@@ -1,7 +1,8 @@
 services:
   bot:
+    container_name: podcastie-bot
     build:
-      context: ./services/bot
+      context: ./services/bot/
     secrets:
       - bot_token
       - mongo_user
@@ -11,8 +12,9 @@ services:
       BOT_TOKEN_FILE: /run/secrets/bot_token
 
   notifier:
+    container_name: podcastie-notifier
     build:
-      context: ./services/notifier
+      context: ./services/notifier/
     secrets:
       - bot_token
       - mongo_user
@@ -20,6 +22,7 @@ services:
       - mongo_database
 
   mongo:
+    container_name: podcastie-mongo
     image: mongo
     volumes:
       - ./services/mongo:/data/db
