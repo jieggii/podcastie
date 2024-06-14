@@ -1,2 +1,3 @@
-.idea/
-.secrets/
+.idea
+.secrets
+__pycache__
