@@ -1,0 +1,5 @@
+__pycache__
+__pypackages__
+.env
+.pdm-python
+.pdm-build

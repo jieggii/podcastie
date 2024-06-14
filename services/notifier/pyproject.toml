@@ -1,0 +1,36 @@
+[project]
+name = "notifier"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "jieggii", email = "jieggii@protonmail.com"},
+]
+dependencies = [
+    "motor>=3.4.0",
+    "loguru>=0.7.2",
+    "podcastie-configs @ file:///${PROJECT_ROOT}/../../lib/podcastie_configs",
+    "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",
+    "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
+    "aiogram>=3.7.0",
+    "aiohttp>=3.9.5",
+    "aiofiles>=23.2.1",
+    "betterconf>=2.6.1",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "python-dotenv[cli]>=1.0.1",
+    "isort>=5.13.2",
+    "black>=24.4.2",
+]
+
+[tool.pdm.scripts]
+start = "dotenv -f .env run python -m notifier"
+fmt.shell = "isort ./notifier && black ./notifier"

@@ -1,0 +1,36 @@
+[project]
+name = "bot"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "jieggii", email = "jieggii@protonmail.com"},
+]
+dependencies = [
+    "aiogram>=3.6.0",
+    "motor>=3.4.0",
+    "feedparser>=6.0.11",
+    "aiohttp>=3.9.5",
+    "podcastparser>=0.6.10",
+    "podcastie-configs @ file:///${PROJECT_ROOT}/../../lib/podcastie_configs",
+    "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",
+    "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
+    "loguru>=0.7.2",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "black>=24.4.2",
+    "isort>=5.13.2",
+    "python-dotenv[cli]>=1.0.1",
+]
+
+[tool.pdm.scripts]
+start = "dotenv -f .env run python -m bot"
+fmt.shell = "isort ./bot && black ./bot"
