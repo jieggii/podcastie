@@ -15,7 +15,6 @@ class DatabaseMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any],
     ) -> Any:
-        print("called middleware")
         user = await User.find_one(User.user_id == event.from_user.id)
         if not user:
             user = User(user_id=event.from_user.id)
