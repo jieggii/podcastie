@@ -56,12 +56,12 @@ services:
       - ./services/mongo:/data/db
 
     secrets:
-      - mongo_user
-      - mongo_password
-
+      - mongo_database
+#      - mongo_user
+#      - mongo_password
     environment:
-      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_user
-      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_password
+#      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_user
+#      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_password
       MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo_database
 
     restart: unless-stopped
@@ -69,9 +69,9 @@ services:
 secrets:
   bot_token:
     file: ./.secrets/bot_token
-  mongo_user:
-    file: ./.secrets/mongo_user
-  mongo_password:
-    file: ./.secrets/mongo_password
+#  mongo_user:
+#    file: ./.secrets/mongo_user
+#  mongo_password:
+#    file: ./.secrets/mongo_password
   mongo_database:
     file: ./.secrets/mongo_database
