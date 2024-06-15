@@ -10,7 +10,7 @@ To get started, simply grab the RSS feed URL of your favorite podcast and use th
 ```
 
 ## Todos
-- [ ] Refine bot messages
+- [ ] Refine bot messages (+add link to github issues for problems with specific RSS feeds)
 - [ ] Compress audio files that are larger than 50 MB to fit within Telegram's limits
 - [ ] Docs
 - [ ] Ensure security when making a request to read RSS feed
