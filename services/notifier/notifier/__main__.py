@@ -86,9 +86,9 @@ async def main() -> None:
                         continue
                     break
 
-            new_episodes.append(
-                NewEpisode(meta=feed.episodes[0])
-            )  # this is for debug, remove in prod!
+            # new_episodes.append(
+            #     NewEpisode(meta=feed.episodes[0])
+            # )  # this is for debug, remove in prod!
             logger.debug(f"{podcast=} has {len(new_episodes)} new episodes")
 
             # send missed episodes of the podcast to all subscribers:
