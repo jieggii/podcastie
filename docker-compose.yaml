@@ -2,23 +2,41 @@ services:
   bot:
     container_name: podcastie-bot
     build:
-      context: ./services/bot/
+      context: .
+      dockerfile: ./services/bot/Dockerfile
+
     secrets:
       - bot_token
-      - mongo_user
-      - mongo_password
+#      - mongo_user
+#      - mongo_password
       - mongo_database
+
     environment:
       BOT_TOKEN_FILE: /run/secrets/bot_token
+
+      MONGO_HOST: podcastie-mongo
+      MONGO_PORT: 27017
+      MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
   notifier:
     container_name: podcastie-notifier
     build:
-      context: ./services/notifier/
+      context: .
+      dockerfile: ./services/notifier/Dockerfile
+
+    environment:
+      NOTIFIER_PERIOD: 60
+
+      BOT_TOKEN_FILE: /run/secrets/bot_token
+
+      MONGO_HOST: podcastie-mongo
+      MONGO_PORT: 27017
+      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+
     secrets:
       - bot_token
-      - mongo_user
-      - mongo_password
+#      - mongo_user
+#      - mongo_password
       - mongo_database
 
   mongo:
@@ -26,9 +44,11 @@ services:
     image: mongo
     volumes:
       - ./services/mongo:/data/db
+
     secrets:
       - mongo_user
       - mongo_password
+
     environment:
       MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_user
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_password
@@ -36,10 +56,10 @@ services:
 
 secrets:
   bot_token:
-    file: ./secrets/bot_token
+    file: ./.secrets/bot_token
   mongo_user:
-    file: ./secrets/mongo_user
+    file: ./.secrets/mongo_user
   mongo_password:
-    file: ./secrets/mongo_password
+    file: ./.secrets/mongo_password
   mongo_database:
-    file: ./secrets/mongo_database
+    file: ./.secrets/mongo_database

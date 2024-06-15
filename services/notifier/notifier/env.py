@@ -19,7 +19,7 @@ class Env(Config):
 
         HOST = field()
         PORT = field(caster=to_int)
-        DATABASE = field()
+        DATABASE = field(default=None)
         DATABASE_FILE = field(default=None)
 
 
