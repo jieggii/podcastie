@@ -9,6 +9,6 @@ To get started, simply grab the RSS feed URL of your favorite podcast and use th
 ```
 
 ## Todos
-[] Refine bot messages
-[] Compress audio files that are larger than 50 MB to fit within Telegram's limits
-[] Docs
+- [ ] Refine bot messages
+- [ ] Compress audio files that are larger than 50 MB to fit within Telegram's limits
+- [ ] Docs
