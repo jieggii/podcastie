@@ -88,7 +88,6 @@ async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
                 "enclosures"
             )
             if enclosures:
-                print(enclosures)
                 # get file URL (it's required):
                 file_url: str | None = enclosures[0].get("url")
 
