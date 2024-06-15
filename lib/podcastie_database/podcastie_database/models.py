@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from beanie import Document, Link, PydanticObjectId
+from beanie import Document, PydanticObjectId
 
 
 class Podcast(Document):

@@ -4,13 +4,6 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 from podcastie_database.models import User
 
-# async def db_user_middleware(
-#     handler: Callable[[Message, dict[str, Any]], Awaitable[Any]],
-#     message: Message,
-#     data: dict[str, Any],
-# ) -> Any:
-#
-
 
 class DatabaseMiddleware(BaseMiddleware):
     def __init__(self) -> None:
