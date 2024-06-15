@@ -11,10 +11,10 @@ async def handle_help(message: Message) -> None:
         "Here is the list of my commands:\n"
         "• /follow - start following podcast.\n"
         "• /unfollow - stop following podcast.\n"
-        "• /list — list podcasts you follow.\n"
+        "• /list — list podcasts you are following.\n"
         "• /search - search for podcasts available in my database.\n"
         "\n"
-        "• /faq — frequently asked questions.\n"
-        "• /about — some additional information about the bot.\n"
+        "• /faq — get list of frequently asked questions.\n"
+        "• /about — get additional information about the bot.\n"
         "• /help — get this useful help message again.\n"
     )

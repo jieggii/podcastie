@@ -21,7 +21,7 @@ router.message.middleware(DatabaseMiddleware())
 async def handle_follow_state(message: Message, state: FSMContext, user: User) -> None:
     podcast_identifier = message.text
 
-    podcast: Podcast | None = None
+    podcast: Podcast
 
     if is_ppid(podcast_identifier):
         # find podcast by PPID:
@@ -30,7 +30,7 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
         podcast = await Podcast.find_one(Podcast.ppid == ppid)
         if not podcast:
             await message.answer(
-                "I checked twice but could not find podcast with this PPID. "
+                "❌ I checked twice but could not find podcast with this PPID. "
                 "Please try again or /cancel this action.",
             )
             return
@@ -49,18 +49,16 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
                 podcastie_rss.InvalidFeedError,
                 podcastie_rss.UntitledPodcastError,
             ) as e:
-                logger.info(f"could not parse podcast feed {feed_url=}, {e=}")
-                await message.answer(  # todo: add link to a document explaining requirements to the RSS feed (refine message)
-                    "⛔ I could not parse this RSS feed. "
-                    "Please try again or /cancel this action."
-                )
+                logger.info(f"could not parse feed {feed_url=}, {e=}")
+                # todo: add link to a document explaining requirements to the RSS feed
+                await message.answer("❌ I could not parse this RSS feed. Please try again or /cancel this action.")
                 return
 
             except Exception as e:
-                logger.info(f"could not fetch podcast feed {feed_url=}, {e}")
+                logger.info(f"could not fetch feed {feed_url=}, {e}")
                 await message.answer(
-                    "⛔ I could not fetch the podcast RSS feed."
-                )  # todo: refine message
+                    "❌ I could not fetch the podcast RSS feed. Please try again or /cancel this action.",
+                )
                 return
 
             # store the podcast in the database:
@@ -75,11 +73,11 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
                 feed_url=feed_url,
                 latest_episode_date=latest_episode_date,
             )
+            logger.info(f"storing a new podcast {podcast=}")
             await podcast.insert()
-            logger.info(f"stored a new podcast podcast={podcast}")
 
     else:
-        await message.answer("🤔 This does not look like URL or valid ppid!")
+        await message.answer("🤔 This does not look like valid URL or PPID! Please try again or /cancel this action.")
         return
 
     # fail if user already follows this podcast:
@@ -101,8 +99,9 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
     )
     await message.answer(
         f"You have successfully subscribed to {fmt_podcast_title}.\n"
-        f"From now on, you will receive messages with new episodes of this podcast!\n\n"
-        "Use /list to list your subscriptions and /unfollow to unfollow from podcasts.",
+        f"From now on, you will receive messages with new episodes of this podcast!\n"
+        "\n"
+        "Use /list to get list of your subscriptions and /unfollow to unfollow from podcasts.",
     )
 
 

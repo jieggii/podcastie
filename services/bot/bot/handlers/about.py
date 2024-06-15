@@ -7,4 +7,4 @@ router = Router()
 
 @router.message(Command("about"))
 async def handle_about(message: Message) -> None:
-    await message.answer("stub about message")
+    await message.answer("This is a stub about message.")

@@ -14,4 +14,4 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
         return
 
     await state.clear()
-    await message.answer("The action was cancelled.")
+    await message.answer("🔄 The action was cancelled.")

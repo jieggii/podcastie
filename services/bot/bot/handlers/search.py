@@ -14,4 +14,4 @@ async def handle_follow_command(
     message: Message,
     state: FSMContext,
 ) -> None:
-    await message.answer("This command is not yet implemented.")
+    await message.answer("💔 This command is not yet implemented.")
