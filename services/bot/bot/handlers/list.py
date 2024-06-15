@@ -21,11 +21,11 @@ async def cancel_handler(message: Message, state: FSMContext, user: User) -> Non
     response = "List of podcasts you follow:\n"
     for object_id in user.following_podcasts:
         podcast = await Podcast.find_one(Podcast.id == object_id)
-        latest_episode_date_str = (
-            podcast.latest_episode_date.strftime("%d.%m.%Y")
-            if podcast.latest_episode_date
-            else "n/a"
+        fmt_title = (
+            f'<a href="{podcast.link}">{podcast.title}</a>'
+            if podcast.link
+            else podcast.title
         )
-        response += f"• <a href='{podcast.link}'>{podcast.title}</a> (<code>{podcast.ppid}</code>), latest episode: {latest_episode_date_str}\n"
+        response += f"• {fmt_title} (<code>{podcast.ppid}</code>)\n"
 
     await message.answer(response, disable_web_page_preview=True)

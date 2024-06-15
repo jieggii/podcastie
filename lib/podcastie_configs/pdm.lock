@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:19a01677d4405e64ff8180b902d21e70317f055684c55c098ed98bdbb1cae16d"
+content_hash = "sha256:78975d8e8c20f400111197423ec090357b9bdeca371d80fabbab4dfd3fe12419"
 
 [[package]]
 name = "black"
@@ -108,14 +108,4 @@ groups = ["dev"]
 files = [
     {file = "platformdirs-4.2.2-py3-none-any.whl", hash = "sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee"},
     {file = "platformdirs-4.2.2.tar.gz", hash = "sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3"},
-]
-
-[[package]]
-name = "podcastparser"
-version = "0.6.10"
-summary = "Simplified, fast RSS parser "
-groups = ["default"]
-files = [
-    {file = "podcastparser-0.6.10-py2.py3-none-any.whl", hash = "sha256:afbeb2eda5a93e2e0e2125a3580a7bae064d6bf3233e0d898525eee54dac5ded"},
-    {file = "podcastparser-0.6.10.tar.gz", hash = "sha256:2b9acb60ad46cff5230c0a3609d37e934674644bfcd5d13b18c423917e9f13d7"},
 ]

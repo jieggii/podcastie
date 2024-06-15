@@ -32,5 +32,5 @@ dev = [
 ]
 
 [tool.pdm.scripts]
-start = "dotenv -f .env run python -m notifier"
 fmt.shell = "isort ./notifier && black ./notifier"
+start = "dotenv -f .env run python -m notifier"

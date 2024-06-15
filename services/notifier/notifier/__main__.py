@@ -1,15 +1,14 @@
 import asyncio
 from dataclasses import dataclass
 
+import podcastie_configs
+import podcastie_database
+import podcastie_rss
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.types import URLInputFile
 from loguru import logger
-
-import podcastie_configs
-import podcastie_database
-import podcastie_rss
 from podcastie_database.models import Podcast, User
 
 from notifier.env import env
@@ -18,10 +17,10 @@ from notifier.env import env
 @dataclass
 class NewEpisode:
     meta: podcastie_rss.Episode
-    telegram_file_id: str | None = None
+    audio_file_telegram_id: str | None = None
 
     def __str__(self) -> str:
-        return f"NewEpisode(meta={self.meta}, file_id={self.telegram_file_id})"
+        return f"NewEpisode(meta={self.meta} audio_file_telegram_id={self.audio_file_telegram_id})"
 
 
 async def main() -> None:
@@ -45,7 +44,10 @@ async def main() -> None:
                 feed = await podcastie_rss.fetch_podcast(
                     podcast.feed_url, max_episodes=10
                 )
-            except podcastie_rss.FeedParseError as e:
+            except (
+                podcastie_rss.InvalidFeedError,
+                podcastie_rss.UntitledPodcastError,
+            ) as e:
                 logger.error(f"could not parse podcast feed {podcast=}, {e=}")
                 continue
             except Exception as e:
@@ -96,54 +98,121 @@ async def main() -> None:
                 users = await User.find(User.following_podcasts == podcast.id).to_list()
                 for user in users:
                     for episode in new_episodes:
+                        # format episode publication date:
+                        fmt_ep_publication_date = f"{episode.meta.publication_date.strftime("%d.%m.%Y at %H:%M")}"
+
+                        # format episode title:
+                        fmt_ep_title = (
+                            episode.meta.title if episode.meta.title else "[no title]"
+                        )
+
+                        # format <a> episode title:
+                        fmt_ep_a_title = (
+                            f'<a href="{episode.meta.link}">{fmt_ep_title}</a>'
+                            if episode.meta.link
+                            else fmt_ep_title
+                        )
+
+                        # format episode description:
+                        fmt_ep_description = (
+                            episode.meta.description
+                            if episode.meta.description
+                            else "[empty description]"
+                        )
+
+                        fmt_ep_file_download_link = (
+                            f'<a href="{episode.meta.audio_file.url}">here</a>'
+                            if episode.meta.audio_file
+                            else "[not available]"
+                        )
+
+                        # format <a> podcast title:
+                        fmt_podcast_a_title = (
+                            f'<a href="{podcast.link}">{podcast.title}</a>'
+                            if podcast.link
+                            else podcast.title
+                        )
+
+                        # create episode thumbnail image file if available:
+                        thumbnail_file: URLInputFile | None = (
+                            URLInputFile(feed.cover_url) if feed.cover_url else None
+                        )
+
                         try:
+                            # send notification about the new episode containing its meta:
+                            logger.info(
+                                f"sending text notification about the new episode to user {episode=} {user=}"
+                            )
                             await bot.send_message(
                                 user.user_id,
-                                f"<a href='{episode.meta.file_url}'>A new episode</a> of <a href='{podcast.link}'>{podcast.title}</a> is out!\n"
-                                f"\n"
-                                f"{episode.meta.description}",
+                                f"🎉 {fmt_podcast_a_title} has published a new episode - {fmt_ep_a_title}\n"
+                                "\n"
+                                f"{fmt_ep_description}\n"
+                                "\n"
+                                f"📅 Episode was published on  {fmt_ep_publication_date}.\n"
+                                f"📁 Download episode audio {fmt_ep_file_download_link}.\n",
                             )
 
-                            if not episode.telegram_file_id:
-                                #  upload file to the Telegram server and cache its file_id:
+                        except Exception as e:
+                            logger.info(
+                                f"failed to send text notification about the new episode to user, will skip trying sending audio {episode=} {user=} {e=}"
+                            )
+                            continue
 
+                        try:
+                            # send new episode's audio file if it is provided:
+                            if not episode.meta.audio_file:
                                 logger.info(
-                                    f"start uploading new episode to Telegram and sending it to the user {episode=}, {user=}"
+                                    f"skip sending audio file of the new episode to the user as there is no audio file provided {episode=} {user=}"
+                                )
+                                continue
+
+                            if episode.meta.audio_file.size > 5e7:
+                                logger.info(
+                                    f"skip sending audio file of the new episode to the user as the audio file size exceeds limit {episode=} {user=}"
+                                )
+                                await bot.send_message(
+                                    user.user_id,
+                                    "📏 Episode audio file size exceeds Telegram limit (50MB), so I am not sending it to you 😭",
+                                )
+                                continue
+
+                            # send it through uploading file to Telegram server if no file_id cached for it:
+                            if not episode.audio_file_telegram_id:
+                                logger.info(
+                                    f"start sending the new episode audio file to the user by uploading it to the Telegram server {episode=}, {user=}"
                                 )
 
-                                file = URLInputFile(
-                                    episode.meta.file_url,
-                                    filename=None,  # todo
+                                audio_file = URLInputFile(
+                                    episode.meta.audio_file.url,
                                     timeout=120,
                                 )
                                 message = await bot.send_audio(
                                     user.user_id,
-                                    audio=file,
-                                    title=episode.meta.title,
+                                    audio=audio_file,
+                                    title=fmt_ep_title,
                                     performer=podcast.title,
-                                    thumbnail=None,  # todo: include thumbnail
+                                    thumbnail=thumbnail_file,
                                 )
-                                episode.telegram_file_id = message.audio.file_id
+                                episode.audio_file_telegram_id = message.audio.file_id
 
-                            else:  # otherwise send episode audio by its file id if cached:
+                            else:  # otherwise send episode file by its file id:
                                 logger.info(
-                                    f"sending a new episode to user {episode=}, {user=}"
+                                    f"sending the new episode to the user by file_id {episode=}, {user=}, {episode.audio_file_telegram_id=}"
                                 )
                                 await bot.send_audio(
                                     user.user_id,
-                                    audio=episode.telegram_file_id,
-                                    title=episode.meta.title,
+                                    audio=episode.audio_file_telegram_id,
+                                    title=fmt_ep_title,
                                     performer=podcast.title,
-                                    thumbnail=None,  # todo: include thumbnail
+                                    thumbnail=thumbnail_file,
                                 )
 
-                            logger.info(
-                                f"successfully sent a new episode of {podcast=} to {user=}"
-                            )
                         except Exception as e:
                             logger.error(
-                                f"failed to send a new episode of podcast to user {podcast=} {user=}, {e}"
+                                f"failed to send audio file of the new episode to user {episode=} {user=}, {e}"
                             )
+
         logger.info(f"sleeping for {env.Notifier.PERIOD} seconds")
         await asyncio.sleep(env.Notifier.PERIOD)
 

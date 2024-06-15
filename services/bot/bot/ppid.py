@@ -3,4 +3,8 @@ import random
 
 
 def generate_ppid(podcast_title: str) -> str:
-    return f"ppid:{podcast_title.lower()[:10]}#{random.randint(1000, 9999)}"
+    ppid = podcast_title.lower().strip()
+    ppid = "".join(ppid.split())
+    ppid = ppid[:15]
+    ppid = f"{ppid}#{random.randint(1000, 9999)}"
+    return ppid

@@ -41,12 +41,16 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
 
         podcast = await Podcast.find_one(Podcast.feed_url == feed_url)
         if not podcast:
-            # try to fetch podcast feed and then validate it:
+            # try retrieving the podcast information by RSS feed URL:
             try:
                 feed = await podcastie_rss.fetch_podcast(feed_url, max_episodes=1)
-            except podcastie_rss.FeedParseError as e:
+
+            except (
+                podcastie_rss.InvalidFeedError,
+                podcastie_rss.UntitledPodcastError,
+            ) as e:
                 logger.info(f"could not parse podcast feed {feed_url=}, {e=}")
-                await message.answer(
+                await message.answer(  # todo: add link to a document explaining requirements to the RSS feed (refine message)
                     "⛔ I could not parse this RSS feed. "
                     "Please try again or /cancel this action."
                 )
@@ -54,22 +58,13 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
 
             except Exception as e:
                 logger.info(f"could not fetch podcast feed {feed_url=}, {e}")
-                await message.answer("⛔ Could not read the podcast RSS feed.")
-                return
-
-            if not feed.title or not feed.link:
-                logger.info(
-                    f"refused to store podcast as it does not contain either title or link {feed_url=}"
-                )
                 await message.answer(
-                    "⛔ This RSS feed is not supported: it does not contain title or link! "
-                    "Please try again or /cancel this action."
-                )
+                    "⛔ I could not fetch the podcast RSS feed."
+                )  # todo: refine message
                 return
 
-            # save validated podcast:
+            # store the podcast in the database:
             latest_episode_date: datetime | None = None
-            print(feed.episodes)
             if feed.episodes:
                 latest_episode_date = feed.episodes[0].publication_date
 
@@ -98,16 +93,23 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
     await user.save()
 
     await state.clear()
+
+    fmt_podcast_title = (
+        f'<a href="{podcast.link}">{podcast.title}</a>'
+        if podcast.link
+        else podcast.title
+    )
     await message.answer(
-        f'You have successfully subscribed to <a href="{podcast.link}">{podcast.title}</a>.\n'
+        f"You have successfully subscribed to {fmt_podcast_title}.\n"
         f"From now on, you will receive messages with new episodes of this podcast!\n\n"
-        "Use /list to list your subscriptions and /remove to unsubscribe from podcasts.",
+        "Use /list to list your subscriptions and /unfollow to unfollow from podcasts.",
     )
 
 
 @router.message(Command("follow"))
 async def handle_follow_command(
-    message: Message, state: FSMContext, user: User
+    message: Message,
+    state: FSMContext,
 ) -> None:
     await state.set_state(States.follow)
     await message.answer(

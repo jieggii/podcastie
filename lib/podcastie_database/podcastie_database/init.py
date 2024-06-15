@@ -1,7 +1,7 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from .models import User, Podcast
+from .models import Podcast, User
 
 
 async def init(host: str, port: int, db_name: str):

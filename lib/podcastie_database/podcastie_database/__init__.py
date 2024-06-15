@@ -1,3 +1,4 @@
 from .init import init
-from .models import User, Podcast
+from .models import Podcast, User
+
 # from .queries import *
