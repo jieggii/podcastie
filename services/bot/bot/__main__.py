@@ -28,13 +28,13 @@ async def main() -> None:
     # note: be sure to register cancel.router first so that it is the first router to handle /cancel command
     dp.include_router(cancel.router)
     dp.include_routers(
-        follow.router,
-        unfollow.router,
-        list.router,
-        start.router,
-        help.router,
-        faq.router,
         about.router,
+        faq.router,
+        follow.router,
+        list.router,
+        help.router,
+        start.router,
+        unfollow.router,
     )
 
     # create and start bot:
