@@ -14,6 +14,9 @@ from podcastie_database.models import Podcast, User
 from notifier.env import env
 
 
+MAX_AUDIO_FILE_SIZE = 5e7
+
+
 @dataclass
 class NewEpisode:
     meta: podcastie_rss.Episode
@@ -89,13 +92,19 @@ async def main() -> None:
             # new_episodes.append(
             #     NewEpisode(meta=feed.episodes[0])
             # )  # this is for debug, remove in prod!
-            logger.debug(f"{podcast=} has {len(new_episodes)} new episodes")
+            logger.info(f"found {len(new_episodes)} new episodes {podcast=}")
 
             # send missed episodes of the podcast to all subscribers:
             if new_episodes:
+                # update latest episode date in the database:
                 podcast.latest_episode_date = new_episodes[0].meta.publication_date
+                await podcast.save()
 
+                # iterate over followers of the podcast and send them new episodes:
+                # todo: check if anyone is subscribed to this podcast and remove it from db is nobody!
+                # todo: implement retries on network error
                 users = await User.find(User.following_podcasts == podcast.id).to_list()
+
                 for user in users:
                     for episode in new_episodes:
                         # format episode publication date:
@@ -138,8 +147,8 @@ async def main() -> None:
                             URLInputFile(feed.cover_url) if feed.cover_url else None
                         )
 
+                        # try sending notification about the new episode containing its meta:
                         try:
-                            # send notification about the new episode containing its meta:
                             logger.info(
                                 f"sending text notification about the new episode to user {episode=} {user=}"
                             )
@@ -159,6 +168,7 @@ async def main() -> None:
                             )
                             continue
 
+                        # todo: move this try deeper
                         try:
                             # send new episode's audio file if it is provided:
                             if not episode.meta.audio_file:
@@ -167,7 +177,7 @@ async def main() -> None:
                                 )
                                 continue
 
-                            if episode.meta.audio_file.size > 5e7:
+                            if episode.meta.audio_file.size > MAX_AUDIO_FILE_SIZE:
                                 logger.info(
                                     f"skip sending audio file of the new episode to the user as the audio file size exceeds limit {episode=} {user=}"
                                 )
