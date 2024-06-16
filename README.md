@@ -14,3 +14,4 @@ To get started, simply grab the RSS feed URL of your favorite podcast and use th
 - [ ] Compress audio files that are larger than 50 MB to fit within Telegram's limits
 - [ ] Docs
 - [ ] Ensure security when making a request to read RSS feed
+- [ ] Remember about timezones when sending information about episode publication date
