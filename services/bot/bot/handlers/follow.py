@@ -114,5 +114,5 @@ async def handle_follow_command(
     await message.answer(
         "📻 Please send me the RSS feed URL or PPID of the podcast.\n"
         "\n"
-        "Use /cancel to cancel this action.",
+        "You can /cancel this action.",
     )

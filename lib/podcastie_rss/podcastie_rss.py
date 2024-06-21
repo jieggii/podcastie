@@ -1,30 +1,30 @@
 import datetime
 import io
 import typing
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import aiohttp
 import podcastparser
 
+_SUPPORTED_ENCLOSURE_MIME_TYPES = ("audio/mp3", "audio/mpeg")
 
-class InvalidFeedError(podcastparser.FeedParseError):
+
+class MalformedFeedFormatError(Exception):
+    """Is raised when unable to parse feed as it's content is malformed/not valid."""
+
     pass
 
 
-class UntitledPodcastError(Exception):
+class FeedDidNotPassValidation(Exception):
+    """Is raised when feed did not pass validation after parsing it."""
+
     pass
 
 
 @dataclass
 class AudioFile:
     url: str
-    size: int
-
-    def __str__(self) -> str:
-        return f"AudioFile(url={self.url} size={self.size})"
-
-    def __repr__(self) -> str:
-        return self.__str__()
+    size: int  # size in bytes
 
 
 @dataclass
@@ -53,21 +53,30 @@ async def _fetch_podcast_feed(url: str, max_episodes: int) -> dict[str, typing.A
 
 
 async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
-    feed = await _fetch_podcast_feed(url, max_episodes)
+    try:
+        feed = await _fetch_podcast_feed(url, max_episodes)
+    except podcastparser.FeedParseError:
+        raise MalformedFeedFormatError()
 
     # get and validate title (it's required):
     podcast_title: str | None = feed.get("title")
     if not podcast_title:
-        raise UntitledPodcastError("podcast does not have title")
+        raise FeedDidNotPassValidation("podcast does not have title")
 
-    # get list of podcast episodes (they are required, but can be an empty list):
+    # get podcast link (it's optional):
+    podcast_link: str | None = feed.get("link")
+
+    # get podcast cover URL (it's optional)
+    podcast_cover_url: str | None = feed.get("cover_url")
+
+    # get podcast episodes (they are required, but can be an empty list):
     raw_episodes: list[dict[str, typing.Any]] | None = feed.get("episodes")
     podcast_episodes: list[Episode] = []
 
     if raw_episodes:
         for raw_episode in raw_episodes:
             # get publication date (it's required, episode will be omitted if it does not contain publication date):
-            published: None | int = raw_episode.get("published")
+            published: int | None = raw_episode.get("published")
             if published is None:  # skip episodes without publication date
                 continue
 
@@ -84,16 +93,20 @@ async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
 
             # get audio file (it's optional):
             ep_audio_file: AudioFile | None = None
-            enclosures: list[dict[str, typing.Any]] | None = raw_episode.get(
-                "enclosures"
-            )
+            enclosures: list[dict[str, typing.Any]] | None = raw_episode.get("enclosures")
             if enclosures:
+                enclosure = enclosures[0]  # use the first enclosure
+
                 # get file URL (it's required):
-                file_url: str | None = enclosures[0].get("url")
+                file_url: str | None = enclosure.get("url")
 
                 # get file size (it's required):
-                file_size: int | None = enclosures[0].get("file_size")
-                if file_url and file_size:
+                file_size: int | None = enclosure.get("file_size")
+
+                # get file mime type (it's required):
+                file_mime_type: str | None = enclosure.get("mime_type")
+
+                if file_url and file_size and (file_mime_type in _SUPPORTED_ENCLOSURE_MIME_TYPES):
                     ep_audio_file = AudioFile(url=file_url, size=file_size)
 
             episode = Episode(
@@ -104,12 +117,6 @@ async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
                 audio_file=ep_audio_file,
             )
             podcast_episodes.append(episode)
-
-    # get podcast link (it's optional):
-    podcast_link: str | None = feed.get("link")
-
-    # get podcast cover URL (it's optional)
-    podcast_cover_url: str | None = feed.get("cover_url")
 
     podcast = Podcast(
         title=podcast_title,

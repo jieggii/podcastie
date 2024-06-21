@@ -1,6 +1,9 @@
-FROM python:3.12 as builder
+FROM python:3.12-alpine as builder
 
 WORKDIR /build
+
+# install ffmpeg:
+RUN apk add ffmpeg
 
 # install pdm:
 RUN pip install pdm==2.15.4
@@ -21,7 +24,9 @@ FROM python:3.12 as runner
 
 WORKDIR /app
 
+# copy dependencies
 COPY --from=builder /build/services/notifier/__pypackages__/ __pypackages__/
+COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
 
 # copy notifier package
 COPY services/notifier/notifier notifier
