@@ -7,7 +7,7 @@ import structlog
 from notifier.env import env
 from notifier.notifier import Notifier
 
-MAX_AUDIO_FILE_SIZE = 45 * 1024 * 1024  # 45 mb
+MAX_TELEGRAM_AUDIO_FILE_SIZE = 45 * 1024 * 1024  # 45 mb
 
 
 async def main() -> None:
@@ -23,12 +23,18 @@ async def main() -> None:
     notifier = Notifier(
         bot_token=env.Bot.TOKEN,
         audio_storage_path="/tmp",
-        feed_poll_interval=60,
-        max_audio_file_size=MAX_AUDIO_FILE_SIZE,
+        poll_feeds_interval=60,
+        log_queue_sizes_interval=10,
+        max_telegram_audio_file_size=MAX_TELEGRAM_AUDIO_FILE_SIZE,
     )
 
     log.info("starting notifier")
-    await notifier.run()
+    try:
+        await notifier.run()
+    except asyncio.CancelledError:
+        log.info("all notifier asyncio tasks were cancelled")
+    finally:
+        await notifier.close()
 
 
 if __name__ == "__main__":

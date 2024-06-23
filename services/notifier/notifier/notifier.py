@@ -3,19 +3,22 @@ import datetime
 from asyncio import Queue
 from dataclasses import dataclass
 
+import aiogram.exceptions
 import aiohttp
 import podcastie_rss
 import structlog
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import FSInputFile, InputFile, URLInputFile
+from aiogram.enums.chat_action import ChatAction
+from aiogram.types import FSInputFile, InputFile, Message, URLInputFile
 from podcastie_database import Podcast, User
 from telegram_text import Link
 
 from notifier.audio_storage import AudioStorage
+from notifier.retry import retry_forever
 
-_AUDIO_FILE_TRANSFER_CHUNK_SIZE = 64 * 1024  # 64 kb
+_AUDIO_FILE_TRANSFER_CHUNK_SIZE = 512 * 1024  # 512 kb
 _AUDIO_FILE_DOWNLOAD_TIMEOUT = 20 * 60  # 20 min
 _AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
 
@@ -24,28 +27,32 @@ _AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
 class Episode:
     title: str
     publication_date: datetime.datetime
-    audio_file_url: str  # URL to audio file hosted by podcast provider
+    audio_file_url: str  # URL to the audio file hosted by the podcast provider
 
-    recipient_user_ids: list[int]  # list of recipients of the episode
+    recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
 
     podcast_title: str  # title of the podcast
-    podcast_link: str  # link to the podcast
-    podcast_cover_url: str | None  # podcast cover image
+    podcast_link: str  # link to the podcast's main page
+    podcast_cover_url: str | None  # URL to the podcast's cover image
 
-    link: str | None  # link to the episode
-    description: str | None
+    link: str | None  # Link to the specific episode
+    description: str | None  # Description of the episode
 
-    audio_file_downloaded_filename: str | None = None
-    audio_file_compressed_filename: str | None = None
+    # indicates if the notifier should attempt to send the episode audio file. Set to False only when an error occurs while processing the audio file
+    send_audio_file: bool = True
 
-    audio_file_telegram_id: str | None = None  # telegram id of the file
+    audio_file_downloaded_filename: str | None = None  # Local filename of the downloaded audio file
+    audio_file_compressed_filename: str | None = None  # Local filename of the compressed audio file
+
+    audio_file_telegram_id: str | None = None  # Telegram file_id of the audio file
 
 
 class Notifier:
     bot: Bot
     audio_storage: AudioStorage
-    feed_poll_interval: int
-    max_audio_file_size: int
+    poll_feeds_interval: int
+    log_queue_sizes_interval: int
+    max_telegram_audio_file_size: int
 
     download_episode_audio_queue: Queue[Episode]
     compress_episode_audio_queue: Queue[Episode]
@@ -55,22 +62,33 @@ class Notifier:
         self,
         bot_token: str,
         audio_storage_path: str,
-        feed_poll_interval: int,
-        max_audio_file_size: int,  # max acceptable audio file size, bytes
+        poll_feeds_interval: int,
+        log_queue_sizes_interval: int,
+        max_telegram_audio_file_size: int,  # max acceptable audio file size, bytes
     ):
+        # dependencies:
         self.bot = Bot(
             token=bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
-        self.audio_storage = AudioStorage(audio_storage_path)
-        self.feed_poll_interval = feed_poll_interval
-        self.max_audio_file_size = max_audio_file_size
+        self.audio_storage = AudioStorage(
+            path=audio_storage_path,
+            download_chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+            download_timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
+        )
+        self.http_session = aiohttp.ClientSession()
 
+        # task intervals:
+        self.poll_feeds_interval = poll_feeds_interval
+        self.log_queue_sizes_interval = log_queue_sizes_interval
+
+        # constants:
+        self.max_telegram_audio_file_size = max_telegram_audio_file_size
+
+        # queues:
         self.download_episode_audio_queue: Queue[Episode] = Queue()
         self.compress_episode_audio_queue: Queue[Episode] = Queue()
         self.broadcast_episode_queue: Queue[Episode] = Queue()
-
-        self.http_session = aiohttp.ClientSession()
 
     async def poll_feeds_task(self):
         log = structlog.getLogger().bind(task="poll_feeds")
@@ -95,8 +113,19 @@ class Notifier:
                 try:
                     # Personally I think, that fetching only one latest episode
                     # from the feed (i.e. having max_episodes=1) is enough as long as we have reasonably
-                    # short polling interval (for example, 1 min - 24 hours).
-                    feed = await podcastie_rss.fetch_podcast(podcast.feed_url, max_episodes=1)
+                    # short polling interval (for example, 1 min - couple hours).
+                    feed: podcastie_rss.Podcast = await retry_forever(
+                        podcastie_rss.fetch_podcast,
+                        kwargs={
+                            "url": podcast.feed_url,
+                            "max_episodes": 1,
+                        },
+                        on_retry=lambda attempt, prev_e: log.warning(
+                            "retrying to fetch RSS feed", attempt=attempt, prev_e=prev_e
+                        ),
+                        exceptions=(aiohttp.ClientConnectionError,),
+                        interval=1,
+                    )
 
                 except aiohttp.ClientError as e:
                     log.error(f"http client error while attempting to read feed", podcast_title=podcast.title, e=e)
@@ -162,7 +191,7 @@ class Notifier:
                     )
 
                     # decide episode's path to the user:
-                    if latest_episode_meta.audio_file.size > self.max_audio_file_size:
+                    if latest_episode_meta.audio_file.size > self.max_telegram_audio_file_size:
                         # 1. The episode's audio file is larger than Telegram's limit.
                         # We need to download, compress, and then broadcast it.
                         log.info(f"episode audio needs compression, sending to the DOWNLOAD queue")
@@ -173,8 +202,8 @@ class Notifier:
                         log.info(f"episode audio is SMOL enough, sending to the BROADCAST queue")
                         await self.broadcast_episode_queue.put(episode)
 
-            log.info(f"notifier sleeps for {self.feed_poll_interval} seconds")
-            await asyncio.sleep(self.feed_poll_interval)
+            log.info(f"notifier sleeps for {self.poll_feeds_interval} seconds")
+            await asyncio.sleep(self.poll_feeds_interval)
 
     async def download_audio_files_task(self):
         log = structlog.getLogger().bind(task="download_audio_files")
@@ -183,15 +212,31 @@ class Notifier:
             episode = await self.download_episode_audio_queue.get()
 
             log = log.bind(episode_title=episode.title)
-            log.info(f"start downloading")  # todo: log progress while downloading
-            original_filename = await self.audio_storage.download(
-                url=episode.audio_file_url,
-                chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
-                timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
-            )
-            episode.audio_file_downloaded_filename = original_filename
+            log.info(f"start downloading")
 
-            log.info(f"finish downloading, sending to the COMPRESS queue")
+            try:
+                original_filename: str = await retry_forever(
+                    self.audio_storage.download,
+                    kwargs={
+                        "url": episode.audio_file_url,
+                    },
+                    on_retry=lambda attempt, prev_e: log.warning(
+                        "retrying to download", attempt=attempt, prev_e=prev_e, url=episode.audio_file_url
+                    ),
+                    exceptions=(aiohttp.ClientConnectionError,),
+                    interval=1,
+                )
+                episode.audio_file_downloaded_filename = original_filename
+
+            except aiohttp.ClientError as e:
+                episode.send_audio_file = False
+                log.error("http client error when trying to download, episode audio will not be sent", e=e)
+
+            except Exception as e:
+                episode.send_audio_file = False
+                log.error("unexpected exception when trying to download, episode audio will not be sent", e=e)
+
+            log.info(f"finish DOWNLOAD task, sending to the COMPRESS queue")
             await self.compress_episode_audio_queue.put(episode)
 
     async def compress_audio_files_task(self):
@@ -202,12 +247,17 @@ class Notifier:
 
             log = log.bind(episode_title=episode.title)
             log.info(f"start compressing")
-            compressed_filename = await self.audio_storage.compress_file(
-                filename=episode.audio_file_downloaded_filename, target_size=self.max_audio_file_size
-            )
-            episode.audio_file_compressed_filename = compressed_filename
 
-            log.info(f"finish compressing, sending to the BROADCAST queue")
+            try:
+                compressed_filename = await self.audio_storage.compress_file(
+                    filename=episode.audio_file_downloaded_filename, target_size=self.max_telegram_audio_file_size
+                )
+                episode.audio_file_compressed_filename = compressed_filename
+            except Exception as e:
+                episode.send_audio_file = False
+                log.error("unexpected exception when compressing, audio file will not be sent", e=e)
+
+            log.info(f"finish COMPRESS task, sending to the BROADCAST queue")
             await self.broadcast_episode_queue.put(episode)
 
     async def broadcast_episodes_task(self):
@@ -235,58 +285,116 @@ class Notifier:
             audio_thumbnail: URLInputFile | None = (
                 URLInputFile(episode.podcast_cover_url) if episode.podcast_cover_url else None
             )
-            audio_filename = "Episode.mp3"
+            audio_filename = "Episode.mp3"  # todo: new filename for new episode from audio URL
 
             for user_id in episode.recipient_user_ids:
-                # send text notification to the user: (todo: try)
-                await self.bot.send_message(user_id, text)
+                log = log.bind(recipient_user_id=user_id)
 
-                # send audio file to the user:
-                audio_file: InputFile | str
-                if episode.audio_file_telegram_id:
-                    # use Telegram file_id as audio file if available
-                    audio_file = episode.audio_file_telegram_id
-
-                elif episode.audio_file_compressed_filename:
-                    # use locally stored compressed audio file if available
-                    audio_file = FSInputFile(
-                        path=self.audio_storage.get_file_path(episode.audio_file_compressed_filename),
-                        filename=audio_filename,
-                        chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+                # send text notification to the user:
+                try:
+                    await retry_forever(
+                        self.bot.send_message,
+                        kwargs={"chat_id": user_id, "text": text},
+                        on_retry=lambda attempt, prev_e: log.warning(
+                            "retrying to send text notification", attempt=attempt, prev_e=prev_e
+                        ),
+                        exceptions=(aiohttp.ClientConnectionError,),
+                        interval=1,
                     )
+                    log.info("sent text notification")
 
-                else:
-                    # use original audio file URL
-                    audio_file = URLInputFile(
-                        episode.audio_file_url,
-                        filename=audio_filename,
-                        chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
-                        timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
+                except aiogram.exceptions.TelegramForbiddenError:
+                    log.info("skipping recipient, he/she has blocked the bot")
+                    # todo: check if the user has blocked the bot for too long, delete them from the database
+                    continue
+
+                except Exception as e:
+                    log.error("unexpected exception when sending text notification, skipping this recipient", e=e)
+                    continue
+
+                # send uploading document chat action to the user:
+                try:
+                    await retry_forever(
+                        self.bot.send_chat_action,  # todo: this sets status only for 5 seconds, repeat this request until audio is sent
+                        kwargs={"chat_id": user_id, "action": ChatAction.UPLOAD_DOCUMENT},
+                        on_retry=lambda attempt, prev_e: log.warning(
+                            "retrying to send chat action", attempt=attempt, prev_e=prev_e
+                        ),
+                        exceptions=(aiohttp.ClientConnectionError,),
+                        interval=1,
                     )
+                except Exception as e:
+                    log.error("unexpected exception when sending chat action", e=e)
 
-                await self.bot.send_chat_action(
-                    chat_id=user_id, action="upload_document"
-                )  # todo: this sets status only for 5 seconds, repeat this request until audio is sent
+                # send audio file to the user (if there were no problems with it):
+                if episode.send_audio_file:
+                    audio_file: InputFile | str
+                    if episode.audio_file_telegram_id:
+                        # use Telegram file_id as audio file if available
+                        audio_file = episode.audio_file_telegram_id
+                    elif episode.audio_file_compressed_filename:
+                        # use locally stored compressed audio file if available
+                        audio_file = FSInputFile(
+                            path=self.audio_storage.get_file_path(episode.audio_file_compressed_filename),
+                            filename=audio_filename,
+                            chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+                        )
+                    else:
+                        # use original audio file URL
+                        audio_file = URLInputFile(
+                            episode.audio_file_url,
+                            filename=audio_filename,
+                            chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+                            timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
+                        )
 
-                message = await self.bot.send_audio(  # todo: try
-                    chat_id=user_id,
-                    audio=audio_file,
-                    title=episode.title,
-                    performer=episode.podcast_title,
-                    thumbnail=audio_thumbnail,
-                    request_timeout=_AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
-                )
+                    try:
+                        message: Message = await retry_forever(
+                            self.bot.send_audio,
+                            kwargs={
+                                "chat_id": user_id,
+                                "audio": audio_file,
+                                "title": episode.title,
+                                "performer": episode.podcast_title,
+                                "thumbnail": audio_thumbnail,
+                                "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
+                            },
+                            on_retry=lambda attempt, prev_e: log.warning(
+                                "retrying to send audio", attempt=attempt, prev_e=prev_e
+                            ),
+                            exceptions=(aiohttp.ClientConnectionError,),
+                            interval=1,
+                        )
+                        log.info("sent audio file")
 
-                # remember Telegram file_id for the next time:
-                if not episode.audio_file_telegram_id:
-                    episode.audio_file_telegram_id = message.audio.file_id
+                        # remember Telegram file_id for the next time:
+                        if not episode.audio_file_telegram_id:
+                            episode.audio_file_telegram_id = message.audio.file_id
 
-                log.info("finish broadcasting")
+                    except Exception as e:
+                        log.error("unexpected exception when sending audio file", e=e)
+
+            log.info("finish broadcasting")
+
+    async def log_queue_sizes_task(self):
+        log = structlog.getLogger().bind(task="log_queue_sizes")
+
+        while True:
+            log.debug(
+                f"queue sizes: DOWNLOAD: {self.download_episode_audio_queue.qsize()}, COMPRESS: {self.compress_episode_audio_queue.qsize()} BROADCAST: {self.broadcast_episode_queue.qsize()}"
+            )
+            await asyncio.sleep(self.log_queue_sizes_interval)
 
     async def run(self):
-        await asyncio.gather(
+        tasks = [
             self.poll_feeds_task(),
             self.download_audio_files_task(),
             self.compress_audio_files_task(),
             self.broadcast_episodes_task(),
-        )
+            self.log_queue_sizes_task(),
+        ]
+        await asyncio.gather(*tasks)
+
+    async def close(self):
+        await self.audio_storage.close()
+        await self.http_session.close()
