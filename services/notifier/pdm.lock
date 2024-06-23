@@ -140,13 +140,13 @@ files = [
 
 [[package]]
 name = "betterconf"
-version = "2.7.0"
+version = "2.8.0"
 requires_python = "<4.0,>=3.8"
 summary = "Minimalistic Python library for your configs."
 groups = ["default"]
 files = [
-    {file = "betterconf-2.7.0-py3-none-any.whl", hash = "sha256:e71dc944a3edc4a65d3b156a1c7008a14a8cd768b6f42a025f18b30d53a0f988"},
-    {file = "betterconf-2.7.0.tar.gz", hash = "sha256:5796e98f554f78622c935186bc161c5ffb8b432150794854ecf122fc190d6a98"},
+    {file = "betterconf-2.8.0-py3-none-any.whl", hash = "sha256:41672d8cdcb4798705b487c77b0613dc4a0160ca94228d7e1423f1695af6a116"},
+    {file = "betterconf-2.8.0.tar.gz", hash = "sha256:7eb20161908db5c85716907281dbf72eddd41784dc0cd6c4d88007946eec2db0"},
 ]
 
 [[package]]
