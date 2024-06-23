@@ -50,13 +50,17 @@ class Episode:
 class Notifier:
     bot: Bot
     audio_storage: AudioStorage
+    poll_feeds_http_session: aiohttp.ClientSession
+
     poll_feeds_interval: int
     log_queue_sizes_interval: int
+
+    max_audio_file_size: int
     max_telegram_audio_file_size: int
 
-    download_episode_audio_queue: Queue[Episode]
-    compress_episode_audio_queue: Queue[Episode]
-    broadcast_episode_queue: Queue[Episode]
+    download_audio_queue: Queue[Episode]
+    compress_audio_queue: Queue[Episode]
+    broadcast_queue: Queue[Episode]
 
     def __init__(
         self,
@@ -64,7 +68,8 @@ class Notifier:
         audio_storage_path: str,
         poll_feeds_interval: int,
         log_queue_sizes_interval: int,
-        max_telegram_audio_file_size: int,  # max acceptable audio file size, bytes
+        max_audio_file_size: int,  # max acceptable audio file size for notifier, larger will not be handled
+        max_telegram_audio_file_size: int,  # max acceptable audio file size for Telegram, larger will be compressed, bytes
     ):
         # dependencies:
         self.bot = Bot(
@@ -76,19 +81,20 @@ class Notifier:
             download_chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
             download_timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
         )
-        self.http_session = aiohttp.ClientSession()
+        self.poll_feeds_http_session = aiohttp.ClientSession()
 
         # task intervals:
         self.poll_feeds_interval = poll_feeds_interval
         self.log_queue_sizes_interval = log_queue_sizes_interval
 
-        # constants:
+        # audio file size limit constants:
+        self.max_audio_file_size = max_audio_file_size
         self.max_telegram_audio_file_size = max_telegram_audio_file_size
 
         # queues:
-        self.download_episode_audio_queue: Queue[Episode] = Queue()
-        self.compress_episode_audio_queue: Queue[Episode] = Queue()
-        self.broadcast_episode_queue: Queue[Episode] = Queue()
+        self.download_audio_queue: Queue[Episode] = Queue()
+        self.compress_audio_queue: Queue[Episode] = Queue()
+        self.broadcast_queue: Queue[Episode] = Queue()
 
     async def poll_feeds_task(self):
         log = structlog.getLogger().bind(task="poll_feeds")
@@ -191,16 +197,25 @@ class Notifier:
                     )
 
                     # decide episode's path to the user:
-                    if latest_episode_meta.audio_file.size > self.max_telegram_audio_file_size:
-                        # 1. The episode's audio file is larger than Telegram's limit.
+                    if latest_episode_meta.audio_file.size > self.max_audio_file_size:
+                        # 1. The episode's audio file is larger than notifier's limit.
+                        # It will neither be handler nor sent to users
+                        log.info(
+                            "audio is too large for notifier, it will neither be handled nor sent to users, sending to BROADCAST queue",
+                        )
+                        episode.send_audio_file = False
+                        await self.broadcast_queue.put(episode)
+
+                    elif latest_episode_meta.audio_file.size > self.max_telegram_audio_file_size:
+                        # 2. The episode's audio file is larger than Telegram's limit.
                         # We need to download, compress, and then broadcast it.
-                        log.info(f"episode audio needs compression, sending to the DOWNLOAD queue")
-                        await self.download_episode_audio_queue.put(episode)
+                        log.info(f"audio needs compression, sending to the DOWNLOAD queue")
+                        await self.download_audio_queue.put(episode)
                     else:
-                        # 2. The episode's audio file is within Telegram's limit.
+                        # 3. The episode's audio file is within Telegram's limit.
                         # We can simply broadcast it directly.
-                        log.info(f"episode audio is SMOL enough, sending to the BROADCAST queue")
-                        await self.broadcast_episode_queue.put(episode)
+                        log.info(f"audio is small enough, sending to the BROADCAST queue")
+                        await self.broadcast_queue.put(episode)
 
             log.info(f"notifier sleeps for {self.poll_feeds_interval} seconds")
             await asyncio.sleep(self.poll_feeds_interval)
@@ -209,7 +224,7 @@ class Notifier:
         log = structlog.getLogger().bind(task="download_audio_files")
 
         while True:
-            episode = await self.download_episode_audio_queue.get()
+            episode = await self.download_audio_queue.get()
 
             log = log.bind(episode_title=episode.title)
             log.info(f"start downloading")
@@ -237,13 +252,13 @@ class Notifier:
                 log.error("unexpected exception when trying to download, episode audio will not be sent", e=e)
 
             log.info(f"finish DOWNLOAD task, sending to the COMPRESS queue")
-            await self.compress_episode_audio_queue.put(episode)
+            await self.compress_audio_queue.put(episode)
 
     async def compress_audio_files_task(self):
         log = structlog.getLogger().bind(task="compress_audio_files")
 
         while True:
-            episode = await self.compress_episode_audio_queue.get()
+            episode = await self.compress_audio_queue.get()
 
             log = log.bind(episode_title=episode.title)
             log.info(f"start compressing")
@@ -258,13 +273,13 @@ class Notifier:
                 log.error("unexpected exception when compressing, audio file will not be sent", e=e)
 
             log.info(f"finish COMPRESS task, sending to the BROADCAST queue")
-            await self.broadcast_episode_queue.put(episode)
+            await self.broadcast_queue.put(episode)
 
     async def broadcast_episodes_task(self):
         log = structlog.getLogger().bind(task="broadcast_episodes")
 
         while True:
-            episode = await self.broadcast_episode_queue.get()
+            episode = await self.broadcast_queue.get()
 
             log = log.bind(episode_title=episode.title)
             log.info(f"start broadcasting")
@@ -381,7 +396,7 @@ class Notifier:
 
         while True:
             log.debug(
-                f"queue sizes: DOWNLOAD: {self.download_episode_audio_queue.qsize()}, COMPRESS: {self.compress_episode_audio_queue.qsize()} BROADCAST: {self.broadcast_episode_queue.qsize()}"
+                f"queue sizes: DOWNLOAD: {self.download_audio_queue.qsize()}, COMPRESS: {self.compress_audio_queue.qsize()} BROADCAST: {self.broadcast_queue.qsize()}"
             )
             await asyncio.sleep(self.log_queue_sizes_interval)
 
@@ -397,4 +412,4 @@ class Notifier:
 
     async def close(self):
         await self.audio_storage.close()
-        await self.http_session.close()
+        await self.poll_feeds_http_session.close()

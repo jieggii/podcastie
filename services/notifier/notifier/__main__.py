@@ -7,6 +7,7 @@ import structlog
 from notifier.env import env
 from notifier.notifier import Notifier
 
+MAX_AUDIO_FILE_SIZE = 500 * 1024 * 1024  # 500 mb
 MAX_TELEGRAM_AUDIO_FILE_SIZE = 45 * 1024 * 1024  # 45 mb
 
 
@@ -25,6 +26,7 @@ async def main() -> None:
         audio_storage_path="/tmp",
         poll_feeds_interval=60,
         log_queue_sizes_interval=10,
+        max_audio_file_size=MAX_AUDIO_FILE_SIZE,
         max_telegram_audio_file_size=MAX_TELEGRAM_AUDIO_FILE_SIZE,
     )
 
