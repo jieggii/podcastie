@@ -10,7 +10,7 @@ from aiogram.enums import ParseMode
 from loguru import logger
 
 from bot import env
-from bot.handlers import about, cancel, faq, follow, help, list, start, unfollow, search
+from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow
 
 
 async def main() -> None:
@@ -35,7 +35,7 @@ async def main() -> None:
         help.router,
         start.router,
         unfollow.router,
-        search.router
+        search.router,
     )
 
     # create and start bot:

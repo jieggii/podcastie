@@ -45,13 +45,18 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
             try:
                 feed = await podcastie_rss.fetch_podcast(feed_url, max_episodes=1)
 
-            except (
-                podcastie_rss.InvalidFeedError,
-                podcastie_rss.UntitledPodcastError,
-            ) as e:
+            except podcastie_rss.MalformedFeedFormatError as e:
                 logger.info(f"could not parse feed {feed_url=}, {e=}")
                 # todo: add link to a document explaining requirements to the RSS feed
-                await message.answer("❌ I could not parse this RSS feed. Please try again or /cancel this action.")
+                await message.answer(
+                    "❌ I could not parse this RSS feed. Please try again or /cancel this action."
+                )
+                return
+
+            except podcastie_rss.FeedDidNotPassValidation:
+                await message.answer(
+                    "❌ This feed did not pass my validation. Please try again or /cancel this action."
+                )
                 return
 
             except Exception as e:
@@ -77,13 +82,16 @@ async def handle_follow_state(message: Message, state: FSMContext, user: User) -
             await podcast.insert()
 
     else:
-        await message.answer("🤔 This does not look like valid URL or PPID! Please try again or /cancel this action.")
+        await message.answer(
+            "🤔 This does not look like valid URL or PPID. Please try again or /cancel this action."
+        )
         return
 
     # fail if user already follows this podcast:
     if podcast.id in user.following_podcasts:
-        await state.clear()
-        await message.answer(f"🤔 You already follow {podcast.title} podcast!")
+        await message.answer(
+            f"🤔 You already follow {podcast.title} podcast. Please try again or /cancel this action."
+        )
         return
 
     # add podcast feed to user's subscription URLs:
