@@ -30,7 +30,7 @@ services:
       dockerfile: ./services/notifier/Dockerfile
 
     environment:
-      NOTIFIER_PERIOD: 60
+      NOTIFIER_PERIOD: 300
 
       BOT_TOKEN_FILE: /run/secrets/bot_token
 
