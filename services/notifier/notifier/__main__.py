@@ -22,7 +22,7 @@ async def main() -> None:
     )
 
     notifier = Notifier(
-        bot_token=env.Bot.TOKEN,
+        bot_token=podcastie_configs.get_value(env.Bot.TOKEN, env.Bot.TOKEN_FILE),
         audio_storage_path="/tmp",
         poll_feeds_interval=60,
         log_queue_sizes_interval=10,
