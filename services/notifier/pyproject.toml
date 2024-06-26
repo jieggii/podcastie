@@ -6,7 +6,6 @@ authors = [
     {name = "jieggii", email = "jieggii@protonmail.com"},
 ]
 dependencies = [
-    "motor>=3.4.0",
     "loguru>=0.7.2",
     "podcastie-configs @ file:///${PROJECT_ROOT}/../../lib/podcastie_configs",
     "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",

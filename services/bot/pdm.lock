@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:4c8d09c0adafe7f19241fd4466fda8a3ab534cf34bea56bffc0ee7cb7ec0d6df"
+content_hash = "sha256:71bf32f74e2f5f5579a4bf4641fb8256d98c70e4fd58567e841dd618c87f28d5"
 
 [[package]]
 name = "aiofiles"

@@ -20,7 +20,7 @@ COPY services/notifier/pyproject.toml services/notifier/pdm.lock* services/notif
 RUN cd services/notifier/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable
 
 
-FROM python:3.12 as runner
+FROM python:3.12-alpine as runner
 
 WORKDIR /app
 
