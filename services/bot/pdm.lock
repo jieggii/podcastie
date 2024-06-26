@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:71bf32f74e2f5f5579a4bf4641fb8256d98c70e4fd58567e841dd618c87f28d5"
+content_hash = "sha256:7d6fe5db292c6f28acf6ae8ec2804081ed5d2e076ab8cd9b28834314c4fb96cb"
 
 [[package]]
 name = "aiofiles"
@@ -136,6 +136,17 @@ dependencies = [
 files = [
     {file = "beanie-1.26.0-py3-none-any.whl", hash = "sha256:b45926c01d4a899c519c665c2a5f230990717e99f7fd68172a389ca33e7693b9"},
     {file = "beanie-1.26.0.tar.gz", hash = "sha256:54016f4ec71ed0ea6ce0c7946a395090c45687f254dbbe1cf06eec608383f790"},
+]
+
+[[package]]
+name = "betterconf"
+version = "2.8.0"
+requires_python = "<4.0,>=3.8"
+summary = "Minimalistic Python library for your configs."
+groups = ["default"]
+files = [
+    {file = "betterconf-2.8.0-py3-none-any.whl", hash = "sha256:41672d8cdcb4798705b487c77b0613dc4a0160ca94228d7e1423f1695af6a116"},
+    {file = "betterconf-2.8.0.tar.gz", hash = "sha256:7eb20161908db5c85716907281dbf72eddd41784dc0cd6c4d88007946eec2db0"},
 ]
 
 [[package]]

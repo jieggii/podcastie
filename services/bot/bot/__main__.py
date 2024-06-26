@@ -9,7 +9,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from loguru import logger
 
-from bot import env
+from bot.env import env
 from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow
 
 
@@ -17,9 +17,9 @@ async def main() -> None:
     # init database:
     logger.info("initializing database")
     await podcastie_database.init(
-        env.MONGO_HOST,
-        env.MONGO_PORT,
-        podcastie_configs.get_value(env.MONGO_DATABASE, env.MONGO_DATABASE_FILE),
+        env.Mongo.HOST,
+        env.Mongo.PORT,
+        podcastie_configs.get_value(env.Mongo.DATABASE, env.Mongo.DATABASE_FILE),
     )
 
     # create and setup router:
@@ -40,7 +40,7 @@ async def main() -> None:
 
     # create and start bot:
     bot = Bot(
-        token=podcastie_configs.get_value(env.BOT_TOKEN, env.BOT_TOKEN_FILE),
+        token=podcastie_configs.get_value(env.Bot.TOKEN, env.Bot.TOKEN_FILE),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 

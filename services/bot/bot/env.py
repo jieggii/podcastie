@@ -1,9 +1,20 @@
-from os import getenv
+from betterconf import Config, field
+from betterconf.caster import to_int
 
-BOT_TOKEN: str | None = getenv("BOT_TOKEN")
-BOT_TOKEN_FILE: str | None = getenv("BOT_TOKEN_FILE")
 
-MONGO_HOST: str | None = getenv("MONGO_HOST")
-MONGO_PORT: int = int(getenv("MONGO_PORT"))
-MONGO_DATABASE: str | None = getenv("MONGO_DATABASE")
-MONGO_DATABASE_FILE: str | None = getenv("MONGO_DATABASE_FILE")
+class Env(Config):
+    class Bot(Config):
+        _prefix_ = "BOT"
+        TOKEN = field(default=None)
+        TOKEN_FILE = field(default=None)
+
+    class Mongo(Config):
+        _prefix_ = "MONGO"
+
+        HOST = field()
+        PORT = field(caster=to_int)
+        DATABASE = field(default=None)
+        DATABASE_FILE = field(default=None)
+
+
+env = Env()
