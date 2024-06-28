@@ -80,7 +80,7 @@ async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
             if published is None:  # skip episodes without publication date
                 continue
 
-            ep_publication_date = datetime.datetime.fromtimestamp(published)
+            ep_publication_date = datetime.datetime.fromtimestamp(published, datetime.UTC)
 
             # get episode title (it's optional):
             ep_title: str | None = raw_episode.get("title")
