@@ -24,11 +24,12 @@ FROM python:3.12-alpine as runner
 
 WORKDIR /app
 
-# copy dependencies
+# copy dependencies:
 COPY --from=builder /build/services/notifier/__pypackages__/ __pypackages__/
 COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
+COPY --from=builder /usr/bin/ffprobe /usr/bin/ffprobe
 
-# copy notifier package
+# copy notifier package:
 COPY services/notifier/notifier notifier
 
 ENV PYTHONPATH=/app/__pypackages__/3.12/lib
