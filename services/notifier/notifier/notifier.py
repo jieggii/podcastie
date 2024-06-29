@@ -6,6 +6,7 @@ import aiogram.exceptions
 import aiohttp
 import podcastie_rss
 import structlog
+from structlog.contextvars import bind_contextvars, clear_contextvars
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -103,7 +104,7 @@ class Notifier:
             podcasts = await Podcast.find().to_list()
 
             for podcast in podcasts:
-                log = log.bind(podcast_title=podcast.title)
+                bind_contextvars(podcast_title=podcast.title)
 
                 # check if there are any followers:
                 log.info(f"checking if podcast has followers")
@@ -216,6 +217,7 @@ class Notifier:
                         log.info(f"audio is small enough, sending to the BROADCAST queue")
                         await self.broadcast_queue.put(episode)
 
+            clear_contextvars()
             log.info(f"notifier sleeps for {self.poll_feeds_interval} seconds")
             await asyncio.sleep(self.poll_feeds_interval)
 
@@ -225,7 +227,7 @@ class Notifier:
         while True:
             episode = await self.download_audio_queue.get()
 
-            log = log.bind(episode_title=episode.title)
+            log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)
             log.info(f"start downloading")
 
             try:
@@ -259,7 +261,7 @@ class Notifier:
         while True:
             episode = await self.compress_audio_queue.get()
 
-            log = log.bind(episode_title=episode.title)
+            log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)  # todo: include filesize?
             log.info(f"start compressing")
 
             try:
@@ -280,8 +282,9 @@ class Notifier:
         while True:
             episode = await self.broadcast_queue.get()
 
-            log = log.bind(episode_title=episode.title)
+            log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)
             log.info(f"start broadcasting")
+
             fmt_podcast_title = Link(episode.podcast_title, episode.podcast_link).to_html()
 
             fmt_title = Link(episode.title, episode.link).to_html() if episode.link else episode.title
