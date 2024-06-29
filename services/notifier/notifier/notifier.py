@@ -292,7 +292,7 @@ class Notifier:
             fmt_audio_file = Link("here", episode.audio_file_url).to_html()
 
             text = (
-                f"{fmt_podcast_title} has published a new episode - {fmt_title}\n"
+                f"🎉 {fmt_podcast_title} has published a new episode - {fmt_title}\n"
                 "\n"
                 f"{fmt_description}\n"
                 "\n"
