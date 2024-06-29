@@ -157,7 +157,6 @@ async def handle_follow_state(
             response += f"👌 {fmt_podcast_title}\n"
 
         if errors:
-            # response += "\nErrors:\n"
             response += "\n"
             for error in errors:
                 fmt_error = f"{error[0].upper()}{error[1:]}"
@@ -173,6 +172,8 @@ async def handle_follow_state(
     if podcasts:
         response += (
             "\n"
+            "From now on, you will receive new episodes of these podcasts as soon as they are released!"
+            "\n\n"
             "Use /list to get list of your subscriptions and /unfollow to unfollow from podcasts."
         )
         await state.clear()
