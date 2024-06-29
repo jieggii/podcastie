@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:7d6fe5db292c6f28acf6ae8ec2804081ed5d2e076ab8cd9b28834314c4fb96cb"
+content_hash = "sha256:d790d295ce9b5af950b6d2a50bc2dccfd431ab5f4785f8d978616596446207e1"
 
 [[package]]
 name = "aiofiles"
@@ -559,6 +559,17 @@ summary = "Py3k port of sgmllib."
 groups = ["default"]
 files = [
     {file = "sgmllib3k-1.0.0.tar.gz", hash = "sha256:7868fb1c8bfa764c1ac563d3cf369c381d1325d36124933a726f29fcdaa812e9"},
+]
+
+[[package]]
+name = "structlog"
+version = "24.2.0"
+requires_python = ">=3.8"
+summary = "Structured Logging for Python"
+groups = ["default"]
+files = [
+    {file = "structlog-24.2.0-py3-none-any.whl", hash = "sha256:983bd49f70725c5e1e3867096c0c09665918936b3db27341b41d294283d7a48a"},
+    {file = "structlog-24.2.0.tar.gz", hash = "sha256:0e3fe74924a6d8857d3f612739efb94c72a7417d7c7c008d12276bca3b5bf13b"},
 ]
 
 [[package]]

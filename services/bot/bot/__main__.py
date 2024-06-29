@@ -7,15 +7,23 @@ import podcastie_database
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from loguru import logger
+from structlog import get_logger
 
 from bot.env import env
 from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow
 
 
 async def main() -> None:
+    # todo: setup logger
+    log = get_logger()
+
     # init database:
-    logger.info("initializing database")
+    log.info(
+        "connecting to the database",
+        host=env.Mongo.HOST,
+        port=env.Mongo.PORT,
+        database=None,
+    )  # todo
     await podcastie_database.init(
         env.Mongo.HOST,
         env.Mongo.PORT,
@@ -44,7 +52,7 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    logger.info("starting polling")
+    log.info("starting polling")
     await dp.start_polling(bot)
 
 

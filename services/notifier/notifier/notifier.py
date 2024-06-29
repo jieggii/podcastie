@@ -26,7 +26,7 @@ _AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
 @dataclass
 class Episode:
     title: str
-    publication_date: datetime.datetime
+    publication_date: int
     audio_file_url: str  # URL to the audio file hosted by the podcast provider
 
     recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
@@ -170,13 +170,13 @@ class Notifier:
                     continue
 
                 latest_episode_meta = feed.episodes[0]
-                if (not podcast.latest_episode_date) or (
-                    latest_episode_meta.publication_date > podcast.latest_episode_date
+                if (not podcast.latest_episode_published) or (
+                    latest_episode_meta.published > podcast.latest_episode_published
                 ):
                     log = log.bind(episode_title=latest_episode_meta.title)
                     log.info(f"podcast has a new episode out")
 
-                    podcast.latest_episode_date = latest_episode_meta.publication_date
+                    podcast.latest_episode_published = latest_episode_meta.published
                     await podcast.save()
 
                     # skip episodes that are not suitable for broadcasting:
@@ -188,7 +188,7 @@ class Notifier:
                         title=latest_episode_meta.title,
                         link=latest_episode_meta.link,
                         description=latest_episode_meta.description,
-                        publication_date=latest_episode_meta.publication_date,
+                        publication_date=latest_episode_meta.published,
                         audio_file_url=latest_episode_meta.audio_file.url,
                         recipient_user_ids=[follower.user_id for follower in followers],
                         podcast_title=podcast.title,

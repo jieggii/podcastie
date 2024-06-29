@@ -15,6 +15,7 @@ dependencies = [
     "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
     "loguru>=0.7.2",
     "betterconf>=2.8.0",
+    "structlog>=24.2.0",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

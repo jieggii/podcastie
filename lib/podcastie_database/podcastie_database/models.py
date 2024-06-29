@@ -9,13 +9,13 @@ class Podcast(Document):
     feed_url: str
 
     link: str | None
-    latest_episode_date: datetime | None = None
+    latest_episode_published: int | None = None
 
     class Settings:
         name = "podcasts"
 
     def __str__(self) -> str:
-        return f"Podcast(id={self.id}, ppid={self.ppid} title={self.title} feed_url={self.feed_url} link={self.link}, latest_episode_date={self.latest_episode_date})"
+        return f"Podcast(id={self.id}, ppid={self.ppid} title={self.title} feed_url={self.feed_url} link={self.link}, latest_episode_date={self.latest_episode_published})"
 
     def __repr__(self) -> str:
         return self.__str__()

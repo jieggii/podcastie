@@ -1,116 +1,186 @@
-from datetime import datetime
-
+import aiohttp
 import podcastie_rss
-from aiogram import Router
+from aiogram import Bot, Router
+from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from loguru import logger
 from podcastie_database.models import Podcast, User
+from structlog import get_logger
+from structlog.contextvars import bind_contextvars, unbind_contextvars
 
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.ppid import generate_ppid
 from bot.validators import is_feed_url, is_ppid
 
+log = get_logger()
 router = Router()
 router.message.middleware(DatabaseMiddleware())
 
 
+MAX_IDENTIFIERS = 20
+
+
 @router.message(States.follow)
-async def handle_follow_state(message: Message, state: FSMContext, user: User) -> None:
-    podcast_identifier = message.text
+async def handle_follow_state(
+    message: Message, state: FSMContext, user: User, bot: Bot
+) -> None:
+    global log
 
-    podcast: Podcast
+    identifiers = message.text.split("\n", maxsplit=MAX_IDENTIFIERS)
 
-    if is_ppid(podcast_identifier):
-        # find podcast by PPID:
-        ppid = podcast_identifier
-
-        podcast = await Podcast.find_one(Podcast.ppid == ppid)
-        if not podcast:
-            await message.answer(
-                "❌ I checked twice but could not find podcast with this PPID. "
-                "Please try again or /cancel this action.",
-            )
-            return
-
-    elif is_feed_url(podcast_identifier):
-        # find or save podcast by feed URL:
-        feed_url = podcast_identifier
-
-        podcast = await Podcast.find_one(Podcast.feed_url == feed_url)
-        if not podcast:
-            # try retrieving the podcast information by RSS feed URL:
-            try:
-                feed = await podcastie_rss.fetch_podcast(feed_url, max_episodes=1)
-
-            except podcastie_rss.MalformedFeedFormatError as e:
-                logger.info(f"could not parse feed {feed_url=}, {e=}")
-                # todo: add link to a document explaining requirements to the RSS feed
-                await message.answer(
-                    "❌ I could not parse this RSS feed. Please try again or /cancel this action."
-                )
-                return
-
-            except podcastie_rss.FeedDidNotPassValidation:
-                await message.answer(
-                    "❌ This feed did not pass my validation. Please try again or /cancel this action."
-                )
-                return
-
-            except Exception as e:
-                logger.info(f"could not fetch feed {feed_url=}, {e}")
-                await message.answer(
-                    "❌ I could not fetch the podcast RSS feed. Please try again or /cancel this action.",
-                )
-                return
-
-            # store the podcast in the database:
-            latest_episode_date: datetime | None = None
-            if feed.episodes:
-                latest_episode_date = feed.episodes[0].publication_date
-
-            podcast = Podcast(
-                ppid=generate_ppid(feed.title),
-                title=feed.title,
-                link=feed.link,
-                feed_url=feed_url,
-                latest_episode_date=latest_episode_date,
-            )
-            logger.info(f"storing a new podcast {podcast=}")
-            await podcast.insert()
-
-    else:
-        await message.answer(
-            "🤔 This does not look like valid URL or PPID. Please try again or /cancel this action."
-        )
+    if len(identifiers) > MAX_IDENTIFIERS:
+        await message.answer(f"⚠ {MAX_IDENTIFIERS} is the limit TODO")
         return
 
-    # fail if user already follows this podcast:
-    if podcast.id in user.following_podcasts:
-        await message.answer(
-            f"🤔 You already follow {podcast.title} podcast. Please try again or /cancel this action."
-        )
-        return
+    # remove duplicated identifiers:
+    identifiers = list(set(identifiers))
 
-    # add podcast feed to user's subscription URLs:
-    user.following_podcasts.append(podcast.id)
+    # send TYPING type actions because response might take longer than usual:
+    await bot.send_chat_action(user.user_id, ChatAction.TYPING)
+
+    # parse identifiers:
+    podcasts: list[Podcast] = []  # list of podcasts user will follow
+    errors: list[str] = []  # list of errors when attempting to follow podcast
+
+    for identifier in identifiers:
+        podcast: Podcast
+
+        if is_ppid(identifier):
+            # find podcast by PPID:
+            ppid = identifier
+            podcast = await Podcast.find_one(Podcast.ppid == ppid)
+
+            if podcast:
+                # skip podcast if it is already considered:
+                if podcast in podcasts:
+                    continue
+
+                # skip podcast if user already follows it:
+                if podcast.id in user.following_podcasts:
+                    errors.append(f"you already follow {podcast.title}")
+                    continue
+
+                podcasts.append(podcast)
+
+            else:
+                errors.append(f"PPID {ppid} was not found in the database")
+                continue
+
+        elif is_feed_url(identifier):
+            # find or save podcast by feed URL:
+            url = identifier
+            podcast = await Podcast.find_one(Podcast.feed_url == url)
+            if podcast:
+                # skip podcast if it is already considered:
+                if podcast in podcasts:
+                    continue
+
+                # skip podcast if the user already follows this podcast:
+                if podcast.id in user.following_podcasts:
+                    errors.append(f"you already follow {podcast.title}")
+                    continue
+
+                podcasts.append(podcast)
+
+            else:
+                # try retrieving the podcast information by RSS feed URL:
+                try:
+                    feed = await podcastie_rss.fetch_podcast(url, max_episodes=1)
+
+                except aiohttp.ClientConnectorError as e:
+                    logger.info("could not fetch feed", e=e)
+                    errors.append(f"could not fetch {url}")
+                    continue
+
+                except podcastie_rss.MalformedFeedFormatError as e:
+                    log.info("refused to follow feed: it has malformed format", e=e)
+                    errors.append(f"RSS feed at {url} has malformed format")
+                    continue
+
+                except podcastie_rss.FeedDidNotPassValidation as e:
+                    log.info("refused to follow feed: it did not pass validation", e=e)
+                    errors.append(
+                        f"RSS feed at {url} did not pass my validation (read more here todo)"
+                    )
+                    continue
+
+                except Exception as e:
+                    log.error("unexpected exception when fetching feed", e=e)
+                    errors.append(f"unexpected error when fetching RSS feed at {url}")
+                    continue
+
+                # store the podcast in the database:
+                latest_episode_published: int | None = None
+                if feed.episodes:
+                    latest_episode_published = feed.episodes[0].published
+
+                podcast = Podcast(
+                    ppid=generate_ppid(feed.title),
+                    title=feed.title,
+                    link=feed.link,
+                    feed_url=identifier,
+                    latest_episode_published=latest_episode_published,
+                )
+                log.info("storing new podcast", podcast_title=podcast.title)
+                await podcast.insert()
+                podcasts.append(podcast)
+
+        else:
+            errors.append(
+                f'identifier "{identifier}" does not look like a valid URL or PPID'
+            )
+            continue
+
+    # add podcasts to user's subscriptions:
+    user.following_podcasts.extend([podcast.id for podcast in podcasts])
     await user.save()
 
-    await state.clear()
+    response = ""
 
-    fmt_podcast_title = (
-        f'<a href="{podcast.link}">{podcast.title}</a>'
-        if podcast.link
-        else podcast.title
-    )
-    await message.answer(
-        f"You have successfully subscribed to {fmt_podcast_title}.\n"
-        f"From now on, you will receive messages with new episodes of this podcast!\n"
-        "\n"
-        "Use /list to get list of your subscriptions and /unfollow to unfollow from podcasts.",
-    )
+    if podcasts:
+        if not errors:
+            response += (
+                "✨ You have successfully subscribed to all provided podcasts:\n"
+            )
+        else:
+            response += "✨ You have successfully subscribed to some of the provided podcasts:\n"
+
+        for podcast in podcasts:
+            fmt_podcast_title = (
+                f'<a href="{podcast.link}">{podcast.title}</a>'
+                if podcast.link
+                else podcast.title
+            )
+            response += f"👌 {fmt_podcast_title}\n"
+
+        if errors:
+            # response += "\nErrors:\n"
+            response += "\n"
+            for error in errors:
+                fmt_error = f"{error[0].upper()}{error[1:]}"
+                response += f"⚠  {fmt_error}.\n"
+
+    else:
+        response = "❌ Failed to subscribe to any of the provided podcasts.\n\n"
+        for error in errors:
+            fmt_error = f"{error[0].upper()}{error[1:]}"
+            response += f"⚠ ️{fmt_error}.\n"
+
+    # add appendix:
+    if podcasts:
+        response += (
+            "\n"
+            "Use /list to get list of your subscriptions and /unfollow to unfollow from podcasts."
+        )
+        await state.clear()
+
+    else:
+        response += "\n" "Please try again or /cancel this action."
+
+    await message.answer(response, disable_web_page_preview=len(podcasts) != 1)
 
 
 @router.message(Command("follow"))
@@ -120,7 +190,7 @@ async def handle_follow_command(
 ) -> None:
     await state.set_state(States.follow)
     await message.answer(
-        "📻 Please send me the RSS feed URL or PPID of the podcast.\n"
+        "🎙️ Please send me up to 20 RSS feed URLs or PPIDs.\n"
         "\n"
         "You can /cancel this action.",
     )

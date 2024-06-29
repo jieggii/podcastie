@@ -29,7 +29,7 @@ class AudioFile:
 
 @dataclass
 class Episode:
-    publication_date: datetime.datetime
+    published: int
 
     title: str | None
     description: str | None
@@ -76,11 +76,9 @@ async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
     if raw_episodes:
         for raw_episode in raw_episodes:
             # get publication date (it's required, episode will be omitted if it does not contain publication date):
-            published: int | None = raw_episode.get("published")
-            if published is None:  # skip episodes without publication date
+            ep_published: int | None = raw_episode.get("published")
+            if ep_published is None:  # skip episode if it has no publication date
                 continue
-
-            ep_publication_date = datetime.datetime.fromtimestamp(published, datetime.UTC)
 
             # get episode title (it's optional):
             ep_title: str | None = raw_episode.get("title")
@@ -110,7 +108,7 @@ async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
                     ep_audio_file = AudioFile(url=file_url, size=file_size)
 
             episode = Episode(
-                publication_date=ep_publication_date,
+                published=ep_published,
                 title=ep_title,
                 description=ep_description,
                 link=ep_link,
