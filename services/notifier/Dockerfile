@@ -17,7 +17,7 @@ COPY lib/podcastie_rss lib/podcastie_rss
 COPY services/notifier/pyproject.toml services/notifier/pdm.lock* services/notifier/
 
 # install dependencies and the project:
-RUN cd services/notifier/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable
+RUN cd services/notifier/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable --no-self
 
 
 FROM python:3.12-alpine as runner
