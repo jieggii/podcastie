@@ -24,12 +24,19 @@ FROM python:3.12-alpine as runner
 
 WORKDIR /app
 
-# copy dependencies:
+# copy Python dependencies:
 COPY --from=builder /build/services/notifier/__pypackages__/ __pypackages__/
+
+# copy binary dependenies (ffmpeg and ffprobe):
 COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=builder /usr/bin/ffprobe /usr/bin/ffprobe
 
-# copy notifier package:
+# copy shared libraries needed for the binary dependencies:
+# > NOTE: I could have copied only selected libs, but ffprobe requires tens tens of them,
+# > so it is simpler just to copy the whole /usr/lib
+COPY --from=builder /usr/lib/ /usr/lib/
+
+# copy notifier Python package:
 COPY services/notifier/notifier notifier
 
 ENV PYTHONPATH=/app/__pypackages__/3.12/lib
