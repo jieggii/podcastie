@@ -146,7 +146,7 @@ class Notifier:
                     continue
 
                 except Exception as e:
-                    log.error(f"unexpected exception while attempting to read feed", podcast_title=podcast.title, e=e)
+                    log.exception(f"unexpected exception while attempting to read feed", podcast_title=podcast.title, e=e)
                     continue
 
                 # update podcast metadata if it has changed:
@@ -196,12 +196,15 @@ class Notifier:
                         podcast_cover_url=feed.cover_url,
                     )
 
+                    bind_contextvars(original_audio_file_size_mb=latest_episode_meta.audio_file.size / 1024)
+
                     # decide episode's path to the user:
                     if latest_episode_meta.audio_file.size > self.max_audio_file_size:
                         # 1. The episode's audio file is larger than notifier's limit.
                         # It will neither be handler nor sent to users
                         log.info(
-                            "audio is too large for notifier, it will neither be handled nor sent to users, sending to BROADCAST queue",
+                            "audio is too large for notifier, "
+                            "it will neither be handled nor sent to users, sending to BROADCAST queue",
                         )
                         episode.send_audio_file = False
                         await self.broadcast_queue.put(episode)
@@ -250,7 +253,7 @@ class Notifier:
 
             except Exception as e:
                 episode.send_audio_file = False
-                log.error("unexpected exception when trying to download, episode audio will not be sent", e=e)
+                log.exception("unexpected exception when trying to download, episode audio will not be sent", e=e)
 
             log.info(f"finish DOWNLOAD task, sending to the COMPRESS queue")
             await self.compress_audio_queue.put(episode)
@@ -271,7 +274,7 @@ class Notifier:
                 episode.audio_file_compressed_filename = compressed_filename
             except Exception as e:
                 episode.send_audio_file = False
-                log.error("unexpected exception when compressing, audio file will not be sent", e=e)
+                log.exception("unexpected exception when compressing, audio file will not be sent", e=e)
 
             log.info(f"finish COMPRESS task, sending to the BROADCAST queue")
             await self.broadcast_queue.put(episode)
@@ -326,7 +329,7 @@ class Notifier:
                     continue
 
                 except Exception as e:
-                    log.error("unexpected exception when sending text notification, skipping this recipient", e=e)
+                    log.exception("unexpected exception when sending text notification, skipping this recipient", e=e)
                     continue
 
                 # send uploading document chat action to the user:
@@ -341,7 +344,7 @@ class Notifier:
                         interval=1,
                     )
                 except Exception as e:
-                    log.error("unexpected exception when sending chat action", e=e)
+                    log.exception("unexpected exception when sending chat action", e=e)
 
                 # send audio file to the user (if there were no problems with it):
                 if episode.send_audio_file:
@@ -389,7 +392,7 @@ class Notifier:
                             episode.audio_file_telegram_id = message.audio.file_id
 
                     except Exception as e:
-                        log.error("unexpected exception when sending audio file", e=e)
+                        log.exception("unexpected exception when sending audio file", e=e)
 
             log.info("finish broadcasting")
 
