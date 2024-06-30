@@ -32,8 +32,8 @@ COPY --from=builder /usr/bin/ffmpeg /usr/bin/ffmpeg
 COPY --from=builder /usr/bin/ffprobe /usr/bin/ffprobe
 
 # copy shared libraries needed for the binary dependencies:
-# > NOTE: I could have copied only selected libs, but ffprobe requires tens tens of them,
-# > so it is simpler just to copy the whole /usr/lib
+# > NOTE: I could have copied only selected libs, but ffprobe requires
+# > dozens of them, so it is simpler just to copy the whole /usr/lib.
 COPY --from=builder /usr/lib/ /usr/lib/
 
 # copy notifier Python package:
