@@ -5,10 +5,9 @@ from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from loguru import logger
 from podcastie_database.models import Podcast, User
 from structlog import get_logger
-from structlog.contextvars import bind_contextvars, unbind_contextvars
+# from structlog.contextvars import bind_contextvars, unbind_contextvars
 
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
@@ -91,7 +90,7 @@ async def handle_follow_state(
                     feed = await podcastie_rss.fetch_podcast(url, max_episodes=1)
 
                 except aiohttp.ClientConnectorError as e:
-                    logger.info("could not fetch feed", e=e)
+                    log.info("could not fetch feed", e=e)
                     errors.append(f"could not fetch {url}")
                     continue
 
