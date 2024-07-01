@@ -6,7 +6,7 @@ import aiogram.exceptions
 import aiohttp
 import podcastie_rss
 import structlog
-from structlog.contextvars import bind_contextvars, clear_contextvars
+from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -173,7 +173,7 @@ class Notifier:
                 if (not podcast.latest_episode_published) or (
                     latest_episode_meta.published > podcast.latest_episode_published
                 ):
-                    log = log.bind(episode_title=latest_episode_meta.title)
+                    bind_contextvars(episode_title=latest_episode_meta.title)
                     log.info(f"podcast has a new episode out")
 
                     podcast.latest_episode_published = latest_episode_meta.published
@@ -196,7 +196,7 @@ class Notifier:
                         podcast_cover_url=feed.cover_url,
                     )
 
-                    bind_contextvars(original_audio_file_size_mb=latest_episode_meta.audio_file.size / 1024)
+                    bind_contextvars(original_audio_file_size_mb=round(latest_episode_meta.audio_file.size / (1024 * 1024), 2))
 
                     # decide episode's path to the user:
                     if latest_episode_meta.audio_file.size > self.max_audio_file_size:
@@ -219,6 +219,8 @@ class Notifier:
                         # We can simply broadcast it directly.
                         log.info(f"audio is small enough, sending to the BROADCAST queue")
                         await self.broadcast_queue.put(episode)
+
+                    unbind_contextvars("episode_title", "original_audio_file_size_mb")
 
             clear_contextvars()
             log.info(f"notifier sleeps for {self.poll_feeds_interval} seconds")
@@ -308,7 +310,7 @@ class Notifier:
             audio_filename = "Episode.mp3"  # todo: new filename for new episode from audio URL
 
             for user_id in episode.recipient_user_ids:
-                log = log.bind(recipient_user_id=user_id)
+                bind_contextvars(recipient_user_id=user_id)
 
                 # send text notification to the user:
                 try:
@@ -394,6 +396,7 @@ class Notifier:
                     except Exception as e:
                         log.exception("unexpected exception when sending audio file", e=e)
 
+            unbind_contextvars("recipient_user_id")
             log.info("finish broadcasting")
 
     async def log_queue_sizes_task(self):
