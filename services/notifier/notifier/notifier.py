@@ -32,7 +32,7 @@ class Episode:
     recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
 
     podcast_title: str  # title of the podcast
-    podcast_link: str  # link to the podcast's main page
+    podcast_link: str | None  # link to the podcast's main page
     podcast_cover_url: str | None  # URL to the podcast's cover image
 
     link: str | None  # Link to the specific episode
