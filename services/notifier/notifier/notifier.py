@@ -307,7 +307,7 @@ class Notifier:
             audio_thumbnail: URLInputFile | None = (
                 URLInputFile(episode.podcast_cover_url) if episode.podcast_cover_url else None
             )
-            audio_filename = "Episode.mp3"  # todo: new filename for new episode from audio URL
+            audio_filename = "Episode.mp3"  # todo: new filename for new episode from audio URL (?)
 
             for user_id in episode.recipient_user_ids:
                 bind_contextvars(recipient_user_id=user_id)
@@ -334,7 +334,7 @@ class Notifier:
                     log.exception("unexpected exception when sending text notification, skipping this recipient", e=e)
                     continue
 
-                # send uploading document chat action to the user:
+                # send "UPLOAD_DOCUMENT" chat action to the user:
                 try:
                     await retry_forever(
                         self.bot.send_chat_action,  # todo: this sets status only for 5 seconds, repeat this request until audio is sent
@@ -345,56 +345,65 @@ class Notifier:
                         exceptions=(aiohttp.ClientConnectionError,),
                         interval=1,
                     )
+
+                # todo: handle aiogram.exceptions.TelegramForbiddenError here
+
                 except Exception as e:
                     log.exception("unexpected exception when sending chat action", e=e)
 
-                # send audio file to the user (if there were no problems with it):
-                if episode.send_audio_file:
-                    audio_file: InputFile | str
-                    if episode.audio_file_telegram_id:
-                        # use Telegram file_id as audio file if available
-                        audio_file = episode.audio_file_telegram_id
-                    elif episode.audio_file_compressed_filename:
-                        # use locally stored compressed audio file if available
-                        audio_file = FSInputFile(
-                            path=self.audio_storage.get_file_path(episode.audio_file_compressed_filename),
-                            filename=audio_filename,
-                            chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
-                        )
-                    else:
-                        # use original audio file URL
-                        audio_file = URLInputFile(
-                            episode.audio_file_url,
-                            filename=audio_filename,
-                            chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
-                            timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
-                        )
+                # send audio file to the user (if needed):
+                if not episode.send_audio_file:
+                    continue
 
-                    try:
-                        message: Message = await retry_forever(
-                            self.bot.send_audio,
-                            kwargs={
-                                "chat_id": user_id,
-                                "audio": audio_file,
-                                "title": episode.title,
-                                "performer": episode.podcast_title,
-                                "thumbnail": audio_thumbnail,
-                                "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
-                            },
-                            on_retry=lambda attempt, prev_e: log.warning(
-                                "retrying to send audio", attempt=attempt, prev_e=prev_e
-                            ),
-                            exceptions=(aiohttp.ClientConnectionError,),
-                            interval=1,
-                        )
-                        log.info("sent audio file")
+                audio_file: InputFile | str
+                if episode.audio_file_telegram_id:
+                    # use Telegram file_id as audio file if available
+                    audio_file = episode.audio_file_telegram_id
 
-                        # remember Telegram file_id for the next time:
-                        if not episode.audio_file_telegram_id:
-                            episode.audio_file_telegram_id = message.audio.file_id
+                elif episode.audio_file_compressed_filename:
+                    # use locally stored compressed audio file if available
+                    audio_file = FSInputFile(
+                        path=self.audio_storage.get_file_path(episode.audio_file_compressed_filename),
+                        filename=audio_filename,
+                        chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+                    )
 
-                    except Exception as e:
-                        log.exception("unexpected exception when sending audio file", e=e)
+                else:
+                    # use original audio file URL
+                    audio_file = URLInputFile(
+                        episode.audio_file_url,
+                        filename=audio_filename,
+                        chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+                        timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
+                    )
+
+                try:
+                    message: Message = await retry_forever(
+                        self.bot.send_audio,
+                        kwargs={
+                            "chat_id": user_id,
+                            "audio": audio_file,
+                            "title": episode.title,
+                            "performer": episode.podcast_title,
+                            "thumbnail": audio_thumbnail,
+                            "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
+                        },
+                        on_retry=lambda attempt, prev_e: log.warning(
+                            "retrying to send audio", attempt=attempt, prev_e=prev_e
+                        ),
+                        exceptions=(aiohttp.ClientConnectionError,),
+                        interval=1,
+                    )
+                    log.info("sent audio file")
+
+                    # remember Telegram file_id for the next time:
+                    if not episode.audio_file_telegram_id:
+                        episode.audio_file_telegram_id = message.audio.file_id
+
+                # todo: handle aiogram.exceptions.TelegramForbiddenError here
+
+                except Exception as e:
+                    log.exception("unexpected exception when sending audio file", e=e)
 
             unbind_contextvars("recipient_user_id")
             log.info("finish broadcasting")
