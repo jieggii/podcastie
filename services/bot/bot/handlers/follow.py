@@ -107,7 +107,7 @@ async def handle_follow_state(
                     continue
 
                 except Exception as e:
-                    log.error("unexpected exception when fetching feed", e=e)
+                    log.exception("unexpected exception when fetching feed", e=e)
                     errors.append(f"unexpected error when fetching RSS feed at {url}")
                     continue
 
