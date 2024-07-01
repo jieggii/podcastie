@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
-lock_version = "4.4.1"
-content_hash = "sha256:6c9b424c97cc7541949b3ec079938066872460fbed15c2e7c5cd19aa70300851"
+lock_version = "4.4.2"
+content_hash = "sha256:e1fa00dab5d055d029a190b42bdfcbc4719417f8e82d2d192fbe13be590e1769"
 
 [[package]]
 name = "aiofiles"
@@ -422,6 +422,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "podcastie-telegram-html"
+version = "0.1.0"
+requires_python = ">=3.12"
+path = "../../lib/podcastie_telegram_html"
+summary = "Default template for PDM package"
+groups = ["default"]
+
+[[package]]
 name = "podcastparser"
 version = "0.6.10"
 summary = "Simplified, fast RSS parser "
@@ -557,17 +565,6 @@ groups = ["default"]
 files = [
     {file = "structlog-24.2.0-py3-none-any.whl", hash = "sha256:983bd49f70725c5e1e3867096c0c09665918936b3db27341b41d294283d7a48a"},
     {file = "structlog-24.2.0.tar.gz", hash = "sha256:0e3fe74924a6d8857d3f612739efb94c72a7417d7c7c008d12276bca3b5bf13b"},
-]
-
-[[package]]
-name = "telegram-text"
-version = "0.2.0"
-requires_python = ">=3.8.1,<4.0.0"
-summary = "Python markup module for Telegram messenger. This module provides a rich list of components to build any possible markup fast and render it to specific html or MarkdownV2 formats."
-groups = ["default"]
-files = [
-    {file = "telegram_text-0.2.0-py3-none-any.whl", hash = "sha256:5752744dc5f91f3f7f0ec1becbf10adb86d586d9338e0aef74fd76a7261283ca"},
-    {file = "telegram_text-0.2.0.tar.gz", hash = "sha256:ee295a35f2c77246dd9a80c5e1a8deccc598958dff35740697901c632c6121fa"},
 ]
 
 [[package]]

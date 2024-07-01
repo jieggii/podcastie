@@ -14,8 +14,8 @@ dependencies = [
     "aiohttp>=3.9.5",
     "betterconf>=2.6.1",
     "pydub>=0.25.1",
-    "telegram-text>=0.2.0",
     "structlog>=24.2.0",
+    "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

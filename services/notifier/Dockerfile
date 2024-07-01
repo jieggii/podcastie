@@ -12,6 +12,7 @@ RUN pip install pdm==2.15.4
 COPY lib/podcastie_configs lib/podcastie_configs
 COPY lib/podcastie_database lib/podcastie_database
 COPY lib/podcastie_rss lib/podcastie_rss
+COPY lib/podcastie_telegram_html lib/podcastie_telegram_html
 
 # copy notifier service pdm files
 COPY services/notifier/pyproject.toml services/notifier/pdm.lock* services/notifier/
