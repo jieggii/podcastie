@@ -13,7 +13,7 @@ from aiogram.enums import ParseMode
 from aiogram.enums.chat_action import ChatAction
 from aiogram.types import FSInputFile, InputFile, Message, URLInputFile
 from podcastie_database import Podcast, User
-from telegram_text import Link
+from podcastie_telegram_html import Link
 
 from notifier.audio_storage import AudioStorage
 from notifier.retry import retry_forever
@@ -288,11 +288,11 @@ class Notifier:
             log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)
             log.info(f"start broadcasting")
 
-            fmt_podcast_title = Link(episode.podcast_title, episode.podcast_link).to_html()
+            fmt_podcast_title = Link(episode.podcast_title, episode.podcast_link).compile()
 
-            fmt_title = Link(episode.title, episode.link).to_html() if episode.link else episode.title
+            fmt_title = Link(episode.title, episode.link).compile()
             fmt_description = episode.description if episode.description else "[no description available]"
-            fmt_audio_file = Link("here", episode.audio_file_url).to_html()
+            fmt_audio_file = Link("here", episode.audio_file_url).compile()
 
             text = (
                 f"🎉 {fmt_podcast_title} has published a new episode - {fmt_title}\n"
