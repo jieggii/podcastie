@@ -20,6 +20,7 @@ services:
 
     depends_on:
       - mongo
+      - telegram-bot-api
 
     restart: unless-stopped
 
@@ -40,6 +41,7 @@ services:
 
     depends_on:
       - mongo
+      - telegram-bot-api
 
     secrets:
       - bot_token
@@ -48,6 +50,12 @@ services:
       - mongo_database
 
     restart: unless-stopped
+
+  telegram-bot-api:
+    container_name: podcastie-telegram-bot-api
+    image: aiogram/telegram-bot-api
+    env_file:
+      - ./services/telegram-bot-api/.env
 
   mongo:
     container_name: podcastie-mongo
