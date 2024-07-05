@@ -1,4 +1,4 @@
-FROM python:3.12 as builder
+FROM python:3.12 AS builder
 
 WORKDIR /build
 
@@ -17,7 +17,7 @@ COPY services/bot/pyproject.toml services/bot/pdm.lock* services/bot/
 RUN cd services/bot/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable --no-self
 
 
-FROM python:3.12 as runner
+FROM python:3.12 AS runner
 
 WORKDIR /app
 
