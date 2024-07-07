@@ -9,7 +9,6 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from structlog import get_logger
 
-from bot.bot_session import LocalTelegramAPIAiohttpSession
 from bot.env import env
 from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow
 
@@ -49,7 +48,6 @@ async def main() -> None:
 
     # create and start bot:
     bot = Bot(
-        session=LocalTelegramAPIAiohttpSession("http://telegram-bot-api:8081"),
         token=podcastie_configs.get_value(env.Bot.TOKEN, env.Bot.TOKEN_FILE),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
