@@ -87,7 +87,7 @@ async def handle_follow_state(
             else:
                 # try retrieving the podcast information by RSS feed URL:
                 try:
-                    feed = await podcastie_rss.fetch_podcast(url, max_episodes=1)
+                    feed = await podcastie_rss.fetch_podcast(url)
 
                 except aiohttp.ClientConnectorError as e:
                     log.info("could not fetch feed", e=e)
@@ -113,8 +113,8 @@ async def handle_follow_state(
 
                 # store the podcast in the database:
                 latest_episode_published: int | None = None
-                if feed.episodes:
-                    latest_episode_published = feed.episodes[0].published
+                if feed.latest_episode:
+                    latest_episode_published = feed.latest_episode.published
 
                 podcast = Podcast(
                     ppid=generate_ppid(feed.title),

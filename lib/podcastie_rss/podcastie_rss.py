@@ -1,4 +1,3 @@
-import datetime
 import io
 import typing
 from dataclasses import dataclass
@@ -6,7 +5,7 @@ from dataclasses import dataclass
 import aiohttp
 import podcastparser
 
-_SUPPORTED_ENCLOSURE_MIME_TYPES = ("audio/mp3", "audio/mpeg")
+_SUPPORTED_ENCLOSURE_MIME_TYPES = ("audio/mp3", "audio/mpeg")  # todo: expand as we don't need to compress audio anymore
 
 
 class MalformedFeedFormatError(Exception):
@@ -40,10 +39,10 @@ class Episode:
 @dataclass
 class Podcast:
     title: str
-    episodes: list[Episode]
 
     link: str | None
     cover_url: str | None
+    latest_episode: Episode | None
 
 
 async def _fetch_podcast_feed(url: str, max_episodes: int) -> dict[str, typing.Any]:
@@ -52,75 +51,72 @@ async def _fetch_podcast_feed(url: str, max_episodes: int) -> dict[str, typing.A
         return podcastparser.parse(url, io.StringIO(content), max_episodes)
 
 
-async def fetch_podcast(url: str, max_episodes: int = 0) -> Podcast:
+async def fetch_podcast(url: str) -> Podcast:
+    """Fetches podcast by RSS feed URL."""
     try:
-        feed = await _fetch_podcast_feed(url, max_episodes)
+        feed = await _fetch_podcast_feed(url, max_episodes=1)
     except podcastparser.FeedParseError:
         raise MalformedFeedFormatError()
 
-    # get and validate title (it's required):
-    podcast_title: str | None = feed.get("title")
-    if not podcast_title:
+    # parse and validate title (it's required):
+    title: str | None = feed.get("title")
+    if not title:
         raise FeedDidNotPassValidation("podcast does not have title")
 
-    # get podcast link (it's optional):
-    podcast_link: str | None = feed.get("link")
+    # parse podcast link (it's optional):
+    link: str | None = feed.get("link")
 
-    # get podcast cover URL (it's optional)
-    podcast_cover_url: str | None = feed.get("cover_url")
+    # parse podcast cover URL (it's optional)
+    cover_url: str | None = feed.get("cover_url")
 
-    # get podcast episodes (they are required, but can be an empty list):
+    # parse latest podcast episode (it's optional):
+    latest_episode: Episode | None = None
+
     raw_episodes: list[dict[str, typing.Any]] | None = feed.get("episodes")
-    podcast_episodes: list[Episode] = []
-
     if raw_episodes:
-        for raw_episode in raw_episodes:
-            # get publication date (it's required, episode will be omitted if it does not contain publication date):
-            ep_published: int | None = raw_episode.get("published")
-            if ep_published is None:  # skip episode if it has no publication date
-                continue
+        raw_episode: dict[str, typing.Any] = raw_episodes[0]
 
-            # get episode title (it's optional):
+        # get publication date (it's required, episode will be omitted if it does not contain publication date):
+        ep_published: int | None = raw_episode.get("published")
+        if ep_published:
+            # parse episode title (it's optional) (should it be required?):
             ep_title: str | None = raw_episode.get("title")
 
-            # get episode description (it's optional):
-            ep_description: str | None = raw_episode.get("description")
-
-            # get episode link (it's optional):
+            # parse episode link (it's optional):
             ep_link: str | None = raw_episode.get("link")
 
-            # get audio file (it's optional):
+            # parse episode description (it's optional):
+            ep_description: str | None = raw_episode.get("description")
+
+            # parse episode audio file (it's optional):
             ep_audio_file: AudioFile | None = None
             enclosures: list[dict[str, typing.Any]] | None = raw_episode.get("enclosures")
             if enclosures:
                 enclosure = enclosures[0]  # use the first enclosure
 
-                # get file URL (it's required):
+                # parse file URL (it's required):
                 file_url: str | None = enclosure.get("url")
 
-                # get file size (it's required):
+                # parse file size (it's required):
                 file_size: int | None = enclosure.get("file_size")
 
-                # get file mime type (it's required):
+                # parse file mime type (it's required):
                 file_mime_type: str | None = enclosure.get("mime_type")
 
                 if file_url and file_size and (file_mime_type in _SUPPORTED_ENCLOSURE_MIME_TYPES):
                     ep_audio_file = AudioFile(url=file_url, size=file_size)
 
-            episode = Episode(
+            latest_episode = Episode(
                 published=ep_published,
                 title=ep_title,
                 description=ep_description,
                 link=ep_link,
                 audio_file=ep_audio_file,
             )
-            podcast_episodes.append(episode)
 
-    podcast = Podcast(
-        title=podcast_title,
-        link=podcast_link,
-        cover_url=podcast_cover_url,
-        episodes=podcast_episodes,
+    return Podcast(
+        title=title,
+        link=link,
+        cover_url=cover_url,
+        latest_episode=latest_episode,
     )
-
-    return podcast
