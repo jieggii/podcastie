@@ -1,4 +1,4 @@
-FROM python:3.12-alpine as builder
+FROM python:3.12-alpine AS builder
 
 WORKDIR /build
 
@@ -21,7 +21,7 @@ COPY services/notifier/pyproject.toml services/notifier/pdm.lock* services/notif
 RUN cd services/notifier/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable --no-self
 
 
-FROM python:3.12-alpine as runner
+FROM python:3.12-alpine AS runner
 
 WORKDIR /app
 

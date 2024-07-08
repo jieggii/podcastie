@@ -6,19 +6,21 @@ import aiogram.exceptions
 import aiohttp
 import podcastie_rss
 import structlog
-from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.enums.chat_action import ChatAction
-from aiogram.types import FSInputFile, InputFile, Message, URLInputFile
+from aiogram.types import Message, URLInputFile
 from podcastie_database import Podcast, User
-from podcastie_telegram_html import Link
+from podcastie_telegram_html import link
+from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 
-from notifier.audio_storage import AudioStorage
+from notifier.bot_session import LocalTelegramAPIAiohttpSession
 from notifier.retry import retry_forever
 
-_AUDIO_FILE_TRANSFER_CHUNK_SIZE = 512 * 1024  # 512 kb
+_AUDIO_FILE_SIZE_LIMIT = 2000 * 1024 * 1024  # Max audio file size allowed by Telegram
+_AUDIO_FILE_CHUNK_SIZE = 512 * 1024  # 512 kb
+
 _AUDIO_FILE_DOWNLOAD_TIMEOUT = 20 * 60  # 20 min
 _AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
 
@@ -26,77 +28,40 @@ _AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
 @dataclass
 class Episode:
     title: str
-    publication_date: int
-    audio_file_url: str  # URL to the audio file hosted by the podcast provider
-
-    recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
+    audio: podcastie_rss.AudioFile
+    link: str | None  # Link to the specific episode
+    description: str | None  # Description of the episode
 
     podcast_title: str  # title of the podcast
     podcast_link: str | None  # link to the podcast's main page
     podcast_cover_url: str | None  # URL to the podcast's cover image
 
-    link: str | None  # Link to the specific episode
-    description: str | None  # Description of the episode
+    recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
 
-    # indicates if the notifier should attempt to send the episode audio file. Set to False only when an error occurs while processing the audio file
-    send_audio_file: bool = True
-
-    audio_file_downloaded_filename: str | None = None  # Local filename of the downloaded audio file
-    audio_file_compressed_filename: str | None = None  # Local filename of the compressed audio file
-
-    audio_file_telegram_id: str | None = None  # Telegram file_id of the audio file
+    audio_telegram_file_id: str | None = None  # Telegram file_id of the audio file
 
 
 class Notifier:
-    bot: Bot
-    audio_storage: AudioStorage
-    poll_feeds_http_session: aiohttp.ClientSession
+    _poll_interval: int
+    _log_broadcast_queue_size_interval: int
 
-    poll_feeds_interval: int
-    log_queue_sizes_interval: int
+    _bot: Bot
+    _broadcast_queue: Queue[Episode]
 
-    max_audio_file_size: int
-    max_telegram_audio_file_size: int
-
-    download_audio_queue: Queue[Episode]
-    compress_audio_queue: Queue[Episode]
-    broadcast_queue: Queue[Episode]
-
-    def __init__(
-        self,
-        bot_token: str,
-        audio_storage_path: str,
-        poll_feeds_interval: int,
-        log_queue_sizes_interval: int,
-        max_audio_file_size: int,  # max acceptable audio file size for notifier, larger will not be handled
-        max_telegram_audio_file_size: int,  # max acceptable audio file size for Telegram, larger will be compressed, bytes
-    ):
+    def __init__(self, bot_token: str, poll_interval: int):
         # dependencies:
-        self.bot = Bot(
+        self._bot = Bot(
+            session=LocalTelegramAPIAiohttpSession("http://telegram-bot-api:8081"),
             token=bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
-        self.audio_storage = AudioStorage(
-            path=audio_storage_path,
-            download_chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
-            download_timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
-        )
-        self.poll_feeds_http_session = aiohttp.ClientSession()
 
-        # task intervals:
-        self.poll_feeds_interval = poll_feeds_interval
-        self.log_queue_sizes_interval = log_queue_sizes_interval
+        self._poll_interval = poll_interval
+        self._log_broadcast_queue_size_interval = 5
 
-        # audio file size limit constants:
-        self.max_audio_file_size = max_audio_file_size
-        self.max_telegram_audio_file_size = max_telegram_audio_file_size
+        self._broadcast_queue: Queue[Episode] = Queue()
 
-        # queues:
-        self.download_audio_queue: Queue[Episode] = Queue()
-        self.compress_audio_queue: Queue[Episode] = Queue()
-        self.broadcast_queue: Queue[Episode] = Queue()
-
-    async def poll_feeds_task(self):
+    async def poll_feeds_task(self) -> None:
         log = structlog.getLogger().bind(task="poll_feeds")
 
         while True:
@@ -104,28 +69,22 @@ class Notifier:
             podcasts = await Podcast.find().to_list()
 
             for podcast in podcasts:
-                bind_contextvars(podcast_title=podcast.title)
+                bind_contextvars(podcast=podcast.title)
 
                 # check if there are any followers:
                 log.info(f"checking if podcast has followers")
                 followers = await User.find(User.following_podcasts == podcast.id).to_list()
                 if not followers:  # skip and delete the podcast if it has no followers
-                    log.info("skipping and deleting podcast that has no followers")
+                    log.info("skip and delete podcast from DB as it has no followers")
                     await podcast.delete()
                     continue
 
                 # try to fetch podcast RSS feed:
-                log.info(f"checking podcast RSS feed for updates")
+                log.info(f"checking podcast RSS feed for new updates")
                 try:
-                    # Personally I think, that fetching only one latest episode
-                    # from the feed (i.e. having max_episodes=1) is enough as long as we have reasonably
-                    # short polling interval (for example, 1 min - couple hours).
                     feed: podcastie_rss.Podcast = await retry_forever(
                         podcastie_rss.fetch_podcast,
-                        kwargs={
-                            "url": podcast.feed_url,
-                            "max_episodes": 1,
-                        },
+                        kwargs={"url": podcast.feed_url},
                         on_retry=lambda attempt, prev_e: log.warning(
                             "retrying to fetch RSS feed", attempt=attempt, prev_e=prev_e
                         ),
@@ -133,190 +92,106 @@ class Notifier:
                         interval=1,
                     )
 
-                except aiohttp.ClientError as e:
-                    log.error(f"http client error while attempting to read feed", podcast_title=podcast.title, e=e)
+                except aiohttp.ClientError as e:  # failed to fetch feed
+                    log.error(
+                        f"skipping podcast as http client error while attempting to read feed",
+                        podcast_title=podcast.title,
+                        e=e,
+                    )
                     continue
 
                 except podcastie_rss.MalformedFeedFormatError as e:
-                    log.error(f"failed to parse malformed feed content", podcast_title=podcast.title, e=e)
+                    log.error(f"skipping podcast as feed is malformed", podcast_title=podcast.title, e=e)
                     continue
 
                 except podcastie_rss.FeedDidNotPassValidation as e:
-                    log.error(f"feed did not pass validation {podcast} {e=}")
+                    log.error(f"skipping podcast as feed did not pass validation {podcast} {e=}")
                     continue
 
                 except Exception as e:
-                    log.exception(f"unexpected exception while attempting to read feed", podcast_title=podcast.title, e=e)
+                    log.exception(
+                        f"skipping podcast as got unexpected exception while attempting to read feed",
+                        podcast_title=podcast.title,
+                        e=e,
+                    )
                     continue
 
                 # update podcast metadata if it has changed:
-                update_podcast = False
                 if podcast.title != feed.title:
-                    log.info(f"updating podcast title", new_podcast_title=feed.title)
-                    update_podcast = True
+                    log.info(f"update podcast title", new_title=feed.title)
                     podcast.title = feed.title
+                    await podcast.save()
 
                 if podcast.link != feed.link:
-                    log.info(f"updating podcast link", new_podcast_link=feed.link)
-                    update_podcast = True
+                    log.info(f"update podcast link", new_link=feed.link)
                     podcast.link = feed.link
-
-                if update_podcast:
-                    log.info(f"storing new podcast meta")
                     await podcast.save()
 
-                if not feed.episodes:  # skip feeds without any episodes
-                    log.info(f"skipping podcast as it has no episodes")
+                # skip podcast if it does not have any episodes:
+                if not feed.latest_episode:
+                    log.debug(f"skip podcast as it has no episodes")
                     continue
 
-                latest_episode_meta = feed.episodes[0]
-                if (not podcast.latest_episode_published) or (
-                    latest_episode_meta.published > podcast.latest_episode_published
+                if (podcast.latest_episode_published is None) or (
+                    feed.latest_episode.published > podcast.latest_episode_published
                 ):
-                    bind_contextvars(episode_title=latest_episode_meta.title)
-                    log.info(f"podcast has a new episode out")
+                    bind_contextvars(episode=feed.latest_episode.title)
+                    log.info(f"new episode is out")
 
-                    podcast.latest_episode_published = latest_episode_meta.published
+                    # update latest episode timestamp in the database:
+                    podcast.latest_episode_published = feed.latest_episode.published
                     await podcast.save()
 
-                    # skip episodes that are not suitable for broadcasting:
-                    if not latest_episode_meta.title or not latest_episode_meta.audio_file:
-                        log.info("skipping episode because it is not suitable for broadcasting")
+                    # skip episode if it does not contain title or audio file:
+                    if not feed.latest_episode.title or not feed.latest_episode.audio_file:
+                        log.info("skip episode because it does not contain title or audio")
                         continue
 
+                    log.info("send episode to the BROADCAST queue")
                     episode = Episode(
-                        title=latest_episode_meta.title,
-                        link=latest_episode_meta.link,
-                        description=latest_episode_meta.description,
-                        publication_date=latest_episode_meta.published,
-                        audio_file_url=latest_episode_meta.audio_file.url,
-                        recipient_user_ids=[follower.user_id for follower in followers],
+                        title=feed.latest_episode.title,
+                        audio=feed.latest_episode.audio_file,
+                        link=feed.latest_episode.link,
+                        description=feed.latest_episode.description,
                         podcast_title=podcast.title,
                         podcast_link=podcast.link,
                         podcast_cover_url=feed.cover_url,
+                        recipient_user_ids=[follower.user_id for follower in followers],
                     )
+                    await self._broadcast_queue.put(episode)
 
-                    bind_contextvars(original_audio_file_size_mb=round(latest_episode_meta.audio_file.size / (1024 * 1024), 2))
-
-                    # decide episode's path to the user:
-                    if latest_episode_meta.audio_file.size > self.max_audio_file_size:
-                        # 1. The episode's audio file is larger than notifier's limit.
-                        # It will neither be handler nor sent to users
-                        log.info(
-                            "audio is too large for notifier, "
-                            "it will neither be handled nor sent to users, sending to BROADCAST queue",
-                        )
-                        episode.send_audio_file = False
-                        await self.broadcast_queue.put(episode)
-
-                    elif latest_episode_meta.audio_file.size > self.max_telegram_audio_file_size:
-                        # 2. The episode's audio file is larger than Telegram's limit.
-                        # We need to download, compress, and then broadcast it.
-                        log.info(f"audio needs compression, sending to the DOWNLOAD queue")
-                        await self.download_audio_queue.put(episode)
-                    else:
-                        # 3. The episode's audio file is within Telegram's limit.
-                        # We can simply broadcast it directly.
-                        log.info(f"audio is small enough, sending to the BROADCAST queue")
-                        await self.broadcast_queue.put(episode)
-
-                    unbind_contextvars("episode_title", "original_audio_file_size_mb")
+                    clear_contextvars()
 
             clear_contextvars()
-            log.info(f"notifier sleeps for {self.poll_feeds_interval} seconds")
-            await asyncio.sleep(self.poll_feeds_interval)
+            log.info(f"task is sleeping", sleep_sec=self._poll_interval)
+            await asyncio.sleep(self._poll_interval)
 
-    async def download_audio_files_task(self):
-        log = structlog.getLogger().bind(task="download_audio_files")
-
-        while True:
-            episode = await self.download_audio_queue.get()
-
-            log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)
-            log.info(f"start downloading")
-
-            try:
-                original_filename: str = await retry_forever(
-                    self.audio_storage.download,
-                    kwargs={
-                        "url": episode.audio_file_url,
-                    },
-                    on_retry=lambda attempt, prev_e: log.warning(
-                        "retrying to download", attempt=attempt, prev_e=prev_e, url=episode.audio_file_url
-                    ),
-                    exceptions=(aiohttp.ClientConnectionError,),
-                    interval=1,
-                )
-                episode.audio_file_downloaded_filename = original_filename
-
-            except aiohttp.ClientError as e:
-                episode.send_audio_file = False
-                log.error("http client error when trying to download, episode audio will not be sent", e=e)
-
-            except Exception as e:
-                episode.send_audio_file = False
-                log.exception("unexpected exception when trying to download, episode audio will not be sent", e=e)
-
-            log.info(f"finish DOWNLOAD task, sending to the COMPRESS queue")
-            await self.compress_audio_queue.put(episode)
-
-    async def compress_audio_files_task(self):
-        log = structlog.getLogger().bind(task="compress_audio_files")
-
-        while True:
-            episode = await self.compress_audio_queue.get()
-
-            log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)  # todo: include filesize?
-            log.info(f"start compressing")
-
-            try:
-                compressed_filename = await self.audio_storage.compress_file(
-                    filename=episode.audio_file_downloaded_filename, target_size=self.max_telegram_audio_file_size
-                )
-                episode.audio_file_compressed_filename = compressed_filename
-            except Exception as e:
-                episode.send_audio_file = False
-                log.exception("unexpected exception when compressing, audio file will not be sent", e=e)
-
-            log.info(f"finish COMPRESS task, sending to the BROADCAST queue")
-            await self.broadcast_queue.put(episode)
-
-    async def broadcast_episodes_task(self):
+    async def broadcast_episodes_task(self) -> None:
         log = structlog.getLogger().bind(task="broadcast_episodes")
 
         while True:
-            episode = await self.broadcast_queue.get()
+            episode = await self._broadcast_queue.get()
+            bind_contextvars(podcast=episode.podcast_title, episode=episode.title)
 
-            log = log.bind(podcast_title=episode.podcast_title, episode_title=episode.title)
             log.info(f"start broadcasting")
 
-            fmt_podcast_title = Link(episode.podcast_title, episode.podcast_link).compile()
-
-            fmt_title = Link(episode.title, episode.link).compile()
-            fmt_description = episode.description if episode.description else "[no description available]"
-            fmt_audio_file = Link("here", episode.audio_file_url).compile()
-
-            text = (
-                f"🎉 {fmt_podcast_title} has published a new episode - {fmt_title}\n"
+            notification_text = (
+                f"🎉 {link(episode.podcast_title, episode.podcast_link)} "
+                f"has published a new episode - {link(episode.title, episode.link)}\n"
                 "\n"
-                f"{fmt_description}\n"
+                f"{episode.description if episode.description else ''}\n"
                 "\n"
-                f"📁 Download original episode audio {fmt_audio_file}."
+                f"📁 Download original episode audio {link('here', episode.audio.url)}."
             )
-
-            audio_thumbnail: URLInputFile | None = (
-                URLInputFile(episode.podcast_cover_url) if episode.podcast_cover_url else None
-            )
-            audio_filename = "Episode.mp3"  # todo: new filename for new episode from audio URL (?)
 
             for user_id in episode.recipient_user_ids:
-                bind_contextvars(recipient_user_id=user_id)
+                bind_contextvars(user_id=user_id)
 
                 # send text notification to the user:
                 try:
                     await retry_forever(
-                        self.bot.send_message,
-                        kwargs={"chat_id": user_id, "text": text},
+                        self._bot.send_message,
+                        kwargs={"chat_id": user_id, "text": notification_text},
                         on_retry=lambda attempt, prev_e: log.warning(
                             "retrying to send text notification", attempt=attempt, prev_e=prev_e
                         ),
@@ -334,10 +209,13 @@ class Notifier:
                     log.exception("unexpected exception when sending text notification, skipping this recipient", e=e)
                     continue
 
+                if episode.audio.size > _AUDIO_FILE_SIZE_LIMIT:
+                    continue
+
                 # send "UPLOAD_DOCUMENT" chat action to the user:
                 try:
                     await retry_forever(
-                        self.bot.send_chat_action,  # todo: this sets status only for 5 seconds, repeat this request until audio is sent
+                        self._bot.send_chat_action,  # todo: this sets status only for 5 seconds, repeat this request until audio is sent
                         kwargs={"chat_id": user_id, "action": ChatAction.UPLOAD_DOCUMENT},
                         on_retry=lambda attempt, prev_e: log.warning(
                             "retrying to send chat action", attempt=attempt, prev_e=prev_e
@@ -351,41 +229,24 @@ class Notifier:
                 except Exception as e:
                     log.exception("unexpected exception when sending chat action", e=e)
 
-                # send audio file to the user (if needed):
-                if not episode.send_audio_file:
-                    continue
-
-                audio_file: InputFile | str
-                if episode.audio_file_telegram_id:
-                    # use Telegram file_id as audio file if available
-                    audio_file = episode.audio_file_telegram_id
-
-                elif episode.audio_file_compressed_filename:
-                    # use locally stored compressed audio file if available
-                    audio_file = FSInputFile(
-                        path=self.audio_storage.get_file_path(episode.audio_file_compressed_filename),
-                        filename=audio_filename,
-                        chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
-                    )
-
-                else:
-                    # use original audio file URL
+                audio_file: str | None | URLInputFile = episode.audio_telegram_file_id
+                if audio_file is None:  # use URL input file if no file_id stored yet
                     audio_file = URLInputFile(
-                        episode.audio_file_url,
-                        filename=audio_filename,
-                        chunk_size=_AUDIO_FILE_TRANSFER_CHUNK_SIZE,
+                        episode.audio.url,
+                        filename="Episode.mp3",
+                        chunk_size=_AUDIO_FILE_CHUNK_SIZE,
                         timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
                     )
 
                 try:
                     message: Message = await retry_forever(
-                        self.bot.send_audio,
+                        self._bot.send_audio,
                         kwargs={
                             "chat_id": user_id,
                             "audio": audio_file,
                             "title": episode.title,
                             "performer": episode.podcast_title,
-                            "thumbnail": audio_thumbnail,
+                            "thumbnail": URLInputFile(episode.podcast_cover_url) if episode.podcast_cover_url else None,
                             "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
                         },
                         on_retry=lambda attempt, prev_e: log.warning(
@@ -397,8 +258,8 @@ class Notifier:
                     log.info("sent audio file")
 
                     # remember Telegram file_id for the next time:
-                    if not episode.audio_file_telegram_id:
-                        episode.audio_file_telegram_id = message.audio.file_id
+                    if not episode.audio_telegram_file_id:
+                        episode.audio_telegram_file_id = message.audio.file_id
 
                 # todo: handle aiogram.exceptions.TelegramForbiddenError here
 
@@ -408,25 +269,17 @@ class Notifier:
             unbind_contextvars("recipient_user_id")
             log.info("finish broadcasting")
 
-    async def log_queue_sizes_task(self):
-        log = structlog.getLogger().bind(task="log_queue_sizes")
+    async def log_broadcast_queue_size_task(self) -> None:
+        log = structlog.getLogger().bind(task="log_broadcast_queue_size_task")
 
         while True:
-            log.debug(
-                f"queue sizes: DOWNLOAD: {self.download_audio_queue.qsize()}, COMPRESS: {self.compress_audio_queue.qsize()} BROADCAST: {self.broadcast_queue.qsize()}"
-            )
-            await asyncio.sleep(self.log_queue_sizes_interval)
+            log.debug(f"episodes waiting to be broadcasted: {self._broadcast_queue.qsize()}")
+            await asyncio.sleep(self._log_broadcast_queue_size_interval)
 
-    async def run(self):
+    async def start(self) -> None:
         tasks = [
             self.poll_feeds_task(),
-            self.download_audio_files_task(),
-            self.compress_audio_files_task(),
             self.broadcast_episodes_task(),
-            self.log_queue_sizes_task(),
+            self.log_broadcast_queue_size_task(),
         ]
         await asyncio.gather(*tasks)
-
-    async def close(self):
-        await self.audio_storage.close()
-        await self.poll_feeds_http_session.close()

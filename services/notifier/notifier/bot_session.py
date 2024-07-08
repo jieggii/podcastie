@@ -1,5 +1,3 @@
-from typing import Any
-
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 
