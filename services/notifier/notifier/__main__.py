@@ -15,8 +15,8 @@ async def main() -> None:
     await podcastie_database.init(env.Mongo.HOST, env.Mongo.PORT, env.Bot.TOKEN)
 
     notifier = Notifier(
-        bot_token=podcastie_configs.get_value(env.Bot.TOKEN, env.Bot.TOKEN_FILE),
-        poll_interval=60,  # todo: env var
+        bot_token=env.Bot.TOKEN,
+        poll_interval=env.Notifier.POLL_INTERVAL,
     )
 
     log.info("starting notifier")
