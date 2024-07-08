@@ -28,7 +28,7 @@ class Env(Config):
         )
 
     class Notifier(Config):
-        POLL_INTERVAL = field("POLL_INTERVAL", caster=to_int)
+        POLL_INTERVAL = field("NOTIFIER_POLL_INTERVAL", caster=to_int)
 
     class Mongo(Config):
         HOST = field("MONGO_HOST")
