@@ -1,6 +1,5 @@
 import asyncio
 
-import podcastie_configs
 import podcastie_database
 import structlog
 
