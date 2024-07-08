@@ -11,7 +11,7 @@ async def main() -> None:
     log = structlog.get_logger().bind(task="main")
 
     log.info("connecting to the database")
-    await podcastie_database.init(env.Mongo.HOST, env.Mongo.PORT, env.Bot.TOKEN)
+    await podcastie_database.init(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
 
     notifier = Notifier(
         bot_token=env.Bot.TOKEN,
