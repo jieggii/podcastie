@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:e1fa00dab5d055d029a190b42bdfcbc4719417f8e82d2d192fbe13be590e1769"
+content_hash = "sha256:ef70c98125344b1c711f98afc799a52c285539d5a8af7d4e24b24e5fba8eccd2"
 
 [[package]]
 name = "aiofiles"
@@ -390,14 +390,6 @@ files = [
     {file = "platformdirs-4.2.2-py3-none-any.whl", hash = "sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee"},
     {file = "platformdirs-4.2.2.tar.gz", hash = "sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3"},
 ]
-
-[[package]]
-name = "podcastie-configs"
-version = "0.1.0"
-requires_python = ">=3.12"
-path = "../../lib/podcastie_configs"
-summary = "Default template for PDM package"
-groups = ["default"]
 
 [[package]]
 name = "podcastie-database"

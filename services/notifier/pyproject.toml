@@ -7,7 +7,6 @@ authors = [
 ]
 dependencies = [
     "loguru>=0.7.2",
-    "podcastie-configs @ file:///${PROJECT_ROOT}/../../lib/podcastie_configs",
     "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",
     "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
     "aiogram>=3.7.0",
