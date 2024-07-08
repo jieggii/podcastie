@@ -20,7 +20,6 @@ services:
 
     depends_on:
       - mongo
-      - telegram-bot-api
 
     restart: unless-stopped
 
@@ -31,7 +30,7 @@ services:
       dockerfile: ./services/notifier/Dockerfile
 
     environment:
-      NOTIFIER_PERIOD: 300
+      NOTIFIER_POLL_INTERVAL: 300
 
       BOT_TOKEN_FILE: /run/secrets/bot_token
 
@@ -73,6 +72,9 @@ services:
       MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo_database
 
     restart: unless-stopped
+#    ports:
+#      - 27017:27017
+
 
 secrets:
   bot_token:
