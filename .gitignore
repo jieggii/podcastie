@@ -1,4 +1,2 @@
 .idea
 .secrets
-__pycache__
-services/mongo
