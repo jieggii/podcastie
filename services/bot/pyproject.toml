@@ -10,7 +10,7 @@ dependencies = [
     "feedparser>=6.0.11",
     "aiohttp>=3.9.5",
     "podcastparser>=0.6.10",
-    "podcastie-configs @ file:///${PROJECT_ROOT}/../../lib/podcastie_configs",
+    "podcastie-service-config @ file:///${PROJECT_ROOT}/../../lib/podcastie_service_config",
     "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",
     "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
     "loguru>=0.7.2",

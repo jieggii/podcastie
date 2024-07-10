@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:ef70c98125344b1c711f98afc799a52c285539d5a8af7d4e24b24e5fba8eccd2"
+content_hash = "sha256:9c33d3dbd31360a96ce475ae3624dfe3e256627cf926a9ad8b20aa7a4654eefd"
 
 [[package]]
 name = "aiofiles"
@@ -412,6 +412,14 @@ groups = ["default"]
 dependencies = [
     "podcastparser>=0.6.10",
 ]
+
+[[package]]
+name = "podcastie-service-config"
+version = "0.1.0"
+requires_python = ">=3.12"
+path = "../../lib/podcastie_service_config"
+summary = "Default template for PDM package"
+groups = ["default"]
 
 [[package]]
 name = "podcastie-telegram-html"

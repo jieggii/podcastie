@@ -1,20 +1,14 @@
-from betterconf import Config, field
-from betterconf.caster import to_int
+from betterconf import Config
+
+from podcastie_service_config import BotConfig, MongoConfig
 
 
 class Env(Config):
-    class Bot(Config):
-        _prefix_ = "BOT"
-        TOKEN = field(default=None)
-        TOKEN_FILE = field(default=None)
+    class Bot(BotConfig):
+        pass
 
-    class Mongo(Config):
-        _prefix_ = "MONGO"
-
-        HOST = field()
-        PORT = field(caster=to_int)
-        DATABASE = field(default=None)
-        DATABASE_FILE = field(default=None)
+    class Mongo(MongoConfig):
+        pass
 
 
 env = Env()

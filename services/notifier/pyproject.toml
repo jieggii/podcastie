@@ -15,6 +15,7 @@ dependencies = [
     "pydub>=0.25.1",
     "structlog>=24.2.0",
     "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
+    "podcastie-service-config @ file:///${PROJECT_ROOT}/../../lib/podcastie_service_config",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

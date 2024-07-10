@@ -2,7 +2,6 @@ import asyncio
 import logging
 import sys
 
-import podcastie_configs
 import podcastie_database
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -27,7 +26,7 @@ async def main() -> None:
     await podcastie_database.init(
         env.Mongo.HOST,
         env.Mongo.PORT,
-        podcastie_configs.get_value(env.Mongo.DATABASE, env.Mongo.DATABASE_FILE),
+        env.Mongo.DATABASE,
     )
 
     # create and setup router:
@@ -48,7 +47,7 @@ async def main() -> None:
 
     # create and start bot:
     bot = Bot(
-        token=podcastie_configs.get_value(env.Bot.TOKEN, env.Bot.TOKEN_FILE),
+        token=env.Bot.TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 

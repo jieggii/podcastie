@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
-lock_version = "4.4.1"
-content_hash = "sha256:d790d295ce9b5af950b6d2a50bc2dccfd431ab5f4785f8d978616596446207e1"
+lock_version = "4.4.2"
+content_hash = "sha256:a408009726bc1bbe05044aefc0c6362fea465af25bab62e89e6ece861e93ca8b"
 
 [[package]]
 name = "aiofiles"
@@ -406,14 +406,6 @@ files = [
 ]
 
 [[package]]
-name = "podcastie-configs"
-version = "0.1.0"
-requires_python = ">=3.12"
-path = "../../lib/podcastie_configs"
-summary = "Default template for PDM package"
-groups = ["default"]
-
-[[package]]
 name = "podcastie-database"
 version = "0.1.0"
 requires_python = ">=3.12"
@@ -434,6 +426,14 @@ groups = ["default"]
 dependencies = [
     "podcastparser>=0.6.10",
 ]
+
+[[package]]
+name = "podcastie-service-config"
+version = "0.1.0"
+requires_python = ">=3.12"
+path = "../../lib/podcastie_service_config"
+summary = "Default template for PDM package"
+groups = ["default"]
 
 [[package]]
 name = "podcastparser"

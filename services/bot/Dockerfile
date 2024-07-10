@@ -6,7 +6,7 @@ WORKDIR /build
 RUN pip install pdm==2.15.4
 
 # copy shared libs:
-COPY lib/podcastie_configs lib/podcastie_configs
+COPY lib/podcastie_service_config lib/podcastie_service_config
 COPY lib/podcastie_database lib/podcastie_database
 COPY lib/podcastie_rss lib/podcastie_rss
 

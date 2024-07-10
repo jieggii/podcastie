@@ -1,5 +1,5 @@
 [project]
-name = "podcastie_configs"
+name = "podcastie_service_config"
 version = "0.1.0"
 description = "Default template for PDM package"
 authors = [
