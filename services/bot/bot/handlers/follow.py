@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database.models import Podcast, User
 from structlog import get_logger
-# from structlog.contextvars import bind_contextvars, unbind_contextvars
+from datetime import datetime
 
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
@@ -121,7 +121,11 @@ async def handle_follow_state(
                     title=feed.title,
                     link=feed.link,
                     feed_url=identifier,
-                    latest_episode_published=latest_episode_published,
+
+                    latest_episode_checked=datetime.now().timestamp(),
+                    latest_episode_check_successful=True,
+                    latest_episode_publication_ts=latest_episode_published
+
                 )
                 log.info("storing new podcast", podcast_title=podcast.title)
                 await podcast.insert()

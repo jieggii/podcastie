@@ -132,14 +132,14 @@ class Notifier:
                     log.debug(f"skip podcast as it has no episodes")
                     continue
 
-                if (podcast.latest_episode_published is None) or (
-                    feed.latest_episode.published > podcast.latest_episode_published
+                if (podcast.latest_episode_publication_ts is None) or (
+                    feed.latest_episode.published > podcast.latest_episode_publication_ts
                 ):
                     bind_contextvars(episode=feed.latest_episode.title)
                     log.info(f"new episode is out")
 
                     # update latest episode timestamp in the database:
-                    podcast.latest_episode_published = feed.latest_episode.published
+                    podcast.latest_episode_publication_ts = feed.latest_episode.published
                     await podcast.save()
 
                     # skip episode if it does not contain title or audio file:

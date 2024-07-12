@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from beanie import Document, PydanticObjectId
 
 
@@ -9,13 +7,16 @@ class Podcast(Document):
     feed_url: str
 
     link: str | None
-    latest_episode_published: int | None = None
+
+    latest_episode_checked: int
+    latest_episode_check_successful: bool
+    latest_episode_publication_ts: int | None = None
 
     class Settings:
         name = "podcasts"
 
-    def __str__(self) -> str:
-        return f"Podcast(id={self.id}, ppid={self.ppid} title={self.title} feed_url={self.feed_url} link={self.link}, latest_episode_date={self.latest_episode_published})"
+    # def __str__(self) -> str:
+    #     return f"Podcast(id={self.id}, ppid={self.ppid} title={self.title} feed_url={self.feed_url} link={self.link}, latest_episode_date={self.latest_episode_publication_ts})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -28,8 +29,8 @@ class User(Document):
     class Settings:
         name = "users"
 
-    def __str__(self) -> str:
-        return f"User(id={self.id}, user_id={self.user_id}, following_podcasts={self.following_podcasts})"
+    # def __str__(self) -> str:
+    #     return f"User(id={self.id}, user_id={self.user_id}, following_podcasts={self.following_podcasts})"
 
     def __repr__(self) -> str:
         return self.__str__()
