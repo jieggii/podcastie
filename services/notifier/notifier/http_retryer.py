@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any, Awaitable, Callable, NoReturn
+
 import aiohttp
 
 RetryCallback = Callable[[int, Exception], None]
@@ -21,10 +22,10 @@ class HTTPRetryer:
         self.max_attempts = max_attempts
 
     async def wrap(
-            self,
-            f: Callable[..., Awaitable[Any]],
-            kwargs: dict[Any, Any],
-            retry_callback: RetryCallback | None = None,
+        self,
+        f: Callable[..., Awaitable[Any]],
+        kwargs: dict[Any, Any],
+        retry_callback: RetryCallback | None = None,
     ) -> Any | NoReturn:
         attempt = 1
         prev_exception: Exception | None = None

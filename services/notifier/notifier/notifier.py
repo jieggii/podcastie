@@ -209,7 +209,9 @@ class Notifier:
                             # todo: check if the user has blocked the bot for too long, delete them from the database
                             log.info("skipping recipient, he/she has blocked the bot")
                         case _:
-                            log.exception("unexpected exception when sending text notification, skipping this recipient", e=e)
+                            log.exception(
+                                "unexpected exception when sending text notification, skipping this recipient", e=e
+                            )
                     continue
 
                 if episode.audio.size > _AUDIO_FILE_SIZE_LIMIT:

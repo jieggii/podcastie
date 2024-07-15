@@ -1,7 +1,6 @@
 from betterconf import Config as BaseConfig
 from betterconf import field
 from betterconf.caster import to_int
-
 from podcastie_service_config import BotConfig, MongoConfig
 
 
