@@ -16,6 +16,7 @@ dependencies = [
     "loguru>=0.7.2",
     "betterconf>=2.8.0",
     "structlog>=24.2.0",
+    "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
