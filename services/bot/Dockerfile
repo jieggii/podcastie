@@ -9,6 +9,7 @@ RUN pip install pdm==2.15.4
 COPY lib/podcastie_service_config lib/podcastie_service_config
 COPY lib/podcastie_database lib/podcastie_database
 COPY lib/podcastie_rss lib/podcastie_rss
+COPY lib/podcastie_telegram_html lib/podcastie_telegram_html
 
 # copy bot service pdm files
 COPY services/bot/pyproject.toml services/bot/pdm.lock* services/bot/
