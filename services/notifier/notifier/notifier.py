@@ -1,4 +1,5 @@
 import asyncio
+import time
 from asyncio import Queue
 from dataclasses import dataclass
 
@@ -16,7 +17,7 @@ from podcastie_telegram_html import link
 from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 
 from notifier.bot_session import LocalTelegramAPIAiohttpSession
-from notifier.retry import retry_forever
+from notifier.http_retryer import HTTPRetryer
 
 _AUDIO_FILE_SIZE_LIMIT = 2000 * 1024 * 1024  # Max audio file size allowed by Telegram
 _AUDIO_FILE_CHUNK_SIZE = 512 * 1024  # 512 kb
@@ -46,6 +47,7 @@ class Notifier:
     _log_broadcast_queue_size_interval: int
 
     _bot: Bot
+    _http_retryer: HTTPRetryer
     _broadcast_queue: Queue[Episode]
 
     def __init__(self, bot_token: str, poll_interval: int):
@@ -55,6 +57,7 @@ class Notifier:
             token=bot_token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
+        self._http_retryer = HTTPRetryer(interval=1, max_attempts=10)
 
         self._poll_interval = poll_interval
         self._log_broadcast_queue_size_interval = 5
@@ -81,39 +84,42 @@ class Notifier:
 
                 # try to fetch podcast RSS feed:
                 log.info(f"checking podcast RSS feed for new updates")
+                feed: podcastie_rss.Podcast | None = None
                 try:
-                    feed: podcastie_rss.Podcast = await retry_forever(
+                    feed = await self._http_retryer.wrap(
                         podcastie_rss.fetch_podcast,
                         kwargs={"url": podcast.feed_url},
-                        on_retry=lambda attempt, prev_e: log.warning(
-                            "retrying to fetch RSS feed", attempt=attempt, prev_e=prev_e
+                        retry_callback=lambda attempt, prev_e: log.warning(
+                            "retrying to fetch RSS feed", attempt=attempt, e=prev_e
                         ),
-                        exceptions=(aiohttp.ClientConnectionError,),
-                        interval=1,
                     )
-
-                except aiohttp.ClientError as e:  # failed to fetch feed
-                    log.error(
-                        f"skipping podcast as http client error while attempting to read feed",
-                        podcast_title=podcast.title,
-                        e=e,
-                    )
-                    continue
-
-                except podcastie_rss.MalformedFeedFormatError as e:
-                    log.error(f"skipping podcast as feed is malformed", podcast_title=podcast.title, e=e)
-                    continue
-
-                except podcastie_rss.FeedDidNotPassValidation as e:
-                    log.error(f"skipping podcast as feed did not pass validation {podcast} {e=}")
-                    continue
-
                 except Exception as e:
-                    log.exception(
-                        f"skipping podcast as got unexpected exception while attempting to read feed",
-                        podcast_title=podcast.title,
-                        e=e,
-                    )
+                    match e:
+                        case aiohttp.ClientError():
+                            log.warning(
+                                f"http client error while attempting to read feed",
+                                podcast_title=podcast.title,
+                                e=e,
+                            )
+                        case podcastie_rss.MalformedFeedFormatError():
+                            log.warning(f"feed is malformed", podcast_title=podcast.title, e=e)
+
+                        case podcastie_rss.FeedDidNotPassValidation():
+                            log.warning(f"feed did not pass validation", podcast_title=podcast.title, e=e)
+
+                        case _:
+                            log.exception(
+                                f"unexpected exception while attempting to read feed",
+                                podcast_title=podcast.title,
+                                e=e,
+                            )
+
+                podcast.latest_episode_check_successful = bool(feed)
+                podcast.latest_episode_checked = int(time.time())
+                await podcast.save()
+
+                if feed is None:
+                    log.warning("skip podcast as was not able to check its feed")
                     continue
 
                 # update podcast metadata if it has changed:
@@ -189,43 +195,36 @@ class Notifier:
 
                 # send text notification to the user:
                 try:
-                    await retry_forever(
+                    await self._http_retryer.wrap(
                         self._bot.send_message,
                         kwargs={"chat_id": user_id, "text": notification_text},
-                        on_retry=lambda attempt, prev_e: log.warning(
-                            "retrying to send text notification", attempt=attempt, prev_e=prev_e
+                        retry_callback=lambda attempt, prev_e: log.warning(
+                            "retrying to send text notification", attempt=attempt, e=prev_e
                         ),
-                        exceptions=(aiohttp.ClientConnectionError,),
-                        interval=1,
                     )
                     log.info("sent text notification")
-
-                except aiogram.exceptions.TelegramForbiddenError:
-                    log.info("skipping recipient, he/she has blocked the bot")
-                    # todo: check if the user has blocked the bot for too long, delete them from the database
-                    continue
-
                 except Exception as e:
-                    log.exception("unexpected exception when sending text notification, skipping this recipient", e=e)
+                    match e:
+                        case aiogram.exceptions.TelegramForbiddenError():
+                            # todo: check if the user has blocked the bot for too long, delete them from the database
+                            log.info("skipping recipient, he/she has blocked the bot")
+                        case _:
+                            log.exception("unexpected exception when sending text notification, skipping this recipient", e=e)
                     continue
 
                 if episode.audio.size > _AUDIO_FILE_SIZE_LIMIT:
+                    log.info("episode audio size is too big, won't be sent")
                     continue
 
                 # send "UPLOAD_DOCUMENT" chat action to the user:
                 try:
-                    await retry_forever(
+                    await self._http_retryer.wrap(
                         self._bot.send_chat_action,  # todo: this sets status only for 5 seconds, repeat this request until audio is sent
                         kwargs={"chat_id": user_id, "action": ChatAction.UPLOAD_DOCUMENT},
-                        on_retry=lambda attempt, prev_e: log.warning(
-                            "retrying to send chat action", attempt=attempt, prev_e=prev_e
+                        retry_callback=lambda attempt, prev_e: log.warning(
+                            "retrying to send chat action", attempt=attempt, e=prev_e
                         ),
-                        exceptions=(aiohttp.ClientConnectionError,),
-                        interval=1,
                     )
-
-                # todo: handle aiogram.exceptions.TelegramForbiddenError here
-
                 except Exception as e:
                     log.exception("unexpected exception when sending chat action", e=e)
 
@@ -239,7 +238,7 @@ class Notifier:
                     )
 
                 try:
-                    message: Message = await retry_forever(
+                    message: Message = await self._http_retryer.wrap(
                         self._bot.send_audio,
                         kwargs={
                             "chat_id": user_id,
@@ -249,11 +248,9 @@ class Notifier:
                             "thumbnail": URLInputFile(episode.podcast_cover_url) if episode.podcast_cover_url else None,
                             "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
                         },
-                        on_retry=lambda attempt, prev_e: log.warning(
-                            "retrying to send audio", attempt=attempt, prev_e=prev_e
+                        retry_callback=lambda attempt, prev_e: log.warning(
+                            "retrying to send audio", attempt=attempt, e=prev_e
                         ),
-                        exceptions=(aiohttp.ClientConnectionError,),
-                        interval=1,
                     )
                     log.info("sent audio file")
 
@@ -261,9 +258,8 @@ class Notifier:
                     if not episode.audio_telegram_file_id:
                         episode.audio_telegram_file_id = message.audio.file_id
 
-                # todo: handle aiogram.exceptions.TelegramForbiddenError here
-
                 except Exception as e:
+                    # todo: handle aiogram.exceptions.TelegramForbiddenError here
                     log.exception("unexpected exception when sending audio file", e=e)
 
             unbind_contextvars("recipient_user_id")

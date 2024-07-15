@@ -1,3 +1,5 @@
+import time
+
 import aiohttp
 import podcastie_rss
 from aiogram import Bot, Router
@@ -122,7 +124,7 @@ async def handle_follow_state(
                     link=feed.link,
                     feed_url=identifier,
 
-                    latest_episode_checked=datetime.now().timestamp(),
+                    latest_episode_checked=int(time.time()),
                     latest_episode_check_successful=True,
                     latest_episode_publication_ts=latest_episode_published
 
