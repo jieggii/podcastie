@@ -1,5 +1,4 @@
 from betterconf import Config
-
 from podcastie_service_config import BotConfig, MongoConfig
 
 

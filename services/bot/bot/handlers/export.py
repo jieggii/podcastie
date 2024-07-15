@@ -1,8 +1,7 @@
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
-
-from podcastie_database.models import User, Podcast
+from podcastie_database.models import Podcast, User
 
 router = Router()
 
