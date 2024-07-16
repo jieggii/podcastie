@@ -2,12 +2,12 @@ import asyncio
 import logging
 import sys
 
-import podcastie_database
-from aiogram import Bot, Dispatcher
 import aiogram.loggers
+import podcastie_database
+import structlog
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-import structlog
 
 from bot.env import env
 from bot.handlers import (
