@@ -24,14 +24,16 @@ async def handle_list_command(message: Message, state: FSMContext, user: User) -
     response = "List of podcasts you follow:\n"
     for object_id in user.following_podcasts:
         podcast = await Podcast.find_one(Podcast.id == object_id)
-        fmt_status = "✅" if podcast.latest_episode_check_successful else "❌"
-        fmt_last_check_date = datetime.datetime.fromtimestamp(
+
+        status = "👌" if podcast.latest_episode_check_successful else "⚠️"
+        last_check_date = datetime.datetime.fromtimestamp(
             podcast.latest_episode_checked
-        ).strftime("%H:%M:%S %D.%M.%Y")
+        ).strftime("%d/%m/%Y %H:%M:%S")
+
         response += (
-            f"• {link(podcast.title, podcast.link)} "
-            f"<code>{podcast.ppid}</code> "
-            f"(last check: {fmt_last_check_date}, status: {fmt_status})\n\n"
+            f"{status} {link(podcast.title, podcast.link)} "
+            f"(<code>{podcast.ppid}</code>) [{link("FEED", podcast.feed_url)}] "
+            f"(last check {last_check_date} UTC)\n\n"
         )
 
     await message.answer(response, disable_web_page_preview=True)
