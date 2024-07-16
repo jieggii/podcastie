@@ -9,7 +9,19 @@ from aiogram.enums import ParseMode
 from structlog import get_logger
 
 from bot.env import env
-from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow, export, import_
+from bot.handlers import (
+    about,
+    cancel,
+    export,
+    faq,
+    follow,
+    help,
+    import_,
+    list,
+    search,
+    start,
+    unfollow,
+)
 
 
 async def main() -> None:
@@ -44,7 +56,7 @@ async def main() -> None:
         start.router,
         unfollow.router,
         search.router,
-        import_.router
+        import_.router,
     )
 
     # create and start bot:

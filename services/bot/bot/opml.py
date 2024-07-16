@@ -1,6 +1,7 @@
 import listparser
 from podcastie_database import Podcast
 
+
 def read_opml(data: str) -> list[str]:
     result = listparser.parse(data)
     return [feed.url for feed in result.feeds]

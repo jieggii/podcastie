@@ -7,9 +7,8 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database import Podcast, User
-from structlog import get_logger
-
 from podcastie_telegram_html import link
+from structlog import get_logger
 
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
@@ -30,6 +29,7 @@ async def handle_import_state(
 ) -> None:
     global log
     await message.answer("This command is not yet implemented. 🚢🚢🚢")
+
 
 @router.message(Command("import"))
 async def handle_import_command(

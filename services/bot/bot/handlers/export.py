@@ -1,12 +1,11 @@
-from aiogram import Router, Bot
+from aiogram import Bot, Router
 from aiogram.enums import ChatAction
 from aiogram.filters import Command
-from aiogram.types import Message, BufferedInputFile
-
+from aiogram.types import BufferedInputFile, Message
 from podcastie_database import Podcast, User
 
-from bot.opml import generate_opml
 from bot.middlewares import DatabaseMiddleware
+from bot.opml import generate_opml
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())
