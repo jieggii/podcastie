@@ -9,7 +9,7 @@ from aiogram.enums import ParseMode
 from structlog import get_logger
 
 from bot.env import env
-from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow
+from bot.handlers import about, cancel, faq, follow, help, list, search, start, unfollow, export
 
 
 async def main() -> None:
@@ -36,6 +36,7 @@ async def main() -> None:
     dp.include_router(cancel.router)
     dp.include_routers(
         about.router,
+        export.router,
         faq.router,
         follow.router,
         list.router,
@@ -50,6 +51,7 @@ async def main() -> None:
         token=env.Bot.TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+    dp["bot"] = bot
 
     log.info("starting polling")
     await dp.start_polling(bot)

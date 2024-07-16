@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:64bb571e19592e8122d5636dda63af65c0cd134c906e335387abbfbc97b0dff1"
+content_hash = "sha256:8c48680795471b53173cec738daae8ddcf0e5783375257884ff2b90e41e5f414"
 
 [[package]]
 name = "aiofiles"
@@ -293,6 +293,17 @@ dependencies = [
 files = [
     {file = "lazy-model-0.2.0.tar.gz", hash = "sha256:57c0e91e171530c4fca7aebc3ac05a163a85cddd941bf7527cc46c0ddafca47c"},
     {file = "lazy_model-0.2.0-py3-none-any.whl", hash = "sha256:5a3241775c253e36d9069d236be8378288a93d4fc53805211fd152e04cc9c342"},
+]
+
+[[package]]
+name = "listparser"
+version = "0.20"
+requires_python = ">=3.8"
+summary = "Parse OPML subscription lists"
+groups = ["default"]
+files = [
+    {file = "listparser-0.20-py3-none-any.whl", hash = "sha256:5daae9895b75191a77b14f5b8eabf7a63a4ca440f215d9bd8d8e5a2eccde02ce"},
+    {file = "listparser-0.20.tar.gz", hash = "sha256:0dda5b41ca9531fc3c438eb4abf4d8a7cf03ef050d196875993e897a66c1f885"},
 ]
 
 [[package]]
