@@ -25,7 +25,7 @@ router.message.middleware(DatabaseMiddleware())
 MAX_IDENTIFIERS = 20
 
 
-@router.message(States.follow)
+@router.message(States.FOLLOW)
 async def handle_follow_state(
     message: Message, state: FSMContext, user: User, bot: Bot
 ) -> None:
@@ -188,7 +188,7 @@ async def handle_follow_command(
     message: Message,
     state: FSMContext,
 ) -> None:
-    await state.set_state(States.follow)
+    await state.set_state(States.FOLLOW)
     await message.answer(
         "🎙️ Please send me up to 20 RSS feed URLs or PPIDs.\n"
         "\n"

@@ -12,7 +12,7 @@ router = Router()
 router.message.middleware(DatabaseMiddleware())
 
 
-@router.message(States.unfollow)
+@router.message(States.UNFOLLOW)
 async def handle_unfollow_state(
     message: Message, state: FSMContext, user: User
 ) -> None:
@@ -51,7 +51,7 @@ async def handle_unfollow_command(message: Message, state: FSMContext) -> None:
     # todo: check if it is a reply to a message with an episode
     # so that we could get ppid from there and simply unfollow the desired podcast
     # without asking for PPID!
-    await state.set_state(States.unfollow)
+    await state.set_state(States.UNFOLLOW)
     await message.answer(
         "Please send me PPID of the podcast you want to stop following.\n"
         "\n"
