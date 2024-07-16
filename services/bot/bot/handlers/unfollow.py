@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from podcastie_database.models import Podcast, User
+from podcastie_database import Podcast, User
 
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware

@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, BufferedInputFile
 
 from podcastie_telegram_html import escape
-from podcastie_database.models import Podcast, User
+from podcastie_database import Podcast, User
 
 from bot.opml import generate_opml
 from bot.middlewares import DatabaseMiddleware
