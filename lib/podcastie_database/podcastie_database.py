@@ -1,5 +1,8 @@
 from beanie import Document, PydanticObjectId
 
+from beanie import init_beanie
+from motor.motor_asyncio import AsyncIOMotorClient
+
 
 class Podcast(Document):
     ppid: str
@@ -15,9 +18,6 @@ class Podcast(Document):
     class Settings:
         name = "podcasts"
 
-    # def __str__(self) -> str:
-    #     return f"Podcast(id={self.id}, ppid={self.ppid} title={self.title} feed_url={self.feed_url} link={self.link}, latest_episode_date={self.latest_episode_publication_ts})"
-
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -29,8 +29,10 @@ class User(Document):
     class Settings:
         name = "users"
 
-    # def __str__(self) -> str:
-    #     return f"User(id={self.id}, user_id={self.user_id}, following_podcasts={self.following_podcasts})"
-
     def __repr__(self) -> str:
         return self.__str__()
+
+
+async def init(host: str, port: int, db_name: str):
+    client = AsyncIOMotorClient(host, port)
+    await init_beanie(database=client[db_name], document_models=[User, Podcast])
