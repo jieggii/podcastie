@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 
 import aiohttp
 import podcastie_rss
@@ -10,6 +9,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database.models import Podcast, User
 from structlog import get_logger
+
+from podcastie_telegram_html import link
 
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
@@ -61,13 +62,13 @@ async def handle_follow_state(
 
                 # skip podcast if user already follows it:
                 if podcast.id in user.following_podcasts:
-                    errors.append(f"you already follow {podcast.title}")
+                    errors.append(f"you already follow {link(podcast.title, podcast.link)}")
                     continue
 
                 podcasts.append(podcast)
 
             else:
-                errors.append(f"PPID {ppid} was not found in the database")
+                errors.append(f"PPID <code>{ppid}</code> was not found in the database")
                 continue
 
         elif is_feed_url(identifier):
@@ -81,7 +82,7 @@ async def handle_follow_state(
 
                 # skip podcast if the user already follows this podcast:
                 if podcast.id in user.following_podcasts:
-                    errors.append(f"you already follow {podcast.title}")
+                    errors.append(f"you already follow {link(podcast.title, podcast.link)}")
                     continue
 
                 podcasts.append(podcast)
@@ -152,24 +153,19 @@ async def handle_follow_state(
             response += "✨ You have successfully subscribed to some of the provided podcasts:\n"
 
         for podcast in podcasts:
-            fmt_podcast_title = (
-                f'<a href="{podcast.link}">{podcast.title}</a>'
-                if podcast.link
-                else podcast.title
-            )
-            response += f"👌 {fmt_podcast_title}\n"
+            response += f"👌 {link(podcast.title, podcast.link)}\n"
 
         if errors:
             response += "\n"
             for error in errors:
                 fmt_error = f"{error[0].upper()}{error[1:]}"
-                response += f"⚠  {fmt_error}.\n"
+                response += f"⚠  {fmt_error}\n"
 
     else:
         response = "❌ Failed to subscribe to any of the provided podcasts.\n\n"
         for error in errors:
             fmt_error = f"{error[0].upper()}{error[1:]}"
-            response += f"⚠ ️{fmt_error}.\n"
+            response += f"⚠ ️{fmt_error}\n"
 
     # add appendix:
     if podcasts:
