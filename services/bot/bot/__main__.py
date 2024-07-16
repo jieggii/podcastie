@@ -4,9 +4,10 @@ import sys
 
 import podcastie_database
 from aiogram import Bot, Dispatcher
+import aiogram.loggers
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from structlog import get_logger
+import structlog
 
 from bot.env import env
 from bot.handlers import (
@@ -24,17 +25,37 @@ from bot.handlers import (
 )
 
 
+def setup_logging():
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
+
+    aiogram.loggers.webhook = structlog.get_logger()
+    logging.getLogger("aiogram.webhook").setLevel(logging.WARNING)
+
+    aiogram.loggers.middlewares = structlog.get_logger()
+    logging.getLogger("aiogram.middlewares").setLevel(logging.WARNING)
+
+    aiogram.loggers.event = structlog.get_logger()
+    logging.getLogger("aiogram.event").setLevel(logging.WARNING)
+
+    aiogram.loggers.dispatcher = structlog.get_logger()
+    logging.getLogger("aiogram.dispatcher").setLevel(logging.WARNING)
+
+    aiogram.loggers.scene = structlog.get_logger()
+    logging.getLogger("aiogram.scene").setLevel(logging.WARNING)
+
+
 async def main() -> None:
-    # todo: setup logger
-    log = get_logger()
+    setup_logging()
+
+    log = structlog.get_logger()
 
     # init database:
     log.info(
-        "connecting to the database",
+        "Connecting to the database...",
         host=env.Mongo.HOST,
         port=env.Mongo.PORT,
-        database=None,
-    )  # todo
+        database=env.Mongo.DATABASE,
+    )
     await podcastie_database.init(
         env.Mongo.HOST,
         env.Mongo.PORT,
@@ -66,7 +87,6 @@ async def main() -> None:
     )
     dp["bot"] = bot
 
-    log.info("starting polling")
     await dp.start_polling(bot)
 
 
