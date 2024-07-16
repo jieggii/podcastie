@@ -1,10 +1,8 @@
 from aiogram import Router, Bot
 from aiogram.enums import ChatAction
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, BufferedInputFile
 
-from podcastie_telegram_html import escape
 from podcastie_database import Podcast, User
 
 from bot.opml import generate_opml
