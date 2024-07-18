@@ -7,15 +7,14 @@ router = Router()
 
 @router.message(Command("faq"))
 async def handle_faq(message: Message) -> None:
-    await message.answer("Catch are some useful questions and their answers!")
+    await message.answer("Here are some useful questions and answers to them!")
     await message.answer(
         "<b>1. What is RSS feed and where do I get a URL for it?</b>\n"
         "<i>For podcasts, an RSS feed contains the latest episodes and information about the show."
-        "You can usually find the RSS feed URL on the podcast's website, "
-        "or you can search for it on your favorite podcast directory like Apple Podcasts, Spotify, or Google Podcasts. "
-        'Look for a button or link that says "RSS" or "Subscribe".</i>\n'
+        "You can usually find the RSS feed URL on the podcast's website. "
+        "Look for the RSS icon, typically orange and white, often found in the footer or on the subscription page."
         "\n"
-        "<b>2. What is PPID</b>\n"
-        "<i>PPID (Podcastie Podcast ID) is a unique identifier of a podcast within the bot's database. "
-        "This ID helps you manage and interact with your followed podcasts easily.</i>"
+        "<b>2. What is PPID?</b>\n"
+        "<i>PPID (Podcastie Podcast ID) is a unique identifier of a podcast within the Podcastie's database. "
+        "This ID helps you manage and interact with podcasts easily.</i>"
     )
