@@ -7,7 +7,14 @@ help:
 
 secrets:
 	mkdir .secrets
-	echo "todo"
+	touch .secrets/bot_token
+
+	touch .secrets/mongo_database
+	# touch .secrets/mongo_user
+	# touch .secrets/mongo_password
+
+	touch .secrets/tg_api_hash
+	touch .secrets/tg_api_id
 
 fmt:
 	cd ./lib/podcastie_database && pdm run fmt
