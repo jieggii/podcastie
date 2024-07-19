@@ -43,11 +43,15 @@ async def handle_import_state(
         return
 
     if message.document.file_size > MAX_FILE_SIZE:
-        await message.answer("⚠  Sorry, but file size is too big to process it. Please try another file or /cancel this action.")
+        await message.answer(
+            "⚠  Sorry, but file size is too big to process it. Please try another file or /cancel this action."
+        )
         return
 
     if message.document.mime_type not in SUPPORTED_MIME_TYPES:
-        await message.answer("⚠  The file you sent has incorrect file mime type and will not be processed. Please try another file or /cancel this action.")
+        await message.answer(
+            "⚠  The file you sent has incorrect file mime type and will not be processed. Please try another file or /cancel this action."
+        )
         return
 
     await bot.send_chat_action(message.from_user.id, ChatAction.TYPING)
@@ -115,10 +119,7 @@ async def handle_import_state(
         for failed in result.failed:
             response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
 
-        response += (
-            "\n"
-            "Please try again or /cancel this action."
-        )
+        response += "\n" "Please try again or /cancel this action."
 
     await message.answer(response, disable_web_page_preview=len(result.succeeded) != 1)
 
