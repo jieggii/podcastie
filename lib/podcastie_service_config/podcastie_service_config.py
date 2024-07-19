@@ -1,6 +1,6 @@
 from typing import NoReturn
 
-from betterconf import Config, field, compose_field
+from betterconf import Config, compose_field, field
 from betterconf.caster import to_int
 
 
@@ -16,6 +16,7 @@ def _get_value(value: str | None, value_file: str | None) -> str | NoReturn:
     with open(value_file) as file:
         return file.read().rstrip()
 
+
 class BotConfig(Config):
     _TOKEN = field("BOT_TOKEN", default=None)
     _TOKEN_FILE = field("BOT_TOKEN_FILE", default=None)
@@ -24,6 +25,7 @@ class BotConfig(Config):
         _TOKEN_FILE,
         lambda token, token_file: _get_value(token, token_file),
     )
+
 
 class MongoConfig(Config):
     HOST = field("MONGO_HOST")

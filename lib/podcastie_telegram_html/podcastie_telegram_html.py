@@ -3,5 +3,6 @@ def link(text: str, url: str | None = None) -> str:
         return f'<a href="{url}">{text}</a>'
     return text
 
+
 def code(text: str) -> str:
     return f"<code>{text}</code>"

@@ -6,14 +6,12 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database import User
+from podcastie_telegram_html import link
 from structlog import get_logger
 
-from podcastie_telegram_html import link
-
+from bot.core import follow_transaction, opml
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
-from bot.core import opml
-from bot.core import follow_transaction
 from bot.validators import is_feed_url
 
 log = get_logger()
@@ -24,18 +22,24 @@ MAX_SUBSCRIPTIONS = 20
 MAX_FILE_SIZE = 1370 * 10  # todo
 SUPPORTED_MIME_TYPES = ("application/xml",)
 
-def format_failed_identifier(failed: follow_transaction.FollowTransactionCommitResult.Failed) -> str:
+
+def format_failed_identifier(
+    failed: follow_transaction.FollowTransactionCommitResult.Failed,
+) -> str:
     if failed.podcast_title:
         return link(failed.podcast_title, failed.podcast_link)
     return failed.podcast_identifier.value
 
+
 @router.message(States.IMPORT)
 async def handle_import_state(
-        message: Message, state: FSMContext, user: User, bot: Bot
+    message: Message, state: FSMContext, user: User, bot: Bot
 ) -> None:
     global log
     if not message.document:
-        await message.answer("This does not look like a file! Please attach OPML XML file or /cancel this action")
+        await message.answer(
+            "This does not look like a file! Please attach OPML XML file or /cancel this action"
+        )
         return
 
     if message.document.file_size > MAX_FILE_SIZE:
@@ -56,12 +60,15 @@ async def handle_import_state(
     try:
         feed_urls = opml.parse_opml(content.read())
     except opml.OPMLParseError:
-        await message.answer("I failed to parse this OPML file. Please try again or /cancel this action.")
+        await message.answer(
+            "I failed to parse this OPML file. Please try again or /cancel this action."
+        )
         return
 
     if not feed_urls:
         await message.answer(
-            "The OPML file does not contain any subscriptions. Please try again or /cancel this action.")
+            "The OPML file does not contain any subscriptions. Please try again or /cancel this action."
+        )
         return
 
     # start follow transaction:
@@ -111,8 +118,8 @@ async def handle_import_state(
 
 @router.message(Command("import"))
 async def handle_import_command(
-        message: Message,
-        state: FSMContext,
+    message: Message,
+    state: FSMContext,
 ) -> None:
     await state.set_state(States.IMPORT)
     await message.answer(

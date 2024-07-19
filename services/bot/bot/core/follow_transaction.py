@@ -1,15 +1,14 @@
 from dataclasses import dataclass, field
 from enum import Enum
-
-import structlog
-from podcastie_database import User, Podcast
 from typing import NoReturn
+
 import aiohttp
-
-
 import podcastie_rss
+import structlog
+from podcastie_database import Podcast, User
 
 log = structlog.get_logger()
+
 
 class _PodcastPPIDNotFound(Exception):
     pass
@@ -46,6 +45,7 @@ class FollowTransactionCommitResult:
 
     succeeded: list[Succeeded] = field(default_factory=list)
     failed: list[Failed] = field(default_factory=list)
+
 
 async def fetch_podcast_feed(feed_url: str) -> NoReturn | podcastie_rss.Feed:
     try:
@@ -99,10 +99,14 @@ class FollowTransaction:
         self._commited = False
 
     async def follow_podcast_by_ppid(self, ppid: str) -> None:
-        self._target_identifiers.append(PodcastIdentifier(value=ppid, type=PodcastIdentifierType.PPID))
+        self._target_identifiers.append(
+            PodcastIdentifier(value=ppid, type=PodcastIdentifierType.PPID)
+        )
 
     async def follow_podcast_by_feed_url(self, feed_url: str) -> None:
-        self._target_identifiers.append(PodcastIdentifier(value=feed_url, type=PodcastIdentifierType.FEED_URL))
+        self._target_identifiers.append(
+            PodcastIdentifier(value=feed_url, type=PodcastIdentifierType.FEED_URL)
+        )
 
     async def commit(self) -> FollowTransactionCommitResult:
         """Commits subscription transaction."""
@@ -117,19 +121,37 @@ class FollowTransaction:
             except Exception as e:
                 match e:
                     case _PodcastPPIDNotFound():
-                        result.failed.append(result.Failed(podcast_identifier=identifier, message=str(e)))
+                        result.failed.append(
+                            result.Failed(podcast_identifier=identifier, message=str(e))
+                        )
                     case BadFeedException():
-                        result.failed.append(result.Failed(podcast_identifier=identifier, message=str(e)))
+                        result.failed.append(
+                            result.Failed(podcast_identifier=identifier, message=str(e))
+                        )
                     case _:
-                        result.failed.append(result.Failed(podcast_identifier=identifier, message="unexpected error when resolving podcast"))
+                        result.failed.append(
+                            result.Failed(
+                                podcast_identifier=identifier,
+                                message="unexpected error when resolving podcast",
+                            )
+                        )
                 continue
 
             if podcast.id in self._user.following_podcasts:
-                result.failed.append(result.Failed(podcast_identifier=identifier, message="you already follow this podcast", podcast_title=podcast.title, podcast_link=podcast.link))
+                result.failed.append(
+                    result.Failed(
+                        podcast_identifier=identifier,
+                        message="you already follow this podcast",
+                        podcast_title=podcast.title,
+                        podcast_link=podcast.link,
+                    )
+                )
                 continue
 
             self._user.following_podcasts.append(podcast.id)
-            result.succeeded.append(result.Succeeded(podcast_title=podcast.title, podcast_link=podcast.link))
+            result.succeeded.append(
+                result.Succeeded(podcast_title=podcast.title, podcast_link=podcast.link)
+            )
 
         await self._user.save()
         return result

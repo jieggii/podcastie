@@ -5,6 +5,7 @@ from podcastie_database import Podcast
 class OPMLParseError(Exception):
     pass
 
+
 def parse_opml(data: bytes) -> list[str]:
     try:
         result = listparser.parse(data)

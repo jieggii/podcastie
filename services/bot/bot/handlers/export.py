@@ -4,8 +4,8 @@ from aiogram.filters import Command
 from aiogram.types import BufferedInputFile, Message
 from podcastie_database import Podcast, User
 
-from bot.middlewares import DatabaseMiddleware
 from bot.core.opml import generate_opml
+from bot.middlewares import DatabaseMiddleware
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())

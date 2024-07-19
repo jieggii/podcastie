@@ -3,12 +3,16 @@ from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from bot.core.follow_transaction import FollowTransaction, PodcastIdentifierType, PodcastIdentifier, \
-    FollowTransactionCommitResult
-from podcastie_database import User, Podcast
-from podcastie_telegram_html import link, code
+from podcastie_database import Podcast, User
+from podcastie_telegram_html import code, link
 from structlog import get_logger
 
+from bot.core.follow_transaction import (
+    FollowTransaction,
+    FollowTransactionCommitResult,
+    PodcastIdentifier,
+    PodcastIdentifierType,
+)
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url, is_ppid
@@ -29,9 +33,10 @@ def format_failed_identifier(failed: FollowTransactionCommitResult.Failed) -> st
 
     return failed.podcast_identifier.value
 
+
 @router.message(States.FOLLOW)
 async def handle_follow_state(
-        message: Message, state: FSMContext, user: User, bot: Bot
+    message: Message, state: FSMContext, user: User, bot: Bot
 ) -> None:
     global log
 
@@ -49,7 +54,9 @@ async def handle_follow_state(
 
     # create follow transaction:
     transaction = FollowTransaction(user)
-    invalid_identifiers: list[str] = []  # list of identifiers that did not pass validation
+    invalid_identifiers: list[str] = (
+        []
+    )  # list of identifiers that did not pass validation
 
     for identifier in identifiers:
         if is_ppid(identifier):
@@ -75,7 +82,9 @@ async def handle_follow_state(
         )
 
         for identifier in invalid_identifiers:
-            response += f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID"
+            response += (
+                f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID"
+            )
 
         for failed in result.failed:
             response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
@@ -99,8 +108,8 @@ async def handle_follow_state(
 
 @router.message(Command("follow"))
 async def handle_follow_command(
-        message: Message,
-        state: FSMContext,
+    message: Message,
+    state: FSMContext,
 ) -> None:
     await state.set_state(States.FOLLOW)
     await message.answer(

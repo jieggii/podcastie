@@ -1,11 +1,10 @@
+import random
 import time
 
 import podcastie_rss
-from beanie import Document, PydanticObjectId
-
-from beanie import init_beanie
+from beanie import Document, PydanticObjectId, init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
-import random
+
 
 def generate_ppid(podcast_title: str) -> str:
     ppid = podcast_title.lower().strip()
@@ -38,7 +37,7 @@ class Podcast(Document):
             link=feed.link,
             latest_episode_checked=int(time.time()),
             latest_episode_check_successful=True,
-            latest_episode_publication_ts=feed.latest_episode.published if feed.latest_episode else None
+            latest_episode_publication_ts=feed.latest_episode.published if feed.latest_episode else None,
         )
 
     def __repr__(self) -> str:
