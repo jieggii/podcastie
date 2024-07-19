@@ -1,7 +1,18 @@
+import time
+
+import podcastie_rss
 from beanie import Document, PydanticObjectId
 
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
+import random
+
+def generate_ppid(podcast_title: str) -> str:
+    ppid = podcast_title.lower().strip()
+    ppid = "".join(ppid.split())
+    ppid = ppid[:15]
+    ppid = f"{ppid}#{random.randint(1000, 9999)}"
+    return ppid
 
 
 class Podcast(Document):
@@ -17,6 +28,18 @@ class Podcast(Document):
 
     class Settings:
         name = "podcasts"
+
+    @classmethod
+    def from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
+        return cls(
+            ppid=generate_ppid(feed.title),
+            title=feed.title,
+            feed_url=feed_url,
+            link=feed.link,
+            latest_episode_checked=int(time.time()),
+            latest_episode_check_successful=True,
+            latest_episode_publication_ts=feed.latest_episode.published if feed.latest_episode else None
+        )
 
     def __repr__(self) -> str:
         return self.__str__()

@@ -84,10 +84,10 @@ class Notifier:
 
                 # try to fetch podcast RSS feed:
                 log.info(f"checking podcast RSS feed for new updates")
-                feed: podcastie_rss.Podcast | None = None
+                feed: podcastie_rss.Feed | None = None
                 try:
                     feed = await self._http_retryer.wrap(
-                        podcastie_rss.fetch_podcast,
+                        podcastie_rss.fetch_feed,
                         kwargs={"url": podcast.feed_url},
                         retry_callback=lambda attempt, prev_e: log.warning(
                             "retrying to fetch RSS feed", attempt=attempt, e=prev_e
@@ -104,7 +104,7 @@ class Notifier:
                         case podcastie_rss.MalformedFeedFormatError():
                             log.warning(f"feed is malformed", podcast_title=podcast.title, e=e)
 
-                        case podcastie_rss.FeedDidNotPassValidation():
+                        case podcastie_rss.MissingFeedTitleError():
                             log.warning(f"feed did not pass validation", podcast_title=podcast.title, e=e)
 
                         case _:

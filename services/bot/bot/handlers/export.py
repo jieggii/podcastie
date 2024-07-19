@@ -5,7 +5,7 @@ from aiogram.types import BufferedInputFile, Message
 from podcastie_database import Podcast, User
 
 from bot.middlewares import DatabaseMiddleware
-from bot.opml import generate_opml
+from bot.core.opml import generate_opml
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())

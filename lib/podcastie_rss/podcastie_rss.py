@@ -14,7 +14,7 @@ class MalformedFeedFormatError(Exception):
     pass
 
 
-class FeedDidNotPassValidation(Exception):
+class MissingFeedTitleError(Exception):
     """Is raised when feed did not pass validation after parsing it."""
 
     pass
@@ -37,7 +37,7 @@ class Episode:
 
 
 @dataclass
-class Podcast:
+class Feed:
     title: str
 
     link: str | None
@@ -45,23 +45,23 @@ class Podcast:
     latest_episode: Episode | None
 
 
-async def _fetch_podcast_feed(url: str, max_episodes: int) -> dict[str, typing.Any]:
+async def _fetch_feed(url: str, max_episodes: int) -> dict[str, typing.Any]:
     async with aiohttp.request("GET", url) as response:
         content = await response.text()
         return podcastparser.parse(url, io.StringIO(content), max_episodes)
 
 
-async def fetch_podcast(url: str) -> Podcast:
+async def fetch_feed(url: str) -> Feed:
     """Fetches podcast by RSS feed URL."""
     try:
-        feed = await _fetch_podcast_feed(url, max_episodes=1)
+        feed = await _fetch_feed(url, max_episodes=1)
     except podcastparser.FeedParseError:
-        raise MalformedFeedFormatError()
+        raise MalformedFeedFormatError("feed has malformed content")
 
     # parse and validate title (it's required):
     title: str | None = feed.get("title")
     if not title:
-        raise FeedDidNotPassValidation("podcast does not have title")
+        raise MissingFeedTitleError("feed does not contain title")
 
     # parse podcast link (it's optional):
     link: str | None = feed.get("link")
@@ -114,7 +114,7 @@ async def fetch_podcast(url: str) -> Podcast:
                 audio_file=ep_audio_file,
             )
 
-    return Podcast(
+    return Feed(
         title=title,
         link=link,
         cover_url=cover_url,

@@ -2,8 +2,15 @@ import listparser
 from podcastie_database import Podcast
 
 
-def read_opml(data: str) -> list[str]:
-    result = listparser.parse(data)
+class OPMLParseError(Exception):
+    pass
+
+def parse_opml(data: bytes) -> list[str]:
+    try:
+        result = listparser.parse(data)
+    except listparser.ListparserError:
+        raise OPMLParseError()
+
     return [feed.url for feed in result.feeds]
 
 
