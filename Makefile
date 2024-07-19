@@ -2,9 +2,11 @@
 all:
 	@echo "todo"
 
+.PHONY: help
 help:
 	@echo "help"
 
+.PHONY: secrets
 secrets:
 	mkdir .secrets
 	touch .secrets/bot_token
@@ -16,6 +18,7 @@ secrets:
 	touch .secrets/tg_api_hash
 	touch .secrets/tg_api_id
 
+.PHONY: fmt
 fmt:
 	cd ./lib/podcastie_database && pdm run fmt
 	cd ./lib/podcastie_rss && pdm run fmt
