@@ -60,13 +60,15 @@ async def handle_follow_state(
 
     for identifier in identifiers:
         if is_ppid(identifier):
+            print(f"{identifier} is ppid")
             await transaction.follow_podcast_by_ppid(identifier)
         elif is_feed_url(identifier):
+            print(f"{identifier} is url")
             await transaction.follow_podcast_by_feed_url(identifier)
         else:
             invalid_identifiers.append(identifier)
             continue
-
+    print(invalid_identifiers)
     result = await transaction.commit()
 
     response: str
@@ -83,7 +85,7 @@ async def handle_follow_state(
 
         for identifier in invalid_identifiers:
             response += (
-                f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID"
+                f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID\n"
             )
 
         for failed in result.failed:
@@ -98,6 +100,11 @@ async def handle_follow_state(
 
     else:
         response = "❌ Failed to subscribe to any of the provided podcasts.\n\n"
+        for identifier in invalid_identifiers:
+            response += (
+                f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID\n"
+            )
+
         for failed in result.failed:
             response += f"⚠ ️{format_failed_identifier(failed)}: {failed.message}\n"
 

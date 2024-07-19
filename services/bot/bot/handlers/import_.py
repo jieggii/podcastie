@@ -38,7 +38,7 @@ async def handle_import_state(
     global log
     if not message.document:
         await message.answer(
-            "This does not look like a file! Please attach OPML XML file or /cancel this action"
+            "This does not look like a file! Please attach OPML XML file or /cancel this action."
         )
         return
 
@@ -95,7 +95,7 @@ async def handle_import_state(
         )
 
         for url in invalid_urls:
-            response += f"⚠  {url}: does not look like a valid URL"
+            response += f"⚠  {url}: does not look like a valid URL\n"
 
         for failed in result.failed:
             response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
@@ -109,8 +109,12 @@ async def handle_import_state(
 
     else:  # if did not follow any podcasts, all were failed
         response = "❌ Failed to subscribe to any of the provided podcasts.\n\n"
+        for url in invalid_urls:
+            response += f"⚠  {url}: does not look like a valid URL\n"
+
         for failed in result.failed:
             response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
+            
         response += "\n" "Please try again or /cancel this action."
 
     await message.answer(response, disable_web_page_preview=len(result.succeeded) != 1)
