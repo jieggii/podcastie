@@ -9,7 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 def generate_ppid(podcast_title: str) -> str:
     ppid = podcast_title.lower().strip()
     ppid = "".join(ppid.split())
-    ppid = ppid[:15]
+    ppid = ppid[:40]
     ppid = f"{ppid}#{random.randint(1000, 9999)}"
     return ppid
 
