@@ -38,36 +38,36 @@ async def handle_import_state(
     global log
     if not message.document:
         await message.answer(
-            "This does not look like a file! Please attach OPML XML file or /cancel this action."
+            "⚠  It seems that what you sent is not a file! Please attach an OPML XML file or /cancel this action."
         )
         return
 
     if message.document.file_size > MAX_FILE_SIZE:
-        await message.answer("File size is too big")
+        await message.answer("⚠  Sorry, but file size is too big to process it. Please try another file or /cancel this action.")
         return
 
     if message.document.mime_type not in SUPPORTED_MIME_TYPES:
-        await message.answer("Invalid file mime type")
+        await message.answer("⚠  The file you sent has incorrect file mime type and will not be processed. Please try another file or /cancel this action.")
         return
 
     await bot.send_chat_action(message.from_user.id, ChatAction.TYPING)
 
     file = await bot.get_file(message.document.file_id)
 
-    content = io.BytesIO()
-    await bot.download_file(file.file_path, content)
+    file_content = io.BytesIO()
+    await bot.download_file(file.file_path, file_content)
 
     try:
-        feed_urls = opml.parse_opml(content.read())
+        feed_urls = opml.parse_opml(file_content.read())
     except opml.OPMLParseError:
         await message.answer(
-            "I failed to parse this OPML file. Please try again or /cancel this action."
+            "⚠  I failed to parse this OPML file. Please try another file or /cancel this action."
         )
         return
 
     if not feed_urls:
         await message.answer(
-            "The OPML file does not contain any subscriptions. Please try again or /cancel this action."
+            "⚠  The OPML file does not contain any subscriptions. Please try another file or /cancel this action."
         )
         return
 
@@ -114,8 +114,11 @@ async def handle_import_state(
 
         for failed in result.failed:
             response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
-            
-        response += "\n" "Please try again or /cancel this action."
+
+        response += (
+            "\n"
+            "Please try again or /cancel this action."
+        )
 
     await message.answer(response, disable_web_page_preview=len(result.succeeded) != 1)
 
@@ -127,7 +130,7 @@ async def handle_import_command(
 ) -> None:
     await state.set_state(States.IMPORT)
     await message.answer(
-        f"🚢️ Please send me an OPML file from which you want to import your subscriptions.\n"
+        f"🚢️ Please send me an OPML XML file to import your subscriptions.\n"
         "\n"
         "You can /cancel this action.",
     )
