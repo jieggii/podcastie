@@ -1,6 +1,6 @@
 # podcastie
 > [!WARNING]
-> Work in progress, estimating release in July 2024. 
+> Work in progress, estimating release in July - August 2024.
 
 🐣 Stay updated with your favorite podcasts by following them using this cute Telegram bot!
 ```
