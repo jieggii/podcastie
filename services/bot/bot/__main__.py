@@ -23,6 +23,7 @@ from bot.command_handlers import (
     start,
     unfollow,
 )
+from bot.inline_handler import inline_query_router
 
 
 def setup_logging():
@@ -79,6 +80,7 @@ async def main() -> None:
         search.router,
         import_.router,
     )
+    dp.include_router(inline_query_router)
 
     # create and start bot:
     bot = Bot(
