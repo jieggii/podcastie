@@ -18,12 +18,12 @@ class Podcast(Document):
     ppid: str
     title: str
     feed_url: str
-
-    link: str | None
-
     latest_episode_checked: int
     latest_episode_check_successful: bool
-    latest_episode_publication_ts: int | None = None
+
+    description: str | None
+    link: str | None
+    latest_episode_publication_ts: int | None
 
     class Settings:
         name = "podcasts"
@@ -34,9 +34,11 @@ class Podcast(Document):
             ppid=generate_ppid(feed.title),
             title=feed.title,
             feed_url=feed_url,
-            link=feed.link,
             latest_episode_checked=int(time.time()),
             latest_episode_check_successful=True,
+
+            description=feed.description,
+            link=feed.link,
             latest_episode_publication_ts=feed.latest_episode.published if feed.latest_episode else None,
         )
 

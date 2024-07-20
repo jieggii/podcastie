@@ -128,6 +128,11 @@ class Notifier:
                     podcast.title = feed.title
                     await podcast.save()
 
+                if podcast.description != feed.description:
+                    log.info(f"update podcast description", new_description_len=len(feed.description))
+                    podcast.description = feed.description
+                    await podcast.save()
+
                 if podcast.link != feed.link:
                     log.info(f"update podcast link", new_link=feed.link)
                     podcast.link = feed.link

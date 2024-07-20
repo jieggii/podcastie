@@ -40,6 +40,7 @@ class Episode:
 class Feed:
     title: str
 
+    description: str | None
     link: str | None
     cover_url: str | None
     latest_episode: Episode | None
@@ -62,6 +63,9 @@ async def fetch_feed(url: str) -> Feed:
     title: str | None = feed.get("title")
     if not title:
         raise MissingFeedTitleError("feed does not contain title")
+
+    # parse podcast description (it's optional):
+    description: str | None = feed.get("description")  # todo: verify
 
     # parse podcast link (it's optional):
     link: str | None = feed.get("link")
@@ -116,6 +120,7 @@ async def fetch_feed(url: str) -> Feed:
 
     return Feed(
         title=title,
+        description=description,
         link=link,
         cover_url=cover_url,
         latest_episode=latest_episode,
