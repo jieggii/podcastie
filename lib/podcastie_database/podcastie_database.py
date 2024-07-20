@@ -1,8 +1,10 @@
 import random
 import time
+from typing import Annotated
 
 import podcastie_rss
-from beanie import Document, PydanticObjectId, init_beanie
+import pymongo
+from beanie import Document, PydanticObjectId, init_beanie, Indexed
 from motor.motor_asyncio import AsyncIOMotorClient
 
 
@@ -16,7 +18,7 @@ def generate_ppid(podcast_title: str) -> str:
 
 class Podcast(Document):
     ppid: str
-    title: str
+    title: Annotated[str, Indexed(index_type=pymongo.TEXT)]
     feed_url: str
     latest_episode_checked: int
     latest_episode_check_successful: bool
