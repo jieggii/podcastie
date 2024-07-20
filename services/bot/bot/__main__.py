@@ -10,7 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from bot.env import env
-from bot.handlers import (
+from bot.command_handlers import (
     about,
     cancel,
     export,
