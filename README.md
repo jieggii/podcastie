@@ -2,7 +2,8 @@
 > [!WARNING]
 > Work in progress, estimating release in July - August 2024.
 
-Stay updated with your favorite podcasts by following them using this Telegram bot!
+Subscribe to your favorite podcasts, share them with friends, and listen to new episodes directly on Telegram!
+
 ```
 I'm Podcastie Bot and I'm here to help you stay updated with your favorite podcasts! 🎧
 
