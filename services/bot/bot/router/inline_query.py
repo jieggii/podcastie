@@ -4,12 +4,12 @@ import hashlib
 
 from bot.middlewares import DatabaseMiddleware
 
-inline_query_router = Router()
+router = Router()
 
-inline_query_router.inline_query.middleware(DatabaseMiddleware(create_user=False))
+router.inline_query.middleware(DatabaseMiddleware(create_user=False))
 
 
-@inline_query_router.inline_query()
+@router.inline_query()
 async def handle_inline_query(query: InlineQuery) -> None:
     text = query.query
     if not text:

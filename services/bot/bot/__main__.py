@@ -10,20 +10,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from bot.env import env
-from bot.command_handlers import (
-    about,
-    cancel,
-    export,
-    faq,
-    follow,
-    help,
-    import_,
-    list,
-    search,
-    start,
-    unfollow,
-)
-from bot.inline_handler import inline_query_router
+from bot.router import command
+from bot.router import inline_query
 
 
 def setup_logging():
@@ -66,21 +54,21 @@ async def main() -> None:
     # create and setup router:
     dp = Dispatcher()
 
-    # note: be sure to register cancel.router first so that it is the first router to handle /cancel command
-    dp.include_router(cancel.router)
+    # note: be sure to register cancel_command.router first so that it is the first router to handle /cancel command
+    dp.include_router(command.cancel.router)
     dp.include_routers(
-        about.router,
-        export.router,
-        faq.router,
-        follow.router,
-        list.router,
-        help.router,
-        start.router,
-        unfollow.router,
-        search.router,
-        import_.router,
+        command.about.router,
+        command.export.router,
+        command.faq.router,
+        command.follow.router,
+        command.help.router,
+        command.import_.router,
+        command.list.router,
+        command.search.router,
+        command.start.router,
+        command.unfollow.router,
     )
-    dp.include_router(inline_query_router)
+    dp.include_router(inline_query.router)
 
     # create and start bot:
     bot = Bot(
