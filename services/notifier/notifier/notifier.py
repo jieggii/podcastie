@@ -77,9 +77,10 @@ class Notifier:
                 # check if there are any followers:
                 log.info(f"checking if podcast has followers")
                 followers = await User.find(User.following_podcasts == podcast.id).to_list()
-                if not followers:  # skip and delete the podcast if it has no followers
-                    log.info("skip and delete podcast from DB as it has no followers")
-                    await podcast.delete()
+                if not followers:
+                    # todo: delete podcasts that does not have followers
+                    # for SOME amount of time
+                    log.info("skip podcast as it has no followers")
                     continue
 
                 # try to fetch podcast RSS feed:
