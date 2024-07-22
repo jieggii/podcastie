@@ -26,7 +26,7 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
             title=podcast.title,
             input_message_content=input_message_content,
             description=podcast.description,
-            thumbnail_url=None  # todo
+            thumbnail_url=podcast.cover_url
         ))
 
     await query.answer(
