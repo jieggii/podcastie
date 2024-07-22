@@ -25,6 +25,7 @@ class Podcast(Document):
 
     description: str | None
     link: str | None
+    cover_url: str | None
     latest_episode_publication_ts: int | None
 
     class Settings:
@@ -41,6 +42,7 @@ class Podcast(Document):
 
             description=feed.description,
             link=feed.link,
+            cover_url=feed.cover_url,
             latest_episode_publication_ts=feed.latest_episode.published if feed.latest_episode else None,
         )
 

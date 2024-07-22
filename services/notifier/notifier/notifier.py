@@ -139,6 +139,10 @@ class Notifier:
                     podcast.link = feed.link
                     await podcast.save()
 
+                if podcast.cover_url != feed.cover_url:
+                    log.info(f"update podcast cover url", new_cover_ulr=feed.cover_url)
+                    await podcast.save()
+
                 # skip podcast if it does not have any episodes:
                 if not feed.latest_episode:
                     log.debug(f"skip podcast as it has no episodes")
