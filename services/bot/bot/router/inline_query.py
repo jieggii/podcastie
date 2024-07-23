@@ -1,7 +1,5 @@
 from aiogram import Router
-from aiogram.enums import ParseMode
-from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent
-import hashlib
+from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, MessageEntity
 from beanie.operators import Text
 
 from podcastie_database import User, Podcast
@@ -18,38 +16,57 @@ router.inline_query.middleware(DatabaseMiddleware(create_user=False))
 async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
     query_text = query.query
 
-    podcasts: list[Podcast]
+    results: list[Podcast]  # search results that will be displayed to user
+
     result_is_personal: bool
-    if query_text:
-        result_is_personal = False
-        podcasts = await Podcast.find(Text(query_text)).to_list()
-    else:
-        if user and user.following_podcasts:
-            result_is_personal = True
-            podcasts = [
-                await Podcast.find_one(Podcast.id == podcast_id)
+    if user and user.following_podcasts:
+        result_is_personal = True
+
+        if not query_text:
+            # display podcasts user follow
+            results = [
+                await Podcast.get(podcast_id)
                 for podcast_id in user.following_podcasts
             ]
         else:
-            result_is_personal = True
-            podcasts = []
+            # display search results. search results within
+            # podcasts user follow are shown first
+            all_results = await Podcast.find(Text(query_text)).to_list()
+            prioritized = []
+            other = []
+            for podcast in all_results:
+                if podcast.id in user.following_podcasts:
+                    prioritized.append(podcast)
+                else:
+                    other.append(podcast)
+            results = prioritized + other
+    else:
+        result_is_personal = False
 
-    for podcast in podcasts: podcast.description = "Description is not available yet."
+        if not query_text:
+            # do not display anything
+            results = []
+        else:
+            # display search results among all podcasts
+            results = await Podcast.find(Text(query_text)).to_list()
 
     articles: list[InlineQueryResultArticle] = []
-    for podcast in podcasts:
+    for podcast in results:
         footer_items: list[str] = []
         if podcast.link:
-            footer_items.append(link("podcast website", podcast.link))
-        footer_items.append(link("subscribe", f"https://t.me/podcastie_bot?start={podcast.ppid}"))
+            footer_items.append(tags.link("podcast website", podcast.link))
+        footer_items.append(tags.link("subscribe", f"https://t.me/podcastie_bot?start={podcast.ppid}"))
+
+        escaped_description: str | None = util.escape(podcast.description) if podcast.description else ""
 
         text = (
-            f"{bold(podcast.title)}\n\n"
-            f"{optional(podcast.description)}\n\n"
-            f"{footer(footer_items)}"
+            f"{tags.bold(podcast.title)}\n\n"
+            f"<blockquote>{escaped_description}</blockquote>\n\n"
+            f"{components.footer(footer_items)}"
         )
         message_content = InputTextMessageContent(
-            message_text=text, parse_mode=ParseMode.HTML  # todo remove html
+            message_text=text,
+            disable_web_page_preview=True,
         )
 
         articles.append(InlineQueryResultArticle(
