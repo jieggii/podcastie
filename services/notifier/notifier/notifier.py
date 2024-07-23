@@ -13,7 +13,7 @@ from aiogram.enums import ParseMode
 from aiogram.enums.chat_action import ChatAction
 from aiogram.types import Message, URLInputFile
 from podcastie_database import Podcast, User
-from podcastie_telegram_html import link
+from podcastie_telegram_html.tags import link
 from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 
 from notifier.bot_session import LocalTelegramAPIAiohttpSession
