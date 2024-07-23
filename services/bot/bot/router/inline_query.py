@@ -5,7 +5,7 @@ import hashlib
 from beanie.operators import Text
 
 from podcastie_database import User, Podcast
-from podcastie_telegram_html import link, bold, optional, footer
+from podcastie_telegram_html import tags, components, util
 
 from bot.middlewares import DatabaseMiddleware
 

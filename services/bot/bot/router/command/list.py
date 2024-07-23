@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database import Podcast, User
-from podcastie_telegram_html import link
+from podcastie_telegram_html.tags import link
 
 from bot.middlewares import DatabaseMiddleware
 

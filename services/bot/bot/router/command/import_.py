@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database import User
-from podcastie_telegram_html import link
+from podcastie_telegram_html.tags import link
 from structlog import get_logger
 
 from bot.core import follow_transaction, opml
