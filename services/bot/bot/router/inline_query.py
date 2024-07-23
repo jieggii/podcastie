@@ -1,9 +1,13 @@
 from aiogram import Router
-from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, MessageEntity
+from aiogram.types import (
+    InlineQuery,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+    MessageEntity,
+)
 from beanie.operators import Text
-
-from podcastie_database import User, Podcast
-from podcastie_telegram_html import tags, components, util
+from podcastie_database import Podcast, User
+from podcastie_telegram_html import components, tags, util
 
 from bot.middlewares import DatabaseMiddleware
 
@@ -25,8 +29,7 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
         if not query_text:
             # display podcasts user follow
             results = [
-                await Podcast.get(podcast_id)
-                for podcast_id in user.following_podcasts
+                await Podcast.get(podcast_id) for podcast_id in user.following_podcasts
             ]
         else:
             # display search results. search results within
@@ -55,9 +58,13 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
         footer_items: list[str] = []
         if podcast.link:
             footer_items.append(tags.link("podcast website", podcast.link))
-        footer_items.append(tags.link("subscribe", f"https://t.me/podcastie_bot?start={podcast.ppid}"))
+        footer_items.append(
+            tags.link("subscribe", f"https://t.me/podcastie_bot?start={podcast.ppid}")
+        )
 
-        escaped_description: str | None = util.escape(podcast.description) if podcast.description else ""
+        escaped_description: str | None = (
+            util.escape(podcast.description) if podcast.description else ""
+        )
 
         text = (
             f"{tags.bold(podcast.title)}\n\n"
@@ -69,13 +76,15 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
             disable_web_page_preview=True,
         )
 
-        articles.append(InlineQueryResultArticle(
-            id=podcast.ppid,
-            title=podcast.title,
-            input_message_content=message_content,
-            description=podcast.description,
-            thumbnail_url=podcast.cover_url
-        ))
+        articles.append(
+            InlineQueryResultArticle(
+                id=podcast.ppid,
+                title=podcast.title,
+                input_message_content=message_content,
+                description=podcast.description,
+                thumbnail_url=podcast.cover_url,
+            )
+        )
 
     await query.answer(
         results=articles,

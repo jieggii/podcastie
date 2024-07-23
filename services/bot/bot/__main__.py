@@ -10,8 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from bot.env import env
-from bot.router import command
-from bot.router import inline_query
+from bot.router import command, inline_query
 
 
 def setup_logging():

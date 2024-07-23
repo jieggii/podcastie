@@ -1,7 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
-from aiogram.types import Message, InlineQuery
+from aiogram.types import InlineQuery, Message
 from podcastie_database import User
 
 

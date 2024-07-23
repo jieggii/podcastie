@@ -15,5 +15,5 @@ async def handle_start(message: Message) -> None:
         "\n"
         "To get started, simply grab the RSS feed URL of your favorite podcast and use the /follow command.\n"
         "\n"
-        "Type /help to see all available commands."
+        "Type /help to see all available commands.",
     )

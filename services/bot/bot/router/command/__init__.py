@@ -1,11 +1,13 @@
-from . import about
-from . import cancel
-from . import export
-from . import faq
-from . import follow
-from . import help
-from . import import_
-from . import list
-from . import search
-from . import start
-from . import unfollow
+from . import (
+    about,
+    cancel,
+    export,
+    faq,
+    follow,
+    help,
+    import_,
+    list,
+    search,
+    start,
+    unfollow,
+)
