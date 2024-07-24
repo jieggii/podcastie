@@ -58,6 +58,6 @@ async def handle_start(message: Message, user: User) -> None:
         )
     else:
         item = result.failed[0]
-        text = f"⚠️Failed to subscribe to {tags.link(item.podcast_title, item.podcast_link)}: {item.message}."
+        text = f"⚠️ Failed to subscribe to {tags.link(item.podcast_title, item.podcast_link)}: {item.message}."
 
     await message.answer(text, disable_web_page_preview=len(result.succeeded) == 0)
