@@ -3,7 +3,7 @@ from aiogram.types import (
     InlineQuery,
     InlineQueryResultArticle,
     InputTextMessageContent,
-    MessageEntity,
+    MessageEntity, LinkPreviewOptions,
 )
 from beanie.operators import Text
 from podcastie_database import Podcast, User
@@ -55,25 +55,20 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
 
     articles: list[InlineQueryResultArticle] = []
     for podcast in results:
-        footer_items: list[str] = []
-        if podcast.link:
-            footer_items.append(tags.link("podcast website", podcast.link))
-        footer_items.append(
-            tags.link("subscribe", f"https://t.me/podcastie_bot?start={podcast.ppid}")
-        )
-
         escaped_description: str | None = (
             util.escape(podcast.description) if podcast.description else ""
         )
 
         text = (
-            f"{tags.bold(podcast.title)}\n\n"
-            f"<blockquote>{escaped_description}</blockquote>\n\n"
-            f"{components.footer(footer_items)}"
+            f"{tags.bold(podcast.title)} ({tags.link("📬 click to subscribe", "https://t.me/podcastie_bot?start=123")})\n"
+            f"<blockquote expandable>{escaped_description}</blockquote>"
         )
         message_content = InputTextMessageContent(
             message_text=text,
-            disable_web_page_preview=True,
+            link_preview_options=LinkPreviewOptions(
+                url=podcast.link,
+                prefer_small_media=True
+            )
         )
 
         articles.append(
