@@ -93,7 +93,7 @@ async def handle_follow_state(
 
         response += (
             "\n"
-            "Use /list to get list of your subscriptions and /unfollow to unfollow from podcasts."
+            "Use /list to get list of your subscriptions and /unfollow to unfollow podcasts."
         )
 
         await state.clear()
