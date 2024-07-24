@@ -3,11 +3,11 @@ from aiogram.types import (
     InlineQuery,
     InlineQueryResultArticle,
     InputTextMessageContent,
-    MessageEntity, LinkPreviewOptions,
+    LinkPreviewOptions,
 )
 from beanie.operators import Text
 from podcastie_database import Podcast, User
-from podcastie_telegram_html import components, tags, util
+from podcastie_telegram_html import tags, util
 
 from bot.middlewares import DatabaseMiddleware
 
