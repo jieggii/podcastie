@@ -7,6 +7,7 @@ from podcastie_database import Podcast, User
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_ppid
+from podcastie_telegram_html import tags
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())
@@ -39,7 +40,7 @@ async def handle_unfollow_state(
 
         await state.clear()
         await message.answer(
-            f"Good. I have successfully unsubscribed you from {podcast.title}"
+            f"👍 Done. I have successfully unsubscribed you from {tags.link(podcast.title, podcast.link)}"
         )
 
     except ValueError:
