@@ -37,11 +37,11 @@ async def handle_start(message: Message, user: User) -> None:
         return
 
     if not is_ppid(ppid):
-        await message.answer("Provided PPID is not valid.")  # todo
+        await message.answer("⚠️ PPID provided as an argument is not valid.")
         return
 
     if not user:
-        user = User(user_id=message.from_user.id)  # todo: .from_user_id
+        user = User(user_id=message.from_user.id)  # todo: implement User.from_user_id(...)
         await user.insert()
 
     transaction = FollowTransaction(user)
@@ -51,9 +51,13 @@ async def handle_start(message: Message, user: User) -> None:
     text: str
     if result.succeeded:
         item = result.succeeded[0]
-        text = f"You have successfully subscribed to {tags.link(item.podcast_title, item.podcast_link)}"
+        text = (
+            f"✨ You have successfully subscribed to {tags.link(item.podcast_title, item.podcast_link)}\n"
+            f"From now on, you will receive new episodes of this podcast as soon as they are released!\n\n"
+            "Use /list to get list of your subscriptions and /unfollow to unfollow podcasts."
+        )
     else:
         item = result.failed[0]
-        text = f"Failed to subscribe to {tags.link(item.podcast_title, item.podcast_link)}, reason: {item.message}"
+        text = f"⚠️Failed to subscribe to {tags.link(item.podcast_title, item.podcast_link)}: {item.message}."
 
     await message.answer(text, disable_web_page_preview=len(result.succeeded) == 0)
