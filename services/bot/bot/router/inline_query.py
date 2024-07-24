@@ -76,6 +76,7 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
                 id=podcast.ppid,
                 title=podcast.title,
                 input_message_content=message_content,
+                url=podcast.link,
                 description=podcast.description,
                 thumbnail_url=podcast.cover_url,
             )
