@@ -3,15 +3,16 @@ import base64
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-
 from podcastie_database import User
 from podcastie_telegram_html import tags
+
+from bot.core.follow_transaction import FollowTransaction
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_ppid
-from bot.core.follow_transaction import FollowTransaction
 
 router = Router()
 router.message.middleware(DatabaseMiddleware(create_user=False))
+
 
 @router.message(CommandStart())
 async def handle_start(message: Message, user: User) -> None:
@@ -41,7 +42,9 @@ async def handle_start(message: Message, user: User) -> None:
         return
 
     if not user:
-        user = User(user_id=message.from_user.id)  # todo: implement User.from_user_id(...)
+        user = User(
+            user_id=message.from_user.id
+        )  # todo: implement User.from_user_id(...)
         await user.insert()
 
     transaction = FollowTransaction(user)

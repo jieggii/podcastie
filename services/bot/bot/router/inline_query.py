@@ -69,9 +69,8 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
         message_content = InputTextMessageContent(
             message_text=text,
             link_preview_options=LinkPreviewOptions(
-                url=podcast.link,
-                prefer_small_media=True
-            )
+                url=podcast.link, prefer_small_media=True
+            ),
         )
 
         articles.append(
