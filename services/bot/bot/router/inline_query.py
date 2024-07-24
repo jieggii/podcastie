@@ -1,3 +1,5 @@
+import base64
+
 from aiogram import Router
 from aiogram.types import (
     InlineQuery,
@@ -59,8 +61,9 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
             util.escape(podcast.description) if podcast.description else ""
         )
 
+        ppid_encoded: str = base64.urlsafe_b64encode(podcast.ppid.encode()).decode()
         text = (
-            f"{tags.bold(podcast.title)} ({tags.link("📬 click to subscribe", "https://t.me/podcastie_bot?start=123")})\n"
+            f"{tags.bold(podcast.title)} ({tags.link("📬 click to subscribe", f"https://t.me/podcastie_bot?start={ppid_encoded}")})\n"
             f"<blockquote expandable>{escaped_description}</blockquote>"
         )
         message_content = InputTextMessageContent(
