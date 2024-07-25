@@ -40,7 +40,8 @@ async def handle_unfollow_state(
 
         await state.clear()
         await message.answer(
-            f"👍 Done. I have successfully unsubscribed you from {tags.link(podcast.title, podcast.link)}"
+            f"👍 Done. I have successfully unsubscribed you from {tags.link(podcast.title, podcast.link)}",
+            disable_web_page_preview=True
         )
 
     except ValueError:
