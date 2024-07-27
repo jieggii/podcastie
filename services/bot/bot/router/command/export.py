@@ -2,7 +2,8 @@ from aiogram import Bot, Router
 from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile, Message
-from podcastie_database import Podcast, User
+from podcastie_database.models.podcast import Podcast
+from podcastie_database.models.user import User
 
 from bot.core.opml import generate_opml
 from bot.middlewares import DatabaseMiddleware

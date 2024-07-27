@@ -3,16 +3,11 @@ from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from podcastie_database import Podcast, User
+from podcastie_database.models.user import User
 from podcastie_telegram_html.tags import code, link
 from structlog import get_logger
 
-from bot.core.follow_transaction import (
-    FollowTransaction,
-    FollowTransactionCommitResult,
-    PodcastIdentifier,
-    PodcastIdentifierType,
-)
+from bot.core import subscription_manager
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url, is_ppid
@@ -24,14 +19,14 @@ router.message.middleware(DatabaseMiddleware())
 MAX_IDENTIFIERS = 20
 
 
-def format_failed_identifier(failed: FollowTransactionCommitResult.Failed) -> str:
-    if failed.podcast_title:
-        return link(failed.podcast_title, failed.podcast_link)
+def format_failed_transaction_identifier(t: subscription_manager.TransactionResultFailure) -> str:
+    if t.podcast_title:
+        return link(t.podcast_title, t.podcast_link)
 
-    if failed.podcast_identifier.type == PodcastIdentifierType.PPID:
-        return code(failed.podcast_identifier.value)
+    if t.action.target_identifier.type == subscription_manager.PodcastIdentifierType.PPID:
+        return code(t.action.target_identifier.value)
 
-    return failed.podcast_identifier.value
+    return t.action.target_identifier.value
 
 
 @router.message(States.FOLLOW)
@@ -53,29 +48,27 @@ async def handle_follow_state(
     await bot.send_chat_action(user.user_id, ChatAction.TYPING)
 
     # create follow transaction:
-    transaction = FollowTransaction(user)
+    manager = subscription_manager.SubscriptionsManager(user)
     invalid_identifiers: list[str] = (
         []
     )  # list of identifiers that did not pass validation
 
     for identifier in identifiers:
         if is_ppid(identifier):
-            print(f"{identifier} is ppid")
-            await transaction.follow_podcast_by_ppid(identifier)
+            await manager.follow_by_ppid(identifier)
         elif is_feed_url(identifier):
-            print(f"{identifier} is url")
-            await transaction.follow_podcast_by_feed_url(identifier)
+            await manager.follow_by_feed_url(identifier)
         else:
             invalid_identifiers.append(identifier)
             continue
-    print(invalid_identifiers)
-    result = await transaction.commit()
+
+    succeeded, failed = await manager.commit()
 
     response: str
-    if result.succeeded:
+    if succeeded:
         response = "✨ You have successfully subscribed to the following podcasts:\n"
-        for podcast in result.succeeded:
-            response += f"👌 {link(podcast.podcast_title, podcast.podcast_link)}\n"
+        for transaction in succeeded:
+            response += f"👌 {link(transaction.podcast_title, transaction.podcast_link)}\n"
 
         response += (
             "\n"
@@ -88,8 +81,8 @@ async def handle_follow_state(
                 f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID\n"
             )
 
-        for failed in result.failed:
-            response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
+        for transaction in failed:
+            response += f"⚠  {format_failed_transaction_identifier(transaction)}: {transaction.error_message}\n"
 
         response += (
             "\n"
@@ -105,12 +98,12 @@ async def handle_follow_state(
                 f"⚠ ️{identifier}: identifier does not look like a valid URL or PPID\n"
             )
 
-        for failed in result.failed:
-            response += f"⚠ ️{format_failed_identifier(failed)}: {failed.message}\n"
+        for transaction in failed:
+            response += f"⚠ ️{format_failed_transaction_identifier(transaction)}: {transaction.error_message}\n"
 
         response += "\n" "Please try again or /cancel this action."
 
-    await message.answer(response, disable_web_page_preview=len(result.succeeded) != 1)
+    await message.answer(response, disable_web_page_preview=len(succeeded) != 1)
 
 
 @router.message(Command("follow"))

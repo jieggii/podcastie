@@ -1,5 +1,6 @@
 import asyncio
 import time
+import typing
 from asyncio import Queue
 from dataclasses import dataclass
 
@@ -12,7 +13,8 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.enums.chat_action import ChatAction
 from aiogram.types import Message, URLInputFile
-from podcastie_database import Podcast, User
+from podcastie_database.models.podcast import Podcast, PodcastMeta, PodcastLatestEpisodeInfo
+from podcastie_database.models.user import User
 from podcastie_telegram_html.tags import link
 from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 
@@ -72,7 +74,7 @@ class Notifier:
             podcasts = await Podcast.find().to_list()
 
             for podcast in podcasts:
-                bind_contextvars(podcast=podcast.title)
+                bind_contextvars(podcast=podcast.meta.title)
 
                 # check if there are any followers:
                 log.info(f"checking if podcast has followers")
@@ -99,24 +101,24 @@ class Notifier:
                         case aiohttp.ClientError():
                             log.warning(
                                 f"http client error while attempting to read feed",
-                                podcast_title=podcast.title,
+                                podcast_title=podcast.meta.title,
                                 e=e,
                             )
                         case podcastie_rss.MalformedFeedFormatError():
-                            log.warning(f"feed is malformed", podcast_title=podcast.title, e=e)
+                            log.warning(f"feed is malformed", podcast_title=podcast.meta.title, e=e)
 
                         case podcastie_rss.MissingFeedTitleError():
-                            log.warning(f"feed did not pass validation", podcast_title=podcast.title, e=e)
+                            log.warning(f"feed did not pass validation", podcast_title=podcast.meta.title, e=e)
 
                         case _:
                             log.exception(
                                 f"unexpected exception while attempting to read feed",
-                                podcast_title=podcast.title,
+                                podcast_title=podcast.meta.title,
                                 e=e,
                             )
 
-                podcast.latest_episode_check_successful = bool(feed)
-                podcast.latest_episode_checked = int(time.time())
+                podcast.latest_episode_info.check_ts = int(time.time())
+                podcast.latest_episode_info.check_success = bool(feed)
                 await podcast.save()
 
                 if feed is None:
@@ -124,23 +126,28 @@ class Notifier:
                     continue
 
                 # update podcast metadata if it has changed:
-                if podcast.title != feed.title:
+                meta_updated = False
+                if podcast.meta.title != feed.title:
                     log.info(f"update podcast title", new_title=feed.title)
-                    podcast.title = feed.title
-                    await podcast.save()
+                    meta_updated = True
+                    podcast.meta.title = feed.title
 
-                if podcast.description != feed.description:
+                if podcast.meta.description != feed.description:
                     log.info(f"update podcast description", new_description_len=len(feed.description))
-                    podcast.description = feed.description
-                    await podcast.save()
+                    meta_updated = True
+                    podcast.meta.description = feed.description
 
-                if podcast.link != feed.link:
+                if podcast.meta.link != feed.link:
                     log.info(f"update podcast link", new_link=feed.link)
-                    podcast.link = feed.link
-                    await podcast.save()
+                    meta_updated = True
+                    podcast.meta.link = feed.link
 
-                if podcast.cover_url != feed.cover_url:
-                    log.info(f"update podcast cover url", new_cover_ulr=feed.cover_url)
+                if podcast.meta.cover_url != feed.cover_url:
+                    log.info(f"update podcast cover url", new_cover_url=feed.cover_url)
+                    meta_updated = True
+                    podcast.meta.cover_url = feed.cover_url
+
+                if meta_updated:
                     await podcast.save()
 
                 # skip podcast if it does not have any episodes:
@@ -148,14 +155,14 @@ class Notifier:
                     log.debug(f"skip podcast as it has no episodes")
                     continue
 
-                if (podcast.latest_episode_publication_ts is None) or (
-                    feed.latest_episode.published > podcast.latest_episode_publication_ts
+                if (podcast.latest_episode_info.publication_ts is None) or (
+                    feed.latest_episode.published > podcast.latest_episode_info.publication_ts
                 ):
                     bind_contextvars(episode=feed.latest_episode.title)
                     log.info(f"new episode is out")
 
                     # update latest episode timestamp in the database:
-                    podcast.latest_episode_publication_ts = feed.latest_episode.published
+                    podcast.latest_episode_info.publication_ts = feed.latest_episode.published
                     await podcast.save()
 
                     # skip episode if it does not contain title or audio file:
@@ -169,8 +176,9 @@ class Notifier:
                         audio=feed.latest_episode.audio_file,
                         link=feed.latest_episode.link,
                         description=feed.latest_episode.description,
-                        podcast_title=podcast.title,
-                        podcast_link=podcast.link,
+
+                        podcast_title=podcast.meta.title,
+                        podcast_link=podcast.meta.link,
                         podcast_cover_url=feed.cover_url,
                         recipient_user_ids=[follower.user_id for follower in followers],
                     )

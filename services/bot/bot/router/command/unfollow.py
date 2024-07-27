@@ -2,15 +2,22 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from podcastie_database import Podcast, User
+from podcastie_database.models.user import User
 from podcastie_telegram_html import tags
 
 from bot.fsm import States
+from bot.core import subscription_manager
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_ppid
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())
+
+
+def format_failed_transaction_identifier(t: subscription_manager.TransactionResultFailure):
+    if t.podcast_title:
+        return tags.link(t.podcast_title, t.podcast_link)
+    return tags.code(t.action.target_identifier.value)
 
 
 @router.message(States.UNFOLLOW)
@@ -24,28 +31,26 @@ async def handle_unfollow_state(
         )
         return
 
-    podcast = await Podcast.find_one(Podcast.ppid == ppid)
-    if not podcast:
-        await message.answer(
-            "I checked twice and could not find podcast with this PPID in my database. "
-            "Are you sure it is correct? Please try again or /cancel this action."
-        )
-        return
+    manager = subscription_manager.SubscriptionsManager(user)
+    await manager.unfollow_by_ppid(ppid)
+    succeeded, failed = await manager.commit()
 
-    try:
-        user.following_podcasts.remove(podcast.id)
-        await user.save()
-
-        # todo: remove podcast from the database if noone follows it anymore
-
+    response: str
+    if succeeded:
+        transaction = succeeded[0]
         await state.clear()
-        await message.answer(
-            f"👍 Done. I have successfully unsubscribed you from {tags.link(podcast.title, podcast.link)}",
-            disable_web_page_preview=True
-        )
+        response = f"👍 Done. I have successfully unsubscribed you from {tags.link(transaction.podcast_title, transaction.podcast_title)}",
 
-    except ValueError:
-        await message.answer("Well... But you are not following this podcast anyway!")
+    else:
+        transaction = failed[0]
+        response = (f"I failed to unsubscribe you from {format_failed_transaction_identifier(transaction)}. Reason: {transaction.error_message}.\n"
+                             f"Please try again or /cancel this action."
+                    )
+
+    await message.answer(
+        response,
+        disable_web_page_preview=True
+    )
 
 
 @router.message(Command("unfollow"))

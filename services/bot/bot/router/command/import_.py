@@ -5,11 +5,11 @@ from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from podcastie_database import User
+from podcastie_database.models.user import User
 from podcastie_telegram_html.tags import link
 from structlog import get_logger
 
-from bot.core import follow_transaction, opml
+from bot.core import subscription_manager, opml
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url
@@ -23,12 +23,12 @@ MAX_FILE_SIZE = 1370 * 10  # todo
 SUPPORTED_MIME_TYPES = ("application/xml",)
 
 
-def format_failed_identifier(
-    failed: follow_transaction.FollowTransactionCommitResult.Failed,
+def format_failed_transaction_identifier(
+    t: subscription_manager.TransactionResultFailure,
 ) -> str:
-    if failed.podcast_title:
-        return link(failed.podcast_title, failed.podcast_link)
-    return failed.podcast_identifier.value
+    if t.podcast_title:
+        return link(t.podcast_title, t.podcast_link)
+    return t.action.target_identifier.value
 
 
 @router.message(States.IMPORT)
@@ -76,21 +76,21 @@ async def handle_import_state(
         return
 
     # start follow transaction:
-    transaction = follow_transaction.FollowTransaction(user)
+    manager = subscription_manager.SubscriptionsManager(user)
     invalid_urls: list[str] = []
     for url in feed_urls:
         if not is_feed_url(url):
             invalid_urls.append(url)
             continue
-        await transaction.follow_podcast_by_feed_url(url)
+        await manager.follow_by_feed_url(url)
 
-    result = await transaction.commit()
+    succeeded, failed = await manager.commit()
 
     response: str
-    if result.succeeded:  # if followed all podcasts without any fails
+    if succeeded:  # if followed all podcasts without any fails
         response = "✨ You have successfully subscribed to the following podcasts:\n"
-        for podcast in result.succeeded:
-            response += f"👌 {link(podcast.podcast_title, podcast.podcast_link)}\n"
+        for transaction in succeeded:
+            response += f"👌 {link(transaction.podcast_title, transaction.podcast_link)}\n"
 
         response += (
             "\n"
@@ -101,8 +101,8 @@ async def handle_import_state(
         for url in invalid_urls:
             response += f"⚠  {url}: does not look like a valid URL\n"
 
-        for failed in result.failed:
-            response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
+        for transaction in failed:
+            response += f"⚠  {format_failed_transaction_identifier(transaction)}: {transaction.error_message}\n"
 
         response += (
             "\n"
@@ -116,12 +116,12 @@ async def handle_import_state(
         for url in invalid_urls:
             response += f"⚠  {url}: does not look like a valid URL\n"
 
-        for failed in result.failed:
-            response += f"⚠  {format_failed_identifier(failed)}: {failed.message}\n"
+        for transaction in failed:
+            response += f"⚠  {format_failed_transaction_identifier(transaction)}: {transaction.error_message}\n"
 
         response += "\n" "Please try again or /cancel this action."
 
-    await message.answer(response, disable_web_page_preview=len(result.succeeded) != 1)
+    await message.answer(response, disable_web_page_preview=len(succeeded) != 1)
 
 
 @router.message(Command("import"))

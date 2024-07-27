@@ -3,7 +3,7 @@ import logging
 import sys
 
 import aiogram.loggers
-import podcastie_database
+from podcastie_database.init import init_database
 import structlog
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -44,7 +44,7 @@ async def main() -> None:
         port=env.Mongo.PORT,
         database=env.Mongo.DATABASE,
     )
-    await podcastie_database.init(
+    await init_database(
         env.Mongo.HOST,
         env.Mongo.PORT,
         env.Mongo.DATABASE,
