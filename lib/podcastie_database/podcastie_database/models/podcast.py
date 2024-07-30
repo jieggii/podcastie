@@ -27,6 +27,7 @@ def _generate_feed_url_hash(feed_url: str) -> str:
 
 class PodcastMeta(BaseModel):
     title: str
+    title_slug: str
 
     description: str | None
     link: str | None
@@ -46,7 +47,6 @@ class PodcastLatestEpisodeInfo(BaseModel):
 class Podcast(Document):
     feed_url: Indexed(str, unique=True)
     feed_url_hash_prefix: Indexed(str, unique=True)
-    title_slug: str
 
     meta: PodcastMeta
     latest_episode_info: PodcastLatestEpisodeInfo
@@ -55,8 +55,8 @@ class Podcast(Document):
         name = "podcasts"
         indexes = [
             [
-                ("title_slug", pymongo.TEXT),
                 ("meta.title", pymongo.TEXT),
+                ("meta.title_slug", pymongo.TEXT),
             ]
         ]
 
