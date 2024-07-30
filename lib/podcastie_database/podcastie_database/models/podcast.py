@@ -1,5 +1,4 @@
 import time
-from typing import Annotated
 import hashlib
 
 import podcastie_rss
@@ -7,6 +6,7 @@ import pymongo
 from beanie import Document, Indexed
 from pydantic import BaseModel
 from string import punctuation
+
 
 _TITLE_SLUG_FORBIDDEN_CHARS = set(punctuation)
 _FEED_URL_HASH_PREFIX_LEN = 7
@@ -26,7 +26,7 @@ def _generate_feed_url_hash(feed_url: str) -> str:
 
 
 class PodcastMeta(BaseModel):
-    title: Annotated[str, Indexed(index_type=pymongo.TEXT)]
+    title: str
 
     description: str | None
     link: str | None
@@ -44,15 +44,21 @@ class PodcastLatestEpisodeInfo(BaseModel):
 
 
 class Podcast(Document):
-    feed_url: Annotated[str, Indexed(unique=True)]
-    feed_url_hash_prefix: Annotated[str, Indexed(unique=True)]
-    title_slug: Annotated[str, Indexed(index_type=pymongo.TEXT)]
+    feed_url: Indexed(str, unique=True)
+    feed_url_hash_prefix: Indexed(str, unique=True)
+    title_slug: str
 
     meta: PodcastMeta
     latest_episode_info: PodcastLatestEpisodeInfo
 
     class Settings:
         name = "podcasts"
+        indexes = [
+            [
+                ("title_slug", pymongo.TEXT),
+                ("meta.title", pymongo.TEXT),
+            ]
+        ]
 
     @classmethod
     def from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
