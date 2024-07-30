@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.pdm.scripts]
-fmt.shell = "isort podcastie_database.py && black podcastie_database.py"
+fmt.shell = "isort ./podcastie_database && black ./podcastie_database"
 
 
 [tool.black]
