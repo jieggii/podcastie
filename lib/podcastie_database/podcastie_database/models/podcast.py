@@ -8,8 +8,9 @@ import pymongo
 from beanie import Document, Indexed
 from pydantic import BaseModel
 
+PODCAST_FEED_URL_HASH_PREFIX_LEN = 7
+
 _TITLE_SLUG_FORBIDDEN_CHARS = set(punctuation)
-_FEED_URL_HASH_PREFIX_LEN = 7
 
 
 def _sha256(plaintext: str) -> str:
@@ -99,7 +100,7 @@ class Podcast(Document):
     def from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
         return cls(
             feed_url=feed_url,
-            feed_url_hash_prefix=_sha256(feed_url)[:_FEED_URL_HASH_PREFIX_LEN],
+            feed_url_hash_prefix=_sha256(feed_url)[:PODCAST_FEED_URL_HASH_PREFIX_LEN],
             meta=PodcastMeta(
                 title=feed.title,
                 title_slug=generate_podcast_title_slug(feed.title),
