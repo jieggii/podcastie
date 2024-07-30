@@ -1,4 +1,5 @@
 import base64
+import binascii
 
 from aiogram import Router
 from aiogram.filters import CommandStart
@@ -26,9 +27,12 @@ async def handle_start(message: Message, user: User) -> None:
     ppid: str | None = None
     if len(tokens) == 2:
         ppid_encoded = tokens[1]
-        ppid = base64.urlsafe_b64decode(ppid_encoded.encode()).decode()
+        try:
+            ppid = base64.urlsafe_b64decode(ppid_encoded.encode()).decode()
+        except binascii.Error:
+            await message.answer("⚠️ Failed to decode PPID provided as a parameter.")
 
-    if not user or (user and not ppid):
+    if (not user) or (user and not ppid):
         await message.answer(
             f"👋 Hi there, {message.from_user.first_name}!\n"
             f"\n"
@@ -44,7 +48,7 @@ async def handle_start(message: Message, user: User) -> None:
         return
 
     if not is_ppid(ppid):
-        await message.answer("⚠️ PPID provided as an argument is not valid.")
+        await message.answer("⚠️ PPID provided as a parameter is not valid.")
         return
 
     if not user:
