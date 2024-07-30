@@ -13,7 +13,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.enums.chat_action import ChatAction
 from aiogram.types import Message, URLInputFile
-from podcastie_database.models.podcast import Podcast, PodcastMeta, PodcastLatestEpisodeInfo
+from podcastie_database.models.podcast import Podcast, PodcastMetaPatch, generate_podcast_title_slug
 from podcastie_database.models.user import User
 from podcastie_telegram_html.tags import link
 from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
@@ -126,28 +126,26 @@ class Notifier:
                     continue
 
                 # update podcast metadata if it has changed:
-                meta_updated = False
+                podcast_meta_patch: PodcastMetaPatch = {}
                 if podcast.meta.title != feed.title:
                     log.info(f"update podcast title", new_title=feed.title)
-                    meta_updated = True
-                    podcast.meta.title = feed.title
+                    podcast_meta_patch["new_title"] = feed.title
+                    podcast_meta_patch["new_title_slug"] = generate_podcast_title_slug(feed.title)
 
                 if podcast.meta.description != feed.description:
                     log.info(f"update podcast description", new_description_len=len(feed.description))
-                    meta_updated = True
-                    podcast.meta.description = feed.description
+                    podcast_meta_patch["new_description"] = feed.description
 
                 if podcast.meta.link != feed.link:
                     log.info(f"update podcast link", new_link=feed.link)
-                    meta_updated = True
-                    podcast.meta.link = feed.link
+                    podcast_meta_patch["new_link"] = feed.link
 
                 if podcast.meta.cover_url != feed.cover_url:
                     log.info(f"update podcast cover url", new_cover_url=feed.cover_url)
-                    meta_updated = True
-                    podcast.meta.cover_url = feed.cover_url
+                    podcast_meta_patch["new_cover_url"] = feed.cover_url
 
-                if meta_updated:
+                podcast_meta_patched = podcast.meta.patch(podcast_meta_patch)
+                if podcast_meta_patched:
                     await podcast.save()
 
                 # skip podcast if it does not have any episodes:
