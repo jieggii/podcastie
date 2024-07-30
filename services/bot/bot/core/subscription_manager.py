@@ -204,7 +204,7 @@ class SubscriptionsManager:
                                 action=action,
                                 error_message="you already follow this podcast",
                                 podcast_title=podcast.meta.title,
-                                podcast_link=podcast.meta.title,
+                                podcast_link=podcast.meta.link,
                             )
                         )
                         continue
