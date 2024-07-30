@@ -1,5 +1,4 @@
-from base64 import urlsafe_b64encode
-
+import aiogram
 from aiogram import Router
 from aiogram.types import (
     InlineQuery,
@@ -10,7 +9,7 @@ from aiogram.types import (
 from beanie.operators import Text
 from podcastie_database.models.podcast import Podcast
 from podcastie_database.models.user import User
-from podcastie_telegram_html import tags, util
+from podcastie_telegram_html import tags, util, components
 
 from bot.middlewares import DatabaseMiddleware
 
@@ -20,7 +19,7 @@ router.inline_query.middleware(DatabaseMiddleware(create_user=False))
 
 
 @router.inline_query()
-async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
+async def handle_inline_query(query: InlineQuery, user: User | None, bot: aiogram.Bot) -> None:
     query_text = query.query
 
     results: list[Podcast]  # search results that will be displayed to user
@@ -58,20 +57,25 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
 
     articles: list[InlineQueryResultArticle] = []
     for podcast in results:
-        escaped_description: str | None = (
-            util.escape(podcast.meta.description) if podcast.meta.description else ""
+        follow_link = components.start_bot_link(
+            "📬 click to follow",
+            bot_username=(await bot.me()).username,
+            payload=podcast.ppid,
+            encode_payload=True,
+        )
+        description = util.escape(podcast.meta.description) if podcast.meta.description else ""
+        description_len = len(description)
+
+        message_text = (
+            f"{tags.bold(podcast.meta.title)} ({follow_link})\n"
+            f"{tags.blockquote(description, expandable=description_len > 800)}"  # todo: const magic number
         )
 
-        ppid_encoded: str = urlsafe_b64encode(podcast.ppid.encode()).decode()
-        text = (
-            f"{tags.bold(podcast.meta.title)} ({tags.link("📬 click to subscribe", f"https://t.me/podcastie_bot?start={ppid_encoded}")})\n"
-            f"<blockquote expandable>{escaped_description}</blockquote>"
-        )
         message_content = InputTextMessageContent(
-            message_text=text,
+            message_text=message_text,
             link_preview_options=LinkPreviewOptions(
-                url=podcast.meta.link, prefer_small_media=True
-            ),
+                url=podcast.meta.link, prefer_small_media=description_len != 0
+            )
         )
 
         articles.append(
