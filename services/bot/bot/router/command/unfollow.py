@@ -5,8 +5,8 @@ from aiogram.types import Message
 from podcastie_database.models.user import User
 from podcastie_telegram_html import tags
 
-from bot.fsm import States
 from bot.core import subscription_manager
+from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_ppid
 
@@ -14,7 +14,9 @@ router = Router()
 router.message.middleware(DatabaseMiddleware())
 
 
-def format_failed_transaction_identifier(t: subscription_manager.TransactionResultFailure):
+def format_failed_transaction_identifier(
+    t: subscription_manager.TransactionResultFailure,
+):
     if t.podcast_title:
         return tags.link(t.podcast_title, t.podcast_link)
     return tags.code(t.action.target_identifier.value)
@@ -39,18 +41,18 @@ async def handle_unfollow_state(
     if succeeded:
         transaction = succeeded[0]
         await state.clear()
-        response = f"👍 Done. I have successfully unsubscribed you from {tags.link(transaction.podcast_title, transaction.podcast_title)}",
+        response = (
+            f"👍 Done. I have successfully unsubscribed you from {tags.link(transaction.podcast_title, transaction.podcast_title)}",
+        )
 
     else:
         transaction = failed[0]
-        response = (f"I failed to unsubscribe you from {format_failed_transaction_identifier(transaction)}. Reason: {transaction.error_message}.\n"
-                             f"Please try again or /cancel this action."
-                    )
+        response = (
+            f"I failed to unsubscribe you from {format_failed_transaction_identifier(transaction)}. Reason: {transaction.error_message}.\n"
+            f"Please try again or /cancel this action."
+        )
 
-    await message.answer(
-        response,
-        disable_web_page_preview=True
-    )
+    await message.answer(response, disable_web_page_preview=True)
 
 
 @router.message(Command("unfollow"))

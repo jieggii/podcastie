@@ -19,11 +19,16 @@ router.message.middleware(DatabaseMiddleware())
 MAX_IDENTIFIERS = 20
 
 
-def format_failed_transaction_identifier(t: subscription_manager.TransactionResultFailure) -> str:
+def format_failed_transaction_identifier(
+    t: subscription_manager.TransactionResultFailure,
+) -> str:
     if t.podcast_title:
         return link(t.podcast_title, t.podcast_link)
 
-    if t.action.target_identifier.type == subscription_manager.PodcastIdentifierType.PPID:
+    if (
+        t.action.target_identifier.type
+        == subscription_manager.PodcastIdentifierType.PPID
+    ):
         return code(t.action.target_identifier.value)
 
     return t.action.target_identifier.value
@@ -68,7 +73,9 @@ async def handle_follow_state(
     if succeeded:
         response = "✨ You have successfully subscribed to the following podcasts:\n"
         for transaction in succeeded:
-            response += f"👌 {link(transaction.podcast_title, transaction.podcast_link)}\n"
+            response += (
+                f"👌 {link(transaction.podcast_title, transaction.podcast_link)}\n"
+            )
 
         response += (
             "\n"

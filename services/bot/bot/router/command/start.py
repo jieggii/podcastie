@@ -15,7 +15,9 @@ router = Router()
 router.message.middleware(DatabaseMiddleware(create_user=False))
 
 
-def format_failed_transaction_identifier(t: subscription_manager.TransactionResultFailure) -> str:
+def format_failed_transaction_identifier(
+    t: subscription_manager.TransactionResultFailure,
+) -> str:
     if t.podcast_title:
         return tags.link(t.podcast_title, t.podcast_link)
     return tags.code(t.action.target_identifier.value)

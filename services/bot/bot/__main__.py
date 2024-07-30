@@ -3,11 +3,11 @@ import logging
 import sys
 
 import aiogram.loggers
-from podcastie_database.init import init_database
 import structlog
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from podcastie_database.init import init_database
 
 from bot.env import env
 from bot.router import command, inline_query

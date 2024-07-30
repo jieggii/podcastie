@@ -9,7 +9,7 @@ from podcastie_database.models.user import User
 from podcastie_telegram_html.tags import link
 from structlog import get_logger
 
-from bot.core import subscription_manager, opml
+from bot.core import opml, subscription_manager
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url
@@ -90,7 +90,9 @@ async def handle_import_state(
     if succeeded:  # if followed all podcasts without any fails
         response = "✨ You have successfully subscribed to the following podcasts:\n"
         for transaction in succeeded:
-            response += f"👌 {link(transaction.podcast_title, transaction.podcast_link)}\n"
+            response += (
+                f"👌 {link(transaction.podcast_title, transaction.podcast_link)}\n"
+            )
 
         response += (
             "\n"
