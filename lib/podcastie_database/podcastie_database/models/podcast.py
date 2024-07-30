@@ -98,10 +98,10 @@ class Podcast(Document):
         return cls(
             feed_url=feed_url,
             feed_url_hash_prefix=_sha256(feed_url)[:_FEED_URL_HASH_PREFIX_LEN],
-            title_slug=generate_podcast_title_slug(feed.title),
 
             meta=PodcastMeta(
                 title=feed.title,
+                title_slug=generate_podcast_title_slug(feed.title),
                 description=feed.description,
                 link=feed.link,
                 cover_url=feed.cover_url,
