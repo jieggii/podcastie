@@ -2,6 +2,7 @@ import asyncio
 import time
 import typing
 from asyncio import Queue
+from base64 import urlsafe_b64encode
 from dataclasses import dataclass
 
 import aiogram.exceptions
@@ -15,6 +16,7 @@ from aiogram.enums.chat_action import ChatAction
 from aiogram.types import Message, URLInputFile
 from podcastie_database.models.podcast import Podcast, PodcastMetaPatch, generate_podcast_title_slug
 from podcastie_database.models.user import User
+from podcastie_telegram_html import components, tags, util
 from podcastie_telegram_html.tags import link
 from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 
@@ -35,6 +37,7 @@ class Episode:
     link: str | None  # Link to the specific episode
     description: str | None  # Description of the episode
 
+    podcast_ppid: str
     podcast_title: str  # title of the podcast
     podcast_link: str | None  # link to the podcast's main page
     podcast_cover_url: str | None  # URL to the podcast's cover image
@@ -174,6 +177,7 @@ class Notifier:
                         audio=feed.latest_episode.audio_file,
                         link=feed.latest_episode.link,
                         description=feed.latest_episode.description,
+                        podcast_ppid=podcast.ppid,
                         podcast_title=podcast.meta.title,
                         podcast_link=podcast.meta.link,
                         podcast_cover_url=feed.cover_url,
@@ -196,13 +200,22 @@ class Notifier:
 
             log.info(f"start broadcasting")
 
-            notification_text = (
+            footer_links = [
+                link("audio", episode.audio.url),
+                components.start_bot_link(
+                    "follow",
+                    bot_username=(await self._bot.get_me()).username,
+                    payload=episode.podcast_ppid,
+                    encode_payload=True,
+                )
+            ]
+            description = util.escape(episode.description) if episode.description else ""
+
+            text = (
                 f"🎉 {link(episode.podcast_title, episode.podcast_link)} "
                 f"has published a new episode - {link(episode.title, episode.link)}\n"
-                "\n"
-                f"{episode.description if episode.description else ''}\n"
-                "\n"
-                f"📁 Download original episode audio {link('here', episode.audio.url)}."
+                f"{tags.blockquote(description, expandable=len(description) > 800)}\n"  # todo: const magic number
+                f"{components.footer(footer_links)}"
             )
 
             for user_id in episode.recipient_user_ids:
@@ -212,7 +225,7 @@ class Notifier:
                 try:
                     await self._http_retryer.wrap(
                         self._bot.send_message,
-                        kwargs={"chat_id": user_id, "text": notification_text},
+                        kwargs={"chat_id": user_id, "text": text, "disable_web_page_preview": True},
                         retry_callback=lambda attempt, prev_e: log.warning(
                             "retrying to send text notification", attempt=attempt, e=prev_e
                         ),
