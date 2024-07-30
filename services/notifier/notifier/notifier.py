@@ -174,7 +174,6 @@ class Notifier:
                         audio=feed.latest_episode.audio_file,
                         link=feed.latest_episode.link,
                         description=feed.latest_episode.description,
-
                         podcast_title=podcast.meta.title,
                         podcast_link=podcast.meta.link,
                         podcast_cover_url=feed.cover_url,

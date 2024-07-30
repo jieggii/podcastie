@@ -1,8 +1,4 @@
-_ESCAPE_TOKENS = {
-    ">": "&gt;",
-    "<": "&lt;",
-    "&": "&amp;"
-}
+_ESCAPE_TOKENS = {">": "&gt;", "<": "&lt;", "&": "&amp;"}
 
 
 def escape(text: str) -> str:

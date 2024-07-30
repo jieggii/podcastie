@@ -7,5 +7,6 @@ def link(text: str, url: str | None = None) -> str:
 def code(text: str) -> str:
     return f"<code>{text}</code>"
 
+
 def bold(text: str) -> str:
     return f"<b>{text}</b>"

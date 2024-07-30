@@ -1,5 +1,6 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
+
 from podcastie_database.models.podcast import Podcast
 from podcastie_database.models.user import User
 

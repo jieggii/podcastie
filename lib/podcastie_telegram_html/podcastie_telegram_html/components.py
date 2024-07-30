@@ -1,4 +1,3 @@
-
 def footer(items: list[str]) -> str:
     return " • ".join(items)
 

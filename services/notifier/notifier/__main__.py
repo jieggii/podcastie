@@ -1,7 +1,7 @@
 import asyncio
 
-from podcastie_database.init import init_database
 import structlog
+from podcastie_database.init import init_database
 
 from notifier.env import env
 from notifier.notifier import Notifier

@@ -1,13 +1,12 @@
-import time
 import hashlib
+import time
+from string import punctuation
 from typing import TypedDict
 
 import podcastie_rss
 import pymongo
 from beanie import Document, Indexed
 from pydantic import BaseModel
-from string import punctuation
-
 
 _TITLE_SLUG_FORBIDDEN_CHARS = set(punctuation)
 _FEED_URL_HASH_PREFIX_LEN = 7
@@ -26,6 +25,7 @@ def generate_podcast_title_slug(title: str) -> str:
 
     return "".join(slug_chars)
 
+
 class PodcastMetaPatch(TypedDict):
     new_title: str
     new_title_slug: str
@@ -33,6 +33,7 @@ class PodcastMetaPatch(TypedDict):
     new_description: str | None
     new_link: str | None
     new_cover_url: str | None
+
 
 class PodcastMeta(BaseModel):
     title: str
@@ -71,6 +72,7 @@ class PodcastMeta(BaseModel):
 
         return patched
 
+
 class PodcastLatestEpisodeInfo(BaseModel):
     check_ts: int
     check_success: bool
@@ -98,7 +100,6 @@ class Podcast(Document):
         return cls(
             feed_url=feed_url,
             feed_url_hash_prefix=_sha256(feed_url)[:_FEED_URL_HASH_PREFIX_LEN],
-
             meta=PodcastMeta(
                 title=feed.title,
                 title_slug=generate_podcast_title_slug(feed.title),
@@ -109,8 +110,8 @@ class Podcast(Document):
             latest_episode_info=PodcastLatestEpisodeInfo(
                 check_ts=int(time.time()),
                 check_success=True,
-                publication_ts=feed.latest_episode.published if feed.latest_episode else None
-            )
+                publication_ts=feed.latest_episode.published if feed.latest_episode else None,
+            ),
         )
 
     @property
