@@ -1,12 +1,13 @@
-def link(text: str, url: str | None = None) -> str:
+def link(child: str, url: str | None = None) -> str:
     if url:
-        return f'<a href="{url}">{text}</a>'
-    return text
+        return f'<a href="{url}">{child}</a>'
+    return child
 
 
-def code(text: str) -> str:
-    return f"<code>{text}</code>"
+def code(child: str) -> str:
+    return f"<code>{child}</code>"
 
 
-def bold(text: str) -> str:
-    return f"<b>{text}</b>"
+def bold(child: str) -> str:
+    return f"<b>{child}</b>"
+
