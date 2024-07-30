@@ -17,7 +17,7 @@ def _sha256(plaintext: str) -> str:
     return hashlib.sha256(plaintext.encode(), usedforsecurity=False).hexdigest()
 
 
-def generate_title_slug(title: str) -> str:
+def generate_podcast_title_slug(title: str) -> str:
     slug_chars: list[str] = []
     for c in title:
         if c.isspace() or c in _TITLE_SLUG_FORBIDDEN_CHARS:
@@ -98,7 +98,7 @@ class Podcast(Document):
         return cls(
             feed_url=feed_url,
             feed_url_hash_prefix=_sha256(feed_url)[:_FEED_URL_HASH_PREFIX_LEN],
-            title_slug=generate_title_slug(feed.title),
+            title_slug=generate_podcast_title_slug(feed.title),
 
             meta=PodcastMeta(
                 title=feed.title,
