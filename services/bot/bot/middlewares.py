@@ -2,7 +2,7 @@ from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import InlineQuery, Message
-from podcastie_database import User
+from podcastie_database.models.user import User
 
 
 class DatabaseMiddleware(BaseMiddleware):

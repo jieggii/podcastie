@@ -1,5 +1,5 @@
 import listparser
-from podcastie_database import Podcast
+from podcastie_database.models.podcast import Podcast
 
 
 class OPMLParseError(Exception):

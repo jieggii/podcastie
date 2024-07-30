@@ -8,7 +8,8 @@ from aiogram.types import (
     LinkPreviewOptions,
 )
 from beanie.operators import Text
-from podcastie_database import Podcast, User
+from podcastie_database.models.podcast import Podcast
+from podcastie_database.models.user import User
 from podcastie_telegram_html import tags, util
 
 from bot.middlewares import DatabaseMiddleware
@@ -58,29 +59,29 @@ async def handle_inline_query(query: InlineQuery, user: User | None) -> None:
     articles: list[InlineQueryResultArticle] = []
     for podcast in results:
         escaped_description: str | None = (
-            util.escape(podcast.description) if podcast.description else ""
+            util.escape(podcast.meta.description) if podcast.meta.description else ""
         )
 
         ppid_encoded: str = urlsafe_b64encode(podcast.ppid.encode()).decode()
         text = (
-            f"{tags.bold(podcast.title)} ({tags.link("📬 click to subscribe", f"https://t.me/podcastie_bot?start={ppid_encoded}")})\n"
+            f"{tags.bold(podcast.meta.title)} ({tags.link("📬 click to subscribe", f"https://t.me/podcastie_bot?start={ppid_encoded}")})\n"
             f"<blockquote expandable>{escaped_description}</blockquote>"
         )
         message_content = InputTextMessageContent(
             message_text=text,
             link_preview_options=LinkPreviewOptions(
-                url=podcast.link, prefer_small_media=True
+                url=podcast.meta.link, prefer_small_media=True
             ),
         )
 
         articles.append(
             InlineQueryResultArticle(
-                id=podcast.ppid,
-                title=podcast.title,
+                id=podcast.meta.hash(),
+                title=podcast.meta.title,
                 input_message_content=message_content,
-                url=podcast.link,
-                description=podcast.description,
-                thumbnail_url=podcast.cover_url,
+                url=podcast.meta.link,
+                description=podcast.meta.description,
+                thumbnail_url=podcast.meta.cover_url,
             )
         )
 
