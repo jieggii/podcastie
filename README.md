@@ -11,7 +11,7 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 * **Manage Subscriptions**: Easily manage your podcast subscriptions.
 * **Import and Export Subscriptions**: Effortlessly import and export your podcast subscriptions in OPML format for easy management and backup.
 * **Share Your Favorite Shows With Friends**: Use inline mode to share your favorite podcasts with friends.
-* **Instant Links**: Use Instant Links to follow any show in two taps ([like this one](https://t.me/podcastie_bot?start=thejoeroganexperience#a8cbb9f)).
+* **Instant Links**: Use Instant Links to follow any show in two taps ([like this one](https://t.me/podcastie_bot?start=dGhlam9lcm9nYW5leHBlcmllbmNlI2E4Y2JiOWY=)).
 
 ## Available interactions:
 ### Commands in private chat with the bot:
