@@ -1,5 +1,6 @@
 import time
 import hashlib
+from typing import TypedDict
 
 import podcastie_rss
 import pymongo
@@ -25,6 +26,14 @@ def generate_title_slug(title: str) -> str:
 
     return "".join(slug_chars)
 
+class PodcastMetaPatch(TypedDict):
+    new_title: str
+    new_title_slug: str
+
+    new_description: str | None
+    new_link: str | None
+    new_cover_url: str | None
+
 class PodcastMeta(BaseModel):
     title: str
     title_slug: str
@@ -36,6 +45,31 @@ class PodcastMeta(BaseModel):
     def hash(self) -> str:
         plaintext = f"{self.title}{self.description}{self.link}{self.cover_url}"
         return _sha256(plaintext)
+
+    def patch(self, patch: PodcastMetaPatch) -> bool:
+        patched = False
+
+        if "new_title" in patch:
+            self.title = patch["new_title"]
+            patched = True
+
+        if "new_title_slug" in patch:
+            self.title_slug = patch["new_title_slug"]
+            patched = True
+
+        if "new_description" in patch:
+            self.description = patch["new_description"]
+            patched = True
+
+        if "new_link" in patch:
+            self.link = patch["new_link"]
+            patched = True
+
+        if "new_cover_url" in patch:
+            self.cover_url = patch["new_cover_url"]
+            patched = True
+
+        return patched
 
 class PodcastLatestEpisodeInfo(BaseModel):
     check_ts: int
