@@ -12,6 +12,10 @@ _TITLE_SLUG_FORBIDDEN_CHARS = set(punctuation)
 _FEED_URL_HASH_PREFIX_LEN = 7
 
 
+def _sha256(plaintext: str) -> str:
+    return hashlib.sha256(plaintext.encode(), usedforsecurity=False).hexdigest()
+
+
 def generate_title_slug(title: str) -> str:
     slug_chars: list[str] = []
     for c in title:
@@ -20,10 +24,6 @@ def generate_title_slug(title: str) -> str:
         slug_chars.append(c.lower())
 
     return "".join(slug_chars)
-
-def _generate_feed_url_hash(feed_url: str) -> str:
-    return hashlib.sha256(feed_url.encode(), usedforsecurity=False).hexdigest()
-
 
 class PodcastMeta(BaseModel):
     title: str
@@ -34,9 +34,8 @@ class PodcastMeta(BaseModel):
     cover_url: str | None
 
     def hash(self) -> str:
-        target = f"{self.title}{self.description}{self.link}{self.cover_url}"
-        hashsum = hashlib.sha256(target.encode(), usedforsecurity=False).hexdigest()
-        return hashsum
+        plaintext = f"{self.title}{self.description}{self.link}{self.cover_url}"
+        return _sha256(plaintext)
 
 class PodcastLatestEpisodeInfo(BaseModel):
     check_ts: int
@@ -64,7 +63,7 @@ class Podcast(Document):
     def from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
         return cls(
             feed_url=feed_url,
-            feed_url_hash_prefix=_generate_feed_url_hash(feed_url)[:_FEED_URL_HASH_PREFIX_LEN],
+            feed_url_hash_prefix=_sha256(feed_url)[:_FEED_URL_HASH_PREFIX_LEN],
             title_slug=generate_title_slug(feed.title),
 
             meta=PodcastMeta(
