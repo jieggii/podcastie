@@ -11,3 +11,8 @@ def code(child: str) -> str:
 def bold(child: str) -> str:
     return f"<b>{child}</b>"
 
+
+def blockquote(child: str, expandable: bool = False) -> str:
+    if expandable:
+        return f"<blockquote expandable>{child}</blockquote>"
+    return f"<blockquote>{child}</blockquote>"
