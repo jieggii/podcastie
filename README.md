@@ -17,11 +17,11 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 ### Commands in private chat with the bot:
 * `/follow` - start following podcast.
 * `/unfollow` - stop following podcast.
-* `/list` — list podcasts you are following.
+* `/list` - list podcasts you are following.
 * `/import` - import subscriptions from an OPML file.
 * `/export` - export subscriptions as OPML file.
-* `/faq` — get list of frequently asked questions.
-* `/about` — get additional information about the bot.
+* `/faq` - get list of frequently asked questions.
+* `/about` - get additional information about the bot.
 
 ### Inline mode
 Type the bot's username (`@podcastie_bot`) in any chat to see the list of podcasts you follow.
