@@ -190,7 +190,7 @@ class SubscriptionsManager:
                         failure_results.append(
                             TransactionResultFailure(
                                 action=action,
-                                error_message="unexpected error when resolving podcast",
+                                error_message="unexpected error when resolving podcast",  # todo: log exception here
                             )
                         )
                 continue
