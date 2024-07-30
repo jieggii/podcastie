@@ -115,7 +115,7 @@ class Podcast(Document):
 
     @property
     def ppid(self) -> str:
-        return f"{self.title_slug}#{self.feed_url_hash_prefix}"
+        return f"{self.meta.title_slug}#{self.feed_url_hash_prefix}"
 
     def __repr__(self) -> str:
         return self.__str__()
