@@ -1,6 +1,6 @@
 import asyncio
 
-import podcastie_database
+from podcastie_database.init import init_database
 import structlog
 
 from notifier.env import env
@@ -11,7 +11,7 @@ async def main() -> None:
     log = structlog.get_logger().bind(task="main")
 
     log.info("connecting to the database")
-    await podcastie_database.init(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
+    await init_database(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
 
     notifier = Notifier(
         bot_token=env.Bot.TOKEN,
