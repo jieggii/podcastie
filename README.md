@@ -1,8 +1,10 @@
 # podcastie
-> [!WARNING]
-> Work in progress, estimating release in July - August 2024.
+<img src="https://imgur.com/kapg35n.jpg" alt="art" width="30%">
 
 Subscribe to your favorite podcasts, share them with friends, and listen to new episodes right within Telegram!
+
+> [!WARNING]
+> Work in progress, estimating release in July - August 2024.
 
 ## Features
 * **Subscribe to Podcasts**: Simply provide the RSS feed URL or PPID of your favorite podcast to start receiving new episodes.
