@@ -23,14 +23,14 @@ services:
 
     restart: unless-stopped
 
-  notifier:
-    container_name: podcastie-notifier
+  feed_poller:
+    container_name: podcastie-feed_poller
     build:
       context: .
-      dockerfile: ./services/notifier/Dockerfile
+      dockerfile: ./services/feed_poller/Dockerfile
 
     environment:
-      NOTIFIER_POLL_INTERVAL: 300
+      FEED_POLLER_INTERVAL: 5
 
       BOT_TOKEN_FILE: /run/secrets/bot_token
 

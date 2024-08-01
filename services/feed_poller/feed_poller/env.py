@@ -11,9 +11,9 @@ class Env(BaseConfig):
     class Mongo(MongoConfig):
         pass
 
-    class Notifier(BaseConfig):
-        _prefix_ = "NOTIFIER"
-        POLL_INTERVAL = field(caster=to_int)
+    class FeedPoller(BaseConfig):
+        _prefix_ = "FEED_POLLER"
+        INTERVAL = field(caster=to_int)
 
 
 env = Env()

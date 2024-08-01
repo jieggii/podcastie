@@ -26,4 +26,4 @@ fmt:
 	cd ./lib/podcastie_telegram_html && pdm run fmt
 
 	cd ./services/bot && pdm run fmt
-	cd ./services/notifier && pdm run fmt
+	cd ./services/feed_poller && pdm run fmt

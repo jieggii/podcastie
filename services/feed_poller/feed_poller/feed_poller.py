@@ -20,8 +20,8 @@ from podcastie_telegram_html import components, tags, util
 from podcastie_telegram_html.tags import link
 from structlog.contextvars import bind_contextvars, clear_contextvars, unbind_contextvars
 
-from notifier.bot_session import LocalTelegramAPIAiohttpSession
-from notifier.http_retryer import HTTPRetryer
+from feed_poller.bot_session import LocalTelegramAPIAiohttpSession
+from feed_poller.http_retryer import HTTPRetryer
 
 _AUDIO_FILE_SIZE_LIMIT = 2000 * 1024 * 1024  # Max audio file size allowed by Telegram
 _AUDIO_FILE_CHUNK_SIZE = 512 * 1024  # 512 kb
@@ -44,7 +44,7 @@ class Episode:
     audio_telegram_file_id: str | None = None  # Telegram file_id of the audio file
 
 
-class Notifier:
+class FeedPoller:
     _poll_interval: int
     _log_broadcast_queue_size_interval: int
 
