@@ -32,17 +32,14 @@ _AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
 
 @dataclass
 class Episode:
+    recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
+
     title: str
     audio: podcastie_rss.AudioFile
+    podcast: Podcast
+
     link: str | None  # Link to the specific episode
     description: str | None  # Description of the episode
-
-    podcast_ppid: str
-    podcast_title: str  # title of the podcast
-    podcast_link: str | None  # link to the podcast's main page
-    podcast_cover_url: str | None  # URL to the podcast's cover image
-
-    recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
 
     audio_telegram_file_id: str | None = None  # Telegram file_id of the audio file
 
@@ -173,15 +170,12 @@ class Notifier:
 
                     log.info("send episode to the BROADCAST queue")
                     episode = Episode(
+                        recipient_user_ids=[follower.user_id for follower in followers],
                         title=feed.latest_episode.title,
                         audio=feed.latest_episode.audio_file,
+                        podcast=podcast,
                         link=feed.latest_episode.link,
                         description=feed.latest_episode.description,
-                        podcast_ppid=podcast.ppid,
-                        podcast_title=podcast.meta.title,
-                        podcast_link=podcast.meta.link,
-                        podcast_cover_url=feed.cover_url,
-                        recipient_user_ids=[follower.user_id for follower in followers],
                     )
                     await self._broadcast_queue.put(episode)
 
@@ -196,26 +190,27 @@ class Notifier:
 
         while True:
             episode = await self._broadcast_queue.get()
-            bind_contextvars(podcast=episode.podcast_title, episode=episode.title)
+            bind_contextvars(podcast=episode.podcast.meta.title, episode=episode.title)
 
             log.info(f"start broadcasting")
 
-            footer_links = [
+            footer_items = [
                 link("audio", episode.audio.url),
                 components.start_bot_link(
                     "follow",
                     bot_username=(await self._bot.get_me()).username,
-                    payload=episode.podcast_ppid,
+                    payload=episode.podcast.ppid,
                     encode_payload=True,
                 ),
+                f"#{episode.podcast.meta.title_slug}"
             ]
             description = util.escape(episode.description) if episode.description else ""
 
             text = (
-                f"🎉 {link(episode.podcast_title, episode.podcast_link)} "
+                f"🎉 {link(episode.podcast.meta.title, episode.podcast.meta.link)} "
                 f"has published a new episode - {link(episode.title, episode.link)}\n"
                 f"{tags.blockquote(description, expandable=len(description) > 800)}\n"  # todo: const magic number
-                f"{components.footer(footer_links)}"
+                f"{components.footer(footer_items)}"
             )
 
             for user_id in episode.recipient_user_ids:
@@ -274,8 +269,8 @@ class Notifier:
                             "chat_id": user_id,
                             "audio": audio_file,
                             "title": episode.title,
-                            "performer": episode.podcast_title,
-                            "thumbnail": URLInputFile(episode.podcast_cover_url) if episode.podcast_cover_url else None,
+                            "performer": episode.podcast.meta.title,
+                            "thumbnail": URLInputFile(episode.podcast.meta.cover_url) if episode.podcast.meta.cover_url else None,
                             "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate if it's file upload timeout or just API call timeout
                         },
                         retry_callback=lambda attempt, prev_e: log.warning(
