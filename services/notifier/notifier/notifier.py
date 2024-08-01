@@ -207,7 +207,7 @@ class Notifier:
                     bot_username=(await self._bot.get_me()).username,
                     payload=episode.podcast_ppid,
                     encode_payload=True,
-                )
+                ),
             ]
             description = util.escape(episode.description) if episode.description else ""
 

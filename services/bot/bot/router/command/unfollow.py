@@ -41,9 +41,7 @@ async def handle_unfollow_state(
     if succeeded:
         transaction = succeeded[0]
         await state.clear()
-        response = (
-            f"👍 Done. I have successfully unsubscribed you from {tags.link(transaction.podcast_title, transaction.podcast_link)}."
-        )
+        response = f"👍 Done. I have successfully unsubscribed you from {tags.link(transaction.podcast_title, transaction.podcast_link)}."
 
     else:
         transaction = failed[0]

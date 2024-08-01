@@ -9,7 +9,7 @@ from aiogram.types import (
 from beanie.operators import Text
 from podcastie_database.models.podcast import Podcast
 from podcastie_database.models.user import User
-from podcastie_telegram_html import tags, util, components
+from podcastie_telegram_html import components, tags, util
 
 from bot.middlewares import DatabaseMiddleware
 
@@ -19,7 +19,9 @@ router.inline_query.middleware(DatabaseMiddleware(create_user=False))
 
 
 @router.inline_query()
-async def handle_inline_query(query: InlineQuery, user: User | None, bot: aiogram.Bot) -> None:
+async def handle_inline_query(
+    query: InlineQuery, user: User | None, bot: aiogram.Bot
+) -> None:
     query_text = query.query
 
     results: list[Podcast]  # search results that will be displayed to user
@@ -63,7 +65,9 @@ async def handle_inline_query(query: InlineQuery, user: User | None, bot: aiogra
             payload=podcast.ppid,
             encode_payload=True,
         )
-        description = util.escape(podcast.meta.description) if podcast.meta.description else ""
+        description = (
+            util.escape(podcast.meta.description) if podcast.meta.description else ""
+        )
         description_len = len(description)
 
         message_text = (
@@ -75,7 +79,7 @@ async def handle_inline_query(query: InlineQuery, user: User | None, bot: aiogra
             message_text=message_text,
             link_preview_options=LinkPreviewOptions(
                 url=podcast.meta.link, prefer_small_media=description_len != 0
-            )
+            ),
         )
 
         articles.append(
