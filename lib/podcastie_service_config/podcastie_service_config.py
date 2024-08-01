@@ -4,7 +4,7 @@ from betterconf import Config, compose_field, field
 from betterconf.caster import to_int
 
 
-def _get_value(value: str | None, value_file: str | None) -> str | NoReturn:
+def _get_value(value: str | None, value_file: str | None) -> str:
     if not (value or value_file):
         raise ValueError("value and value file are both None")
     if value and value_file:
