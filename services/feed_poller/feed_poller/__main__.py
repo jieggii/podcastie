@@ -1,6 +1,7 @@
 import asyncio
 
 import structlog
+from feed_poller.episode_broadcaster import EpisodeBroadcaster
 from podcastie_database.init import init_database
 
 from feed_poller.env import env
@@ -13,13 +14,22 @@ async def main() -> None:
     log.info("connecting to the database")
     await init_database(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
 
-    poller = FeedPoller(
+    episode_broadcaster = EpisodeBroadcaster(
+        bot_api_host=env.FeedPoller.BOT_API_HOST,
+        bot_api_port=env.FeedPoller.BOT_API_PORT,
         bot_token=env.Bot.TOKEN,
-        poll_interval=env.FeedPoller.INTERVAL,
+    )
+    feed_poller = FeedPoller(
+        interval=env.FeedPoller.INTERVAL,
+        new_episode_consumer=episode_broadcaster.add_episode
     )
 
     log.info("starting feed poller")
-    await poller.start()
+    tasks = [
+        episode_broadcaster.run(),
+        feed_poller.run(),
+    ]
+    await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":

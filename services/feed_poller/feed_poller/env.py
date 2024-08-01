@@ -14,6 +14,8 @@ class Env(BaseConfig):
     class FeedPoller(BaseConfig):
         _prefix_ = "FEED_POLLER"
         INTERVAL = field(caster=to_int)
+        BOT_API_HOST = field()
+        BOT_API_PORT = field(caster=to_int)
 
 
 env = Env()
