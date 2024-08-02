@@ -38,3 +38,8 @@ A podcast card containing an Instant Link to follow it will be sent to the chat.
 Podcastie can be easily selfhosted. Follow these simple instructions to make it work!
 
 ...
+
+
+---
+
+*Created with ❤️ by [jieggii](https://github.com/jiegii) (art by [ellik](https://www.pixilart.com/ellik))*
