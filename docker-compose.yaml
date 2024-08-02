@@ -31,6 +31,8 @@ services:
 
     environment:
       FEED_POLLER_INTERVAL: 5
+      FEED_POLLER_BOT_API_HOST: telegram-bot-api
+      FEED_POLLER_BOT_API_PORT: 8081
 
       BOT_TOKEN_FILE: /run/secrets/bot_token
 
