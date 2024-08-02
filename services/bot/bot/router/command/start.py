@@ -16,6 +16,14 @@ router = Router()
 router.message.middleware(DatabaseMiddleware(create_user=False))
 
 
+def parse_ppid_param(message_text: str) -> str | None:
+    tokens = message_text.split(maxsplit=2)
+    if len(tokens) != 2:
+        return None
+
+    ppid_encoded = tokens[1]
+    return base64.urlsafe_b64decode(ppid_encoded.encode()).decode()
+
 def format_failed_transaction_identifier(
     t: subscription_manager.TransactionResultFailure,
 ) -> str:
@@ -31,12 +39,10 @@ async def handle_start(message: Message, state: FSMContext, user: User) -> None:
 
     # parse bot deeplink param (https://core.telegram.org/api/links#bot-links):
     ppid: str | None = None
-    if len(tokens) == 2:
-        ppid_encoded = tokens[1]
-        try:
-            ppid = base64.urlsafe_b64decode(ppid_encoded.encode()).decode()
-        except binascii.Error:
-            await message.answer("⚠️ Failed to decode PPID provided as a parameter.")
+    try:
+        ppid = parse_ppid_param(message.text)
+    except binascii.Error:
+        await message.answer("⚠️ Failed to decode PPID provided as a parameter.")
 
     if (not user) or (user and not ppid):
         await message.answer(
