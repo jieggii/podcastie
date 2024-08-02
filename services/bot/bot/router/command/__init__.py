@@ -7,7 +7,6 @@ from . import (
     help,
     import_,
     list,
-    search,
     start,
     unfollow,
 )
