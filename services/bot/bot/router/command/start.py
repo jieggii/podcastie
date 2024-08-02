@@ -24,6 +24,7 @@ def parse_ppid_param(message_text: str) -> str | None:
     ppid_encoded = tokens[1]
     return base64.urlsafe_b64decode(ppid_encoded.encode()).decode()
 
+
 def format_failed_transaction_identifier(
     t: subscription_manager.TransactionResultFailure,
 ) -> str:

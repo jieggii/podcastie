@@ -1,23 +1,20 @@
+from asyncio import Queue
 from dataclasses import dataclass
 
-from asyncio import Queue
-
-from aiogram.exceptions import TelegramForbiddenError
 import podcastie_rss
 import structlog
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode, ChatAction
-from aiogram.types import URLInputFile, Message
-from feed_poller.bot_session import LocalTelegramAPIAiohttpSession
-from podcastie_telegram_html import util, tags
-from podcastie_telegram_html.tags import link
-
+from aiogram.enums import ChatAction, ParseMode
+from aiogram.exceptions import TelegramForbiddenError
+from aiogram.types import Message, URLInputFile
 from podcastie_database.models.podcast import Podcast
-
-from feed_poller.http_retryer import HTTPRetryer
-from podcastie_telegram_html import components
+from podcastie_telegram_html import components, tags, util
+from podcastie_telegram_html.tags import link
 from structlog.contextvars import bind_contextvars, unbind_contextvars
+
+from feed_poller.bot_session import LocalTelegramAPIAiohttpSession
+from feed_poller.http_retryer import HTTPRetryer
 
 _AUDIO_FILE_SIZE_LIMIT = 2000 * 1024 * 1024  # Max audio file size allowed by Telegram
 _AUDIO_FILE_CHUNK_SIZE = 512 * 1024  # 512 kb
@@ -80,7 +77,7 @@ class EpisodeBroadcaster:
                     payload=episode.podcast.ppid,
                     encode_payload=True,
                 ),
-                f"#{episode.podcast.meta.title_slug}"
+                f"#{episode.podcast.meta.title_slug}",
             ]
             description = util.escape(episode.description) if episode.description else ""
 
@@ -148,7 +145,9 @@ class EpisodeBroadcaster:
                             "audio": audio_file,
                             "title": episode.title,
                             "performer": episode.podcast.meta.title,
-                            "thumbnail": URLInputFile(episode.podcast.meta.cover_url) if episode.podcast.meta.cover_url else None,
+                            "thumbnail": (
+                                URLInputFile(episode.podcast.meta.cover_url) if episode.podcast.meta.cover_url else None
+                            ),
                             "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,
                         },
                         retry_callback=lambda attempt, prev_e: log.warning(

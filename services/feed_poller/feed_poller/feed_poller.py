@@ -1,15 +1,15 @@
 import asyncio
 import time
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 import aiohttp
 import podcastie_rss
 import structlog
-from feed_poller import episode_broadcaster
 from podcastie_database.models.podcast import Podcast, PodcastMetaPatch, generate_podcast_title_slug
 from podcastie_database.models.user import User
 from structlog.contextvars import bind_contextvars, clear_contextvars
 
+from feed_poller import episode_broadcaster
 from feed_poller.http_retryer import HTTPRetryer
 
 _EPISODE_CONSUMER_TYPE = Callable[[episode_broadcaster.Episode], Awaitable[None]]

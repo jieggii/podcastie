@@ -6,9 +6,8 @@ from podcastie_database.models.podcast import Podcast
 from podcastie_database.models.user import User
 
 from bot.core.opml import generate_opml
-from bot.middlewares import DatabaseMiddleware
 from bot.filters import StatePresenceFilter
-
+from bot.middlewares import DatabaseMiddleware
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())

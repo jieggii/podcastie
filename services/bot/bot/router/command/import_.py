@@ -10,10 +10,10 @@ from podcastie_telegram_html.tags import link
 from structlog import get_logger
 
 from bot.core import opml, subscription_manager
+from bot.filters import StatePresenceFilter
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url
-from bot.filters import StatePresenceFilter
 
 log = get_logger()
 router = Router()

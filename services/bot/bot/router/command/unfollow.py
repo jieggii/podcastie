@@ -6,10 +6,10 @@ from podcastie_database.models.user import User
 from podcastie_telegram_html import tags
 
 from bot.core import subscription_manager
+from bot.filters import StatePresenceFilter
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_ppid
-from bot.filters import StatePresenceFilter
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())

@@ -60,10 +60,8 @@ async def main() -> None:
         command.follow.router,
         command.unfollow.router,
         command.list.router,
-
         command.faq.router,
         command.about.router,
-
         command.import_.router,
         command.export.router,
         # command.search.router,
