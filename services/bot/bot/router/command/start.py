@@ -73,16 +73,16 @@ async def handle_start(message: Message, state: FSMContext, user: User) -> None:
     await manager.follow_by_ppid(ppid)
     succeeded, failed = await manager.commit()
 
-    text: str
+    response: str
     if succeeded:
         transaction = succeeded[0]
-        text = (
+        response = (
             f"✨ You have successfully subscribed to {tags.link(transaction.podcast_title, transaction.podcast_link)}\n"
             f"From now on, you will receive new episodes of this podcast as soon as they are released!\n\n"
             "Use /list to get list of your subscriptions and /unfollow to unfollow podcasts."
         )
     else:
         transaction = failed[0]
-        text = f"⚠️ Failed to subscribe to {format_failed_transaction_identifier(transaction)}: {transaction.error_message}."
+        response = f"⚠️ Failed to subscribe to {format_failed_transaction_identifier(transaction)}: {transaction.error_message}."
 
-    await message.answer(text, disable_web_page_preview=len(succeeded) == 0)
+    await message.answer(response, disable_web_page_preview=len(succeeded) == 0)
