@@ -2,10 +2,12 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
+from bot.filters import StatePresenceFilter
+
 router = Router()
 
 
-@router.message(Command("faq"))
+@router.message(Command("faq"), StatePresenceFilter(has_state=False))
 async def handle_faq(message: Message) -> None:
     await message.answer("Here are some useful questions and answers to them!")
     await message.answer(

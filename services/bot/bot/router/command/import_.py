@@ -13,6 +13,7 @@ from bot.core import opml, subscription_manager
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url
+from bot.filters import StatePresenceFilter
 
 log = get_logger()
 router = Router()
@@ -126,7 +127,7 @@ async def handle_import_state(
     await message.answer(response, disable_web_page_preview=len(succeeded) != 1)
 
 
-@router.message(Command("import"))
+@router.message(Command("import"), StatePresenceFilter(has_state=False))
 async def handle_import_command(
     message: Message,
     state: FSMContext,

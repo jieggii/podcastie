@@ -3,10 +3,12 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from podcastie_telegram_html.tags import bold
 
+from bot.filters import StatePresenceFilter
+
 router = Router()
 
 
-@router.message(Command("help"))
+@router.message(Command("help"), StatePresenceFilter(has_state=False))
 async def handle_help(message: Message) -> None:
     await message.answer(
         f"{bold("Manage subscriptions")}\n"

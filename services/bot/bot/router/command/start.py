@@ -3,6 +3,7 @@ import binascii
 
 from aiogram import Router
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database.models.user import User
 from podcastie_telegram_html import tags
@@ -24,8 +25,11 @@ def format_failed_transaction_identifier(
 
 
 @router.message(CommandStart())
-async def handle_start(message: Message, user: User) -> None:
-    tokens = message.text.split(maxsplit=2)
+async def handle_start(message: Message, state: FSMContext, user: User) -> None:
+    # reset user's state to restart the bot:
+    await state.clear()
+
+    # parse bot deeplink param (https://core.telegram.org/api/links#bot-links):
     ppid: str | None = None
     if len(tokens) == 2:
         ppid_encoded = tokens[1]

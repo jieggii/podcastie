@@ -9,6 +9,7 @@ from bot.core import subscription_manager
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_ppid
+from bot.filters import StatePresenceFilter
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())
@@ -53,7 +54,7 @@ async def handle_unfollow_state(
     await message.answer(response, disable_web_page_preview=True)
 
 
-@router.message(Command("unfollow"))
+@router.message(Command("unfollow"), StatePresenceFilter(has_state=False))
 async def handle_unfollow_command(message: Message, state: FSMContext) -> None:
     # todo: check if it is a reply to a message with an episode
     # so that we could get ppid from there and simply unfollow the desired podcast

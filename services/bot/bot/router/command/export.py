@@ -7,12 +7,14 @@ from podcastie_database.models.user import User
 
 from bot.core.opml import generate_opml
 from bot.middlewares import DatabaseMiddleware
+from bot.filters import StatePresenceFilter
+
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())
 
 
-@router.message(Command("export"))
+@router.message(Command("export"), StatePresenceFilter(has_state=False))
 async def handle_export_command(message: Message, user: User, bot: Bot) -> None:
     if not user.following_podcasts:
         await message.answer("You have nothing to export yet!")

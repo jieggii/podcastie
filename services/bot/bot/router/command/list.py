@@ -9,13 +9,14 @@ from podcastie_database.models.user import User
 from podcastie_telegram_html.tags import link
 
 from bot.middlewares import DatabaseMiddleware
+from bot.filters import StatePresenceFilter
 
 router = Router()
 router.message.middleware(DatabaseMiddleware())
 
 
-@router.message(Command("list"))
-async def handle_list_command(message: Message, state: FSMContext, user: User) -> None:
+@router.message(Command("list"), StatePresenceFilter(has_state=False))
+async def handle_list_command(message: Message, user: User) -> None:
     if not user.following_podcasts:
         await message.answer(
             "📭 You don't follow any podcasts yet! Start by using the /follow command."

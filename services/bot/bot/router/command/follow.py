@@ -11,10 +11,12 @@ from bot.core import subscription_manager
 from bot.fsm import States
 from bot.middlewares import DatabaseMiddleware
 from bot.validators import is_feed_url, is_ppid
+from bot.filters import StatePresenceFilter
 
 log = get_logger()
 router = Router()
 router.message.middleware(DatabaseMiddleware())
+
 
 MAX_IDENTIFIERS = 20
 
@@ -113,7 +115,7 @@ async def handle_follow_state(
     await message.answer(response, disable_web_page_preview=len(succeeded) != 1)
 
 
-@router.message(Command("follow"))
+@router.message(Command("follow"), StatePresenceFilter(has_state=False))
 async def handle_follow_command(
     message: Message,
     state: FSMContext,

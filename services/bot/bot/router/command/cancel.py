@@ -3,10 +3,12 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from bot.filters import StatePresenceFilter
+
 router = Router()
 
 
-@router.message(Command("cancel"))
+@router.message(Command("cancel"), StatePresenceFilter(has_state=True))
 @router.message(F.text.casefold() == "cancel")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
