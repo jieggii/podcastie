@@ -56,16 +56,18 @@ async def main() -> None:
     # note: be sure to register cancel_command.router first so that it is the first router to handle /cancel command
     dp.include_router(command.cancel.router)
     dp.include_routers(
-        command.about.router,
-        command.export.router,
-        command.faq.router,
-        command.follow.router,
-        command.help.router,
-        command.import_.router,
-        command.list.router,
-        command.search.router,
         command.start.router,
+        command.follow.router,
         command.unfollow.router,
+        command.list.router,
+
+        command.faq.router,
+        command.about.router,
+
+        command.import_.router,
+        command.export.router,
+        # command.search.router,
+        command.help.router,
     )
     dp.include_router(inline_query.router)
 
