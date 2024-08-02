@@ -30,7 +30,9 @@ async def handle_unfollow_state(
     ppid = message.text
     if not is_ppid(ppid):
         await message.answer(
-            "This message does not look like a correct PPID. Please try again or /cancel this action."
+            "This message does not look like a correct PPID.\n"
+            "\n"
+            "Please try again or /cancel this action."
         )
         return
 
