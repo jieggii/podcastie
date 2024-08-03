@@ -1,4 +1,4 @@
-name: Build and Push Docker Images
+name: Build and Push Docker Images, Deploy Them on The Server
 
 on:
   push:
@@ -42,3 +42,22 @@ jobs:
           file: ./services/feed_poller/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/feed_poller:latest
+
+      - name: Pull Images and Deploy Them on The Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port:  ${{ secrets.SSH_PORT }}
+          user: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ${{ secrets.SSH_WORKDIR }}
+
+            # create secrets dir:
+            mkdir -p .secrets
+            echo "${{ secrets.BOT_TOKEN }}" > .secrets/bot_token
+            echo "${{ secrets.MONGO_DATABASE }}" > .secrets/mongo_database
+
+            # run images:
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ secrets.actor }}" --password-stdin
+            TG_API_HASH=${{ secrets.TG_API_HASH }} TG_API_ID=${{ secrets.TG_API_ID}} docker compose -f ./docker-compose.prod.yml up --build --detach
