@@ -44,7 +44,7 @@ jobs:
           tags: ghcr.io/${{ github.repository }}/feed_poller:latest
 
       - name: Pull Images and Deploy Them on The Server
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           port:  ${{ secrets.SSH_PORT }}
