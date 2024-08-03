@@ -26,14 +26,15 @@ jobs:
       - name: Build and push bot Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./services/bot
-#          file: Dockerfile
+          context: .
+          file: ./services/bot/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/bot:latest
 
       - name: Build and Push feed_poller Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./services/feed_poller
+          context: .
+          file: ./services/feed_poller/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/feed_poller:latest
