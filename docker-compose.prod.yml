@@ -1,0 +1,83 @@
+services:
+  bot:
+    container_name: podcastie-bot
+    image: jieggii/podcastie/bot:latest
+
+    secrets:
+      - bot_token
+#      - mongo_user
+#      - mongo_password
+      - mongo_database
+
+    environment:
+      BOT_TOKEN_FILE: /run/secrets/bot_token
+
+      MONGO_HOST: podcastie-mongo
+      MONGO_PORT: 27017
+      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+
+    depends_on:
+      - mongo
+
+    restart: unless-stopped
+
+  feed_poller:
+    container_name: podcastie-feed_poller
+    image: jieggii/podcastie/feed_poller:latest
+
+    environment:
+      FEED_POLLER_INTERVAL: 300
+      FEED_POLLER_BOT_API_HOST: telegram-bot-api
+      FEED_POLLER_BOT_API_PORT: 8081
+
+      BOT_TOKEN_FILE: /run/secrets/bot_token
+
+      MONGO_HOST: podcastie-mongo
+      MONGO_PORT: 27017
+      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+
+    depends_on:
+      - mongo
+      - telegram-bot-api
+
+    secrets:
+      - bot_token
+#      - mongo_user
+#      - mongo_password
+      - mongo_database
+
+    restart: unless-stopped
+
+  telegram-bot-api:
+    container_name: podcastie-telegram-bot-api
+    image: aiogram/telegram-bot-api
+    environment:
+      TG_API_HASH: ${TG_API_HASH}
+      TG_API_ID: ${TG_API_ID}
+
+  mongo:
+    container_name: podcastie-mongo
+    image: mongo
+    volumes:
+      - ./services/mongo:/data/db
+
+    secrets:
+      - mongo_database
+#      - mongo_user
+#      - mongo_password
+    environment:
+#      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_user
+#      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_password
+      MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo_database
+
+    restart: unless-stopped
+
+secrets:
+  bot_token:
+    file: ./.secrets/bot_token
+#  mongo_user:
+#    file: ./.secrets/mongo_user
+#  mongo_password:
+#    file: ./.secrets/mongo_password
+  mongo_database:
+    file: ./.secrets/mongo_database
