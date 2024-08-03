@@ -26,6 +26,6 @@ async def handle_export_command(message: Message, user: User, bot: Bot) -> None:
     opml = generate_opml(podcasts)
     file = BufferedInputFile(opml.encode(), "Podcastie.opml.xml")
 
-    await message.answer("📄 Here are your subscriptions in opml format:")
+    await message.answer("📄 Here are your subscriptions in OPML format:")
     await bot.send_chat_action(message.from_user.id, ChatAction.UPLOAD_DOCUMENT)
     await message.answer_document(file)
