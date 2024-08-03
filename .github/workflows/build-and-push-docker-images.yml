@@ -64,5 +64,5 @@ jobs:
 
             # run images:
             docker logout
-            echo "${{ env.GITHUB_TOKEN }}" | docker login --password-stdin --username "${{ env.GITHUB_ACTOR }}"
+            echo "${{ env.GITHUB_TOKEN }}" | docker login --password-stdin --username "${{ env.GITHUB_ACTOR }}" ghcr.io
             TG_API_HASH=${{ secrets.TG_API_HASH }} TG_API_ID=${{ secrets.TG_API_ID}} docker compose -f ./docker-compose.prod.yml up --build --detach
