@@ -48,7 +48,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           port:  ${{ secrets.SSH_PORT }}
-          user: ${{ secrets.SSH_USER }}
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ${{ secrets.SSH_WORKDIR }}
