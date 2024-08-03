@@ -1,7 +1,7 @@
 services:
   bot:
     container_name: podcastie-bot
-    image: jieggii/podcastie/bot:latest
+    image: ghcr.io/jieggii/podcastie/bot:latest
 
     secrets:
       - bot_token
@@ -23,7 +23,7 @@ services:
 
   feed_poller:
     container_name: podcastie-feed_poller
-    image: jieggii/podcastie/feed_poller:latest
+    image: ghcr.io/jieggii/podcastie/feed_poller:latest
 
     environment:
       FEED_POLLER_INTERVAL: 300
