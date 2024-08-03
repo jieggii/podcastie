@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -61,5 +62,5 @@ jobs:
             echo "${{ secrets.MONGO_DATABASE }}" > .secrets/mongo_database
 
             # run images:
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login --username "${{ env.GITHUB_ACTOR }}" --password-stdin
+            echo "${{ env.GITHUB_TOKEN }}" | docker login --username "${{ env.GITHUB_ACTOR }}" --password-stdin
             TG_API_HASH=${{ secrets.TG_API_HASH }} TG_API_ID=${{ secrets.TG_API_ID}} docker compose -f ./docker-compose.prod.yml up --build --detach
