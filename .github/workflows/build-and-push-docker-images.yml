@@ -56,13 +56,13 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd ${{ secrets.SSH_WORKDIR }}
+            
+            git pull
 
-            # create secrets dir:
             mkdir -p .secrets
             echo "${{ secrets.BOT_TOKEN }}" > .secrets/bot_token
             echo "${{ secrets.MONGO_DATABASE }}" > .secrets/mongo_database
 
-            # run images:
-            docker logout
+#            docker logout
             echo "${{ env.GITHUB_TOKEN }}" | docker login --password-stdin --username "${{ env.GITHUB_ACTOR }}" ghcr.io
             TG_API_HASH=${{ secrets.TG_API_HASH }} TG_API_ID=${{ secrets.TG_API_ID}} docker compose -f ./docker-compose.prod.yml up --build --detach
