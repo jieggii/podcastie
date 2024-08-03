@@ -1,12 +1,9 @@
-import datetime
-
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from podcastie_database.models.podcast import Podcast
 from podcastie_database.models.user import User
-from podcastie_telegram_html.tags import link
+from podcastie_telegram_html.tags import link, code
 
 from bot.filters import StatePresenceFilter
 from bot.middlewares import DatabaseMiddleware
@@ -28,14 +25,9 @@ async def handle_list_command(message: Message, user: User) -> None:
         podcast = await Podcast.find_one(Podcast.id == object_id)
 
         status = "👌" if podcast.latest_episode_info.check_success else "⚠️"
-        last_check_date = datetime.datetime.fromtimestamp(
-            podcast.latest_episode_info.check_ts
-        ).strftime("%d/%m/%Y %H:%M:%S")
 
         response += (
-            f"{status} {link(podcast.meta.title, podcast.meta.link)} "
-            f"(<code>{podcast.ppid}</code>) [{link("FEED", podcast.feed_url)}] "
-            f"(last check {last_check_date} UTC)\n\n"
+            f"{status} {link(podcast.meta.title, podcast.meta.link)} ({code(podcast.ppid)})\n\n"
         )
 
     await message.answer(response, disable_web_page_preview=True)
