@@ -35,12 +35,12 @@ A podcast card containing an Instant Link to follow it will be sent to the chat.
 ...
 
 ## Podcast RSS feed requirements
-For users to successfully follow and access a podcast, 
-the podcast's RSS feed must meet the following requirements.
-
 > [!NOTE]
 > Most popular podcasts comply with these requirements. 
 > This documentation serves to clarify the necessary criteria.
+
+For users to successfully follow and access a podcast, 
+the podcast's RSS feed must meet the following requirements.
 
 To ensure a podcast is followable, it must:
 * Have a title.
