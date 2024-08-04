@@ -9,4 +9,4 @@ router = Router()
 
 @router.message(Command("about"), StatePresenceFilter(has_state=False))
 async def handle_about(message: Message) -> None:
-    await message.answer("This is a stub about message.")
+    await message.answer("This is a stub about message. Beep boop?")
