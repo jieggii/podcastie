@@ -42,11 +42,9 @@ the podcast's RSS feed must meet the following requirements.
 > Most popular podcasts comply with these requirements. 
 > This documentation serves to clarify the necessary criteria.
 
-### Podcast requirements:
 To ensure a podcast is followable, it must:
 * Have a title.
 
-### Episode requirements:
 For episodes to be delivered to users, each episode must:
 * Include a publication date.
 * Contain at least one `enclosure` with the following properties:
