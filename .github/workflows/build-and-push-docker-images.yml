@@ -64,4 +64,4 @@ jobs:
             echo "${{ secrets.MONGO_DATABASE }}" > .secrets/mongo_database
 
             echo "${{ env.GITHUB_TOKEN }}" | docker login --password-stdin --username "${{ env.GITHUB_ACTOR }}" ghcr.io
-            TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }} TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID}} docker compose -f ./docker-compose.prod.yml up --build --detach
+            TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }} TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID}} docker compose -f ./docker-compose.prod.yml up --pull=always --detach
