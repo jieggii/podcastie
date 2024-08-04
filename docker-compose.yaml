@@ -74,8 +74,8 @@ services:
       MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo_database
 
     restart: unless-stopped
-#    ports:
-#      - 27017:27017
+    ports:
+      - 27017:27017
 
 
 secrets:
