@@ -36,7 +36,11 @@ A podcast card containing an Instant Link to follow it will be sent to the chat.
 
 ## Podcast RSS feed requirements
 For users to successfully follow and access a podcast, 
-the podcast's RSS feed must meet the following requirements:
+the podcast's RSS feed must meet the following requirements.
+
+> [!NOTE]
+> Most popular podcasts comply with these requirements. 
+> This documentation serves to clarify the necessary criteria.
 
 ### Podcast requirements:
 To ensure a podcast is followable, it must:
@@ -49,10 +53,6 @@ For episodes to be delivered to users, each episode must:
   * `url`: The URL of the episode file.
   * `file_size`: The size of the file in bytes (Must not exceed X MB).
   * `mime_type`: The MIME type of the file (Must be either `audio/mp3` or `audio/mpeg`).
-
-> [!NOTE]
-> Most popular podcasts comply with these requirements. 
-> This documentation serves to clarify the necessary criteria.
 
 ## Selfhosting
 Podcastie can be easily selfhosted. Follow these simple instructions to make it work!
