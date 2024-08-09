@@ -19,8 +19,8 @@ async def main() -> None:
     await init_database(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
 
     episode_broadcaster = EpisodeBroadcaster(
-        bot_api_host=env.FeedPoller.BOT_API_HOST,
-        bot_api_port=env.FeedPoller.BOT_API_PORT,
+        bot_api_host=env.TelegramBot.API_HOST,
+        bot_api_port=env.TelegramBot.API_PORT,
         bot_token=env.Bot.TOKEN,
     )
     feed_poller = FeedPoller(interval=env.FeedPoller.INTERVAL, new_episode_consumer=episode_broadcaster.add_episode)
