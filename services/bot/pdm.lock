@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:1584ca9e588206d45d90d255a7a299c563bacf6fb8ec164a8cd5d19671a6a9b1"
+content_hash = "sha256:bda03e314ebc4c8593453dedff196f9f8804cc064f02d34060b18f474922c365"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -452,14 +452,6 @@ groups = ["default"]
 dependencies = [
     "podcastparser>=0.6.10",
 ]
-
-[[package]]
-name = "podcastie-service-config"
-version = "0.1.0"
-requires_python = ">=3.12"
-path = "../../lib/podcastie_service_config"
-summary = "Default template for PDM package"
-groups = ["default"]
 
 [[package]]
 name = "podcastie-telegram-html"
