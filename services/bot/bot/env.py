@@ -1,13 +1,15 @@
-from betterconf import Config
-from podcastie_service_config import BotConfig, MongoConfig
+from minicfg import Minicfg, Field, minicfg_prefix
+from minicfg.caster import to_int
 
 
-class Env(Config):
-    class Bot(BotConfig):
-        pass
+@minicfg_prefix("BOT")
+class Env(Minicfg):
+    @minicfg_prefix("TELEGRAM_BOT")
+    class TelegramBot(Minicfg):
+        TOKEN: str = Field(attach_file_field=True)
 
-    class Mongo(MongoConfig):
-        pass
-
-
-env = Env()
+    @minicfg_prefix("MONGO")
+    class Mongo(Minicfg):
+        HOST: str = Field()
+        PORT: int = Field(caster=to_int)
+        DATABASE: str = Field(attach_file_field=True)

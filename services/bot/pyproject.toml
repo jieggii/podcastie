@@ -14,10 +14,10 @@ dependencies = [
     "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",
     "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
     "loguru>=0.7.2",
-    "betterconf>=2.8.0",
     "structlog>=24.2.0",
     "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
     "listparser>=0.20",
+    "minicfg>=0.1.1",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

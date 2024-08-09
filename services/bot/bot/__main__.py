@@ -9,7 +9,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from podcastie_database.init import init_database
 
-from bot.env import env
+from bot.env import Env
 from bot.router import command, inline_query
 
 
@@ -36,6 +36,10 @@ async def main() -> None:
     setup_logging()
 
     log = structlog.get_logger()
+
+    # read configuration from env vars:
+    env = Env()
+    env.populate()
 
     # init database:
     log.info(
@@ -71,7 +75,7 @@ async def main() -> None:
 
     # create and start bot:
     bot = Bot(
-        token=env.Bot.TOKEN,
+        token=env.TelegramBot.TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     dp["bot"] = bot
