@@ -8,15 +8,13 @@ help:
 
 .PHONY: secrets
 secrets:
-	mkdir .secrets
-	touch .secrets/bot_token
+	mkdir .secrets -p
 
 	touch .secrets/mongo_database
-	# touch .secrets/mongo_user
-	# touch .secrets/mongo_password
 
-	touch .secrets/tg_api_hash
-	touch .secrets/tg_api_id
+	touch .secrets/telegram_bot_token
+	touch .secrets/telegram_api_id
+	touch .secrets/telegram_api_hash
 
 .PHONY: fmt
 fmt:
