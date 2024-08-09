@@ -21,7 +21,7 @@ async def main() -> None:
     episode_broadcaster = EpisodeBroadcaster(
         bot_api_host=env.TelegramBot.API_HOST,
         bot_api_port=env.TelegramBot.API_PORT,
-        bot_token=env.Bot.TOKEN,
+        bot_token=env.TelegramBot.TOKEN,
     )
     feed_poller = FeedPoller(interval=env.FeedPoller.INTERVAL, new_episode_consumer=episode_broadcaster.add_episode)
 
