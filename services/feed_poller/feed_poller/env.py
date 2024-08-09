@@ -1,21 +1,20 @@
-from betterconf import Config as BaseConfig
-from betterconf import field
-from betterconf.caster import to_int
-from podcastie_service_config import BotConfig, MongoConfig
+from minicfg import Minicfg, Field, minicfg_prefix
+from minicfg.caster import to_int
 
 
-class Env(BaseConfig):
-    class Bot(BotConfig):
-        pass
+@minicfg_prefix("FEED_POLLER")
+class Env(Minicfg):
+    class FeedPoller(Minicfg):
+        INTERVAL = Field(caster=to_int)
 
-    class Mongo(MongoConfig):
-        pass
+    @minicfg_prefix("TELEGRAM_BOT")
+    class TelegramBot(Minicfg):
+        TOKEN: str = Field(attach_file_field=True)
+        API_HOST: str = Field()
+        API_PORT: int = Field(caster=to_int)
 
-    class FeedPoller(BaseConfig):
-        _prefix_ = "FEED_POLLER"
-        INTERVAL = field(caster=to_int)
-        BOT_API_HOST = field()
-        BOT_API_PORT = field(caster=to_int)
-
-
-env = Env()
+    @minicfg_prefix("MONGO")
+    class Mongo(Minicfg):
+        HOST: str = Field()
+        PORT: int = Field(caster=to_int)
+        DATABASE: str = Field(attach_file_field=True)

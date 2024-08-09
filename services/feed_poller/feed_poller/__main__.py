@@ -3,13 +3,17 @@ import asyncio
 import structlog
 from podcastie_database.init import init_database
 
-from feed_poller.env import env
+from feed_poller.env import Env
 from feed_poller.episode_broadcaster import EpisodeBroadcaster
 from feed_poller.feed_poller import FeedPoller
 
 
 async def main() -> None:
     log = structlog.get_logger().bind(task="main")
+
+    # read configuration from env vars:
+    env = Env()
+    env.populate()
 
     log.info("connecting to the database")
     await init_database(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
