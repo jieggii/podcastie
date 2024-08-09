@@ -12,7 +12,7 @@ services:
     environment:
       BOT_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/telegram_bot_token
 
-      BOT_MONGO_HOST: podcastie-mongo
+      BOT_MONGO_HOST: mongo
       BOT_MONGO_PORT: 27017
       BOT_MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
@@ -38,7 +38,7 @@ services:
 
       FEED_POLLER_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/telegram_bot_token
 
-      FEED_POLLER_MONGO_HOST: podcastie-mongo
+      FEED_POLLER_MONGO_HOST: mongo
       FEED_POLLER_MONGO_PORT: 27017
       FEED_POLLER_MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
@@ -62,6 +62,7 @@ services:
 
   mongo:
 #    container_name: podcastie-mongo
+    hostname: mongo
     image: mongo
     volumes:
       - ./services/mongo:/data/db
