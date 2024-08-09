@@ -1,0 +1,3 @@
+[submodule "services/telegram-bot-api"]
+	path = services/telegram-bot-api
+	url = https://github.com/jieggii/telegram-bot-api
