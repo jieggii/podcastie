@@ -50,7 +50,7 @@ services:
 
   telegram-bot-api:
 #    container_name: podcastie-telegram-bot-api
-    build: ./services/telegram-bot-api
+    build: ../telegram-bot-api
 
     secrets:
       - telegram_api_id
