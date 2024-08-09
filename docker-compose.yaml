@@ -1,22 +1,20 @@
 services:
   bot:
-    container_name: podcastie-bot
+#    container_name: podcastie-bot
     build:
       context: .
       dockerfile: ./services/bot/Dockerfile
 
     secrets:
-      - bot_token
-#      - mongo_user
-#      - mongo_password
+      - telegram_bot_token
       - mongo_database
 
     environment:
-      BOT_TOKEN_FILE: /run/secrets/bot_token
+      BOT_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/telegram_bot_token
 
-      MONGO_HOST: podcastie-mongo
-      MONGO_PORT: 27017
-      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+      BOT_MONGO_HOST: podcastie-mongo
+      BOT_MONGO_PORT: 27017
+      BOT_MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
     depends_on:
       - mongo
@@ -24,66 +22,70 @@ services:
     restart: unless-stopped
 
   feed_poller:
-    container_name: podcastie-feed_poller
+#    container_name: podcastie-feed_poller
     build:
       context: .
       dockerfile: ./services/feed_poller/Dockerfile
 
+    secrets:
+      - telegram_bot_token
+      - mongo_database
+
     environment:
       FEED_POLLER_INTERVAL: 5
-      FEED_POLLER_BOT_API_HOST: telegram-bot-api
-      FEED_POLLER_BOT_API_PORT: 8081
+      FEED_POLLER_TELEGRAM_BOT_API_HOST: telegram-bot-api
+      FEED_POLLER_TELEGRAM_BOT_API_PORT: 8081
 
-      BOT_TOKEN_FILE: /run/secrets/bot_token
+      FEED_POLLER_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/telegram_bot_token
 
-      MONGO_HOST: podcastie-mongo
-      MONGO_PORT: 27017
-      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+      FEED_POLLER_MONGO_HOST: podcastie-mongo
+      FEED_POLLER_MONGO_PORT: 27017
+      FEED_POLLER_MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
     depends_on:
       - mongo
       - telegram-bot-api
 
-    secrets:
-      - bot_token
-#      - mongo_user
-#      - mongo_password
-      - mongo_database
-
     restart: unless-stopped
 
   telegram-bot-api:
-    container_name: podcastie-telegram-bot-api
-    image: aiogram/telegram-bot-api
-    env_file:
-      - ./services/telegram-bot-api/.env
+#    container_name: podcastie-telegram-bot-api
+    build: ./services/telegram-bot-api
+
+    secrets:
+      - telegram_api_id
+      - telegram_api_hash
+
+    environment:
+      TELEGRAM_API_ID_FILE: /run/secrets/telegram_api_id
+      TELEGRAM_API_HASH_FILE: /run/secrets/telegram_api_hash
 
   mongo:
-    container_name: podcastie-mongo
+#    container_name: podcastie-mongo
     image: mongo
     volumes:
       - ./services/mongo:/data/db
 
     secrets:
       - mongo_database
-#      - mongo_user
-#      - mongo_password
+
     environment:
-#      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_user
-#      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_password
       MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo_database
 
-    restart: unless-stopped
     ports:
       - 27017:27017
 
+    restart: unless-stopped
 
 secrets:
-  bot_token:
-    file: ./.secrets/bot_token
-#  mongo_user:
-#    file: ./.secrets/mongo_user
-#  mongo_password:
-#    file: ./.secrets/mongo_password
+  telegram_bot_token:
+    file: ./.secrets/telegram_bot_token
+
   mongo_database:
     file: ./.secrets/mongo_database
+
+  telegram_api_id:
+    file: ./secrets/telegram_api_id
+
+  telegram_api_hash:
+    file: ./secrets/telegram_api_hash
