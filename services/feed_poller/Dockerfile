@@ -9,7 +9,6 @@ RUN pip install pdm==2.15.4
 COPY lib/podcastie_database lib/podcastie_database
 COPY lib/podcastie_rss lib/podcastie_rss
 COPY lib/podcastie_telegram_html lib/podcastie_telegram_html
-COPY lib/podcastie_service_config lib/podcastie_service_config
 
 # copy feed_poller service pdm files
 COPY services/feed_poller/pyproject.toml services/feed_poller/pdm.lock* services/feed_poller/
