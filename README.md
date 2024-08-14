@@ -6,6 +6,14 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 > [!WARNING]
 > Work in progress, estimating release in July - August 2024.
 
+## Roadmap
+- [x] MVP (July)
+- [ ] UI/UX redisign (using callback buttons) (Aug)
+- [ ] Antifraud measures (Sep)
+- [ ] Multiple languages support using i18n (Sep)
+- [ ] Release (Oct)
+- [ ] Recommendation system using KNN (Dec)
+
 ## Features
 * **Subscribe to Podcasts**: Simply provide the RSS feed URL or PPID of your favorite podcast to start receiving new episodes.
 * **Listen to Podcasts**: Receive episode notifications containing episode audio and listen to them right in the chat.
