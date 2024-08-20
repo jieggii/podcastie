@@ -73,7 +73,6 @@ class FindView(View):
         await state.set_state(BotState.FIND)
 
         await event.message.edit_text(text, reply_markup=markup)
-        # await answer_entrypoint_event(event, data, message_text=text, query_answer_text=text, reply_markup=markup)
 
     async def handle_state(self, message: Message, data: dict[str, typing.Any]) -> None:
         state: FSMContext = data["state"]
@@ -110,9 +109,7 @@ class FindView(View):
             if podcast.db_object.meta.description:
                 text += f"{blockquote(podcast.db_object.meta.description, expandable=True)}\n"
 
-            markup = _build_podcast_card_reply_markup(
-                podcast, user.is_following_podcast(podcast)
-            )
+            markup = _build_podcast_card_reply_markup(podcast, user.is_following_podcast(podcast))
 
             if podcast.db_object.meta.cover_url:
                 await bot.send_chat_action(
@@ -120,24 +117,9 @@ class FindView(View):
                 )  # Todo: cache telegram_file_ids
 
                 photo = URLInputFile(podcast.db_object.meta.cover_url)
-                await message.answer_photo(
-                    photo,
-                    caption=text,
-                    # link_preview_options=LinkPreviewOptions(
-                    #     url=podcast.db_object.meta.link,
-                    #     prefer_small_media=True,
-                    # ),
-                    reply_markup=markup,
-                )
+                await message.answer_photo(photo, caption=text, reply_markup=markup)
             else:
-                await message.answer(
-                    text,
-                    link_preview_options=LinkPreviewOptions(
-                        url=podcast.db_object.meta.link,
-                        prefer_small_media=True,
-                    ),
-                    reply_markup=markup,
-                )
+                await message.answer(text, reply_markup=markup)
 
         await headline_message.edit_text("✨ Here is what I have found:")
 

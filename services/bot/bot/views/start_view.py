@@ -1,6 +1,6 @@
 import typing
 
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import Message, LinkPreviewOptions
 from podcastie_telegram_html.tags import link
 
 from bot.aiogram_view.view import View
@@ -18,4 +18,11 @@ class StartView(View):
             "\n"
             "To get started, simply use the /menu command.\n"
         )
-        await event.answer(text)
+
+        await event.answer(
+            text,
+            link_preview_options=LinkPreviewOptions(
+                is_disabled=False,
+                prefer_small_media=True,
+            ),
+        )
