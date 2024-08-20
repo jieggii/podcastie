@@ -5,18 +5,16 @@ from dataclasses import dataclass
 import aiohttp
 import podcastparser
 
-_SUPPORTED_ENCLOSURE_MIME_TYPES = ("audio/mp3", "audio/mpeg")  # todo: expand as we don't need to compress audio anymore
+_SUPPORTED_ENCLOSURE_MIME_TYPES = {"audio/mp3", "audio/mpeg"}  # todo: expand to supported by Telegram as we don't need to compress audio anymore
 
 
-class MalformedFeedFormatError(Exception):
-    """Is raised when unable to parse feed as it's content is malformed/not valid."""
-
+class FeedReadError(Exception):
     pass
 
+class FeedParseError(Exception):
+    pass
 
-class MissingFeedTitleError(Exception):
-    """Is raised when feed did not pass validation after parsing it."""
-
+class FeedValidateError(Exception):
     pass
 
 
@@ -46,26 +44,34 @@ class Feed:
     latest_episode: Episode | None
 
 
-async def _fetch_feed(url: str, max_episodes: int) -> dict[str, typing.Any]:
-    async with aiohttp.request("GET", url) as response:
-        content = await response.text()
-        return podcastparser.parse(url, io.StringIO(content), max_episodes)
+async def _fetch_feed(url: str, *, max_episodes: int) -> dict[str, typing.Any]:
+    session = aiohttp.ClientSession()  # todo: use existing session instead of creating a new one, if possible
 
+    try:
+        response = await session.get(url)
+        response.raise_for_status()
+    except aiohttp.ClientError as e:
+        raise FeedReadError("failed to read feed") from e
+
+    await session.close()  # todo: check if it os OK to close session before reading response text
+
+    text = await response.text()
+    try:
+        return podcastparser.parse(url, io.StringIO(text), max_episodes)
+    except podcastparser.FeedParseError as e:
+        raise FeedParseError("failed to parse feed") from e
 
 async def fetch_feed(url: str) -> Feed:
     """Fetches podcast by RSS feed URL."""
-    try:
-        feed = await _fetch_feed(url, max_episodes=1)
-    except podcastparser.FeedParseError:
-        raise MalformedFeedFormatError("feed has malformed content")
+    feed = await _fetch_feed(url, max_episodes=1)
 
     # parse and validate title (it's required):
     title: str | None = feed.get("title")
     if not title:
-        raise MissingFeedTitleError("feed does not contain title")
+        raise FeedValidateError("feed does not contain title")
 
     # parse podcast description (it's optional):
-    description: str | None = feed.get("description")  # todo: verify
+    description: str | None = feed.get("description")  # todo: check if there are any other fields containing description
 
     # parse podcast link (it's optional):
     link: str | None = feed.get("link")

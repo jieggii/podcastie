@@ -1,7 +1,9 @@
-from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.state import State
+from aiogram.fsm.state import StatesGroup
 
 
-class States(StatesGroup):
-    FOLLOW = State()
-    UNFOLLOW = State()
+__all__ = ("BotState",)
+
+class BotState(StatesGroup):
+    FIND = State()
     IMPORT = State()
