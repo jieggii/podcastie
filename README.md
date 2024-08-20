@@ -8,7 +8,7 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 
 ## Roadmap
 - [x] MVP (July)
-- [ ] UI/UX redisign (using callback buttons) (Aug)
+- [ ] [UI/UX redisign](https://github.com/jieggii/podcastie/tree/feature/ui-redesign) (using callback buttons) (Aug)
 - [ ] iTunes integration (Sep)
 - [ ] Antifraud measures (Sep)
 - [ ] Multiple languages support using i18n (Sep)
