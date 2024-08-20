@@ -1,5 +1,5 @@
 import listparser
-from podcastie_database.models.podcast import Podcast
+from bot.core.podcast import Podcast
 
 
 class OPMLParseError(Exception):
@@ -18,7 +18,7 @@ def parse_opml(data: bytes) -> list[str]:
 def generate_opml(podcasts: list[Podcast]) -> str:
     # todo: escape titles and urls
     outlines = [
-        f'\t\t<outline xmlUrl="{podcast.feed_url}" type="rss" text="{podcast.meta.title}"/>'
+        f'\t\t<outline xmlUrl="{podcast.db_object.feed_url}" type="rss" text="{podcast.db_object.meta.title}"/>'
         for podcast in podcasts
     ]
 

@@ -9,7 +9,7 @@ router = Router()
 
 
 @router.message(Command("cancel"), StatePresenceFilter(has_state=True))
-@router.message(F.text.casefold() == "cancel")
+@router.message(F.default_text.casefold() == "cancel")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state is None:
