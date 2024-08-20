@@ -1,7 +1,7 @@
 import typing
 
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
-from bot.aiogram_callback_view.entrypoint_callback_data import EntrypointCallbackData
+from bot.aiogram_view.entrypoint_callback_data import EntrypointCallbackData
 
 
 async def answer_callback_query_entrypoint_event(

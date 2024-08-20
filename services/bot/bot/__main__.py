@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData, ImportViewEntrypointCallbackData, \
-    ExportViewEntrypointCallbackData
+    ExportViewEntrypointCallbackData, UnfollowViewEntrypointCallbackData
 from bot.callback_data.entrypoints import PodcastViewEntrypointCallbackData
 from bot.callback_data.entrypoints import ShareViewEntrypointCallbackData
 from bot.callback_data.entrypoints import SubscriptionsViewEntrypointCallbackData
@@ -18,11 +18,13 @@ from bot.views.export_view import ExportView
 from bot.views.import_view import ImportView
 from bot.views.podcast_view import PodcastView
 from bot.views.share_view import ShareView
+from bot.views.start_view import StartView
 from bot.views.subscriptions_view import SubscriptionsView
+from bot.views.unfollow_view import UnfollowView
 from podcastie_database.init import init_database
 from bot.views.find_view import FindView
 from bot.views.menu_view import MenuView
-from bot.aiogram_callback_view.router import ViewRouter
+from bot.aiogram_view.router import ViewRouter
 from bot.callback_data.entrypoints import FindViewEntrypointCallbackData
 
 from bot.env import Env
@@ -92,6 +94,10 @@ async def main() -> None:
     # include view routers:
     dp.include_routers(
         ViewRouter(
+            StartView(),
+            entrypoint_command="start",
+        ),
+        ViewRouter(
             MenuView(),
             MenuViewEntrypointCallbackData,
             entrypoint_command="menu",
@@ -100,21 +106,18 @@ async def main() -> None:
         ViewRouter(
             FindView(),
             FindViewEntrypointCallbackData,
-            entrypoint_command="find",
             handle_state=BotState.FIND,
             state_handler_middlewares=[DatabaseMiddleware()]
         ),
         ViewRouter(
             ImportView(),
             ImportViewEntrypointCallbackData,
-            entrypoint_command="import",
             handle_state=BotState.IMPORT,
             state_handler_middlewares=[DatabaseMiddleware()]
         ),
         ViewRouter(
             ExportView(),
             ExportViewEntrypointCallbackData,
-            entrypoint_command="export",
             entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
@@ -130,6 +133,11 @@ async def main() -> None:
         ViewRouter(
             ShareView(),
             ShareViewEntrypointCallbackData,
+            entrypoint_handler_middlewares=[DatabaseMiddleware()]
+        ),
+        ViewRouter(
+            UnfollowView(),
+            UnfollowViewEntrypointCallbackData,
             entrypoint_handler_middlewares=[DatabaseMiddleware()]
         )
      )

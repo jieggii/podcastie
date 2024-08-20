@@ -6,8 +6,8 @@ from aiogram.enums import ContentType, ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from bot.aiogram_callback_view.callback_view import CallbackView
-from bot.aiogram_callback_view.util import answer_callback_query_entrypoint_event, answer_entrypoint_event
+from bot.aiogram_view.view import View
+from bot.aiogram_view.util import answer_callback_query_entrypoint_event, answer_entrypoint_event
 from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData
 
 from bot.callback_data.entrypoints import ImportViewEntrypointCallbackData
@@ -19,22 +19,19 @@ from bot.validators import is_feed_url
 from podcastie_telegram_html.tags import link
 
 
-def _build_entrypoint_query_reply_markup() -> InlineKeyboardMarkup:
+def _build_reply_markup() -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
 
     kbd.button(text="« Back to menu", callback_data=MenuViewEntrypointCallbackData(clear_state=True))
 
     return kbd.as_markup()
 
-def _build_entrypoint_command_reply_markup() -> InlineKeyboardMarkup:
-    pass
 
-
-def _build_result_reply_markup() -> InlineKeyboardMarkup:
+def _build_result_reply_markup(failure: bool = False) -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
 
-    kbd.button(text="Try again", callback_data=ImportViewEntrypointCallbackData(edit_current_message=True))
-    kbd.button(text="<< Menu", callback_data=MenuViewEntrypointCallbackData(edit_current_message=True))
+    kbd.button(text="Try again" if failure else "Import again", callback_data=ImportViewEntrypointCallbackData(edit_current_message=True))
+    kbd.button(text="« Menu", callback_data=MenuViewEntrypointCallbackData(edit_current_message=True))
 
     return kbd.as_markup()
 
@@ -68,13 +65,11 @@ async def _follow_podcasts(user: User, feed_urls: list[str]) -> tuple[list[Podca
     return followed, failed_to_follow
 
 
-class ImportView(CallbackView):
+class ImportView(View):
     _FILE_SIZE_LIMIT = 1 * 1024 * 1024  # file size limit in bytes
     _FEED_URLS_LIMIT = 20
 
-    _ENTRYPOINT_MARKUP = _build_entrypoint_query_reply_markup()
-
-    async def handle_entrypoint(self, event: Message | CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
+    async def handle_entrypoint(self, event: CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
         state: FSMContext = data["state"]
 
         await state.set_state(BotState.IMPORT)
@@ -83,9 +78,7 @@ class ImportView(CallbackView):
             "Please either attach an OPML file containing your subscriptions or "
             "send a text message containing podcast RSS feed URLs you want to follow."
         )
-        markup = self._ENTRYPOINT_MARKUP
-
-        await answer_entrypoint_event(event, data, message_text=text, query_answer_text=text, reply_markup=markup)
+        await event.message.edit_text(text, reply_markup=_build_reply_markup())
 
     async def handle_state(self, message: Message, data: dict[str, typing.Any]) -> None:
         bot: Bot = data["bot"]
@@ -102,7 +95,8 @@ class ImportView(CallbackView):
                 file = await bot.get_file(message.document.file_id)
                 if file.file_size > self._FILE_SIZE_LIMIT:
                     await message.answer(
-                        "⚠  The provided file exceeds file size limit.", reply_markup=_build_result_reply_markup(),
+                        "⚠  The provided file exceeds file size limit.", reply_markup=_build_result_reply_markup(
+                            failure=True),
                     )
                     return
 
@@ -114,18 +108,19 @@ class ImportView(CallbackView):
                 except opml.OPMLParseError:
                     await message.answer(
                         "⚠  Failed to parse this OPML file.",
-                        reply_markup=_build_result_reply_markup()
+                        reply_markup=_build_result_reply_markup(failure=True)
                     )
                     return
 
             case _:
                 await message.answer(
-                    "This message kind is not supported.", reply_markup=_build_result_reply_markup(),
+                    "This message kind is not supported.", reply_markup=_build_result_reply_markup(failure=True),
                 )
                 return
 
         if len(feed_urls) > self._FEED_URLS_LIMIT:
-            await message.answer("Number of RSS feed URLs exceeds the limit.", reply_markup=_build_result_reply_markup())
+            await message.answer("Number of RSS feed URLs exceeds the limit.", reply_markup=_build_result_reply_markup(
+                failure=True))
 
         # remove duplicated feed URLs
         feed_urls = list(set(feed_urls))
@@ -135,9 +130,9 @@ class ImportView(CallbackView):
         text = ""
         if followed:
             if failed_to_follow:
-                text += "✨ You have successfully subscribed to the following podcasts:\n"
+                text += "✨ You have successfully subscribed to the following podcasts:\n\n"
             else:
-                text += "✨ You have successfully subscribed to all the provided podcasts:\n"
+                text += "✨ You have successfully subscribed to all the provided podcasts:\n\n"
 
             for podcast in followed:
                 text += f"- {link(podcast.db_object.meta.title, podcast.db_object.meta.link)}\n"
@@ -146,9 +141,9 @@ class ImportView(CallbackView):
             text += "\n"
 
             if followed:
-                text += "Failed to subscribe the following podcasts:\n"
+                text += "Failed to subscribe to the following podcasts:\n\n"
             else:
-                text += "Failed to subscribe to any of the provided podcasts:\n"
+                text += "Failed to subscribe to any of the provided podcasts:\n\n"
 
             for podcast_or_feed_url, error_message in failed_to_follow:
                 if isinstance(podcast_or_feed_url, Podcast):

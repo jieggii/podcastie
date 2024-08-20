@@ -4,8 +4,8 @@ from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, Message, CallbackQuery, URLInputFile, LinkPreviewOptions
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from bot.aiogram_callback_view.callback_view import CallbackView
-from bot.aiogram_callback_view.util import answer_entrypoint_event
+from bot.aiogram_view.view import View
+from bot.aiogram_view.util import answer_entrypoint_event
 from bot.callback_data.entrypoints import FindViewEntrypointCallbackData
 from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData
 from bot.core.podcast import Podcast, search_podcasts
@@ -46,15 +46,17 @@ def _build_podcast_card_reply_markup(podcast: Podcast, user_is_following_podcast
     return kbd.as_markup()
 
 
-class FindView(CallbackView):
-    async def handle_entrypoint(self, event: Message | CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
+class FindView(View):
+    async def handle_entrypoint(self, event: CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
+        state: FSMContext = data["state"]
+
         text = "In your next message, please send me a podcast title you want to find."
         markup = _build_reply_markup()
 
-        state: FSMContext = data["state"]
         await state.set_state(BotState.FIND)
 
-        await answer_entrypoint_event(event, data, message_text=text, query_answer_text=text, reply_markup=markup)
+        await event.message.edit_text(text, reply_markup=markup)
+        # await answer_entrypoint_event(event, data, message_text=text, query_answer_text=text, reply_markup=markup)
 
     async def handle_state(self, message: Message, data: dict[str, typing.Any]) -> None:
         state: FSMContext = data["state"]

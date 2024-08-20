@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from bot.aiogram_callback_view.entrypoint_callback_data import EntrypointCallbackData
+from bot.aiogram_view.entrypoint_callback_data import EntrypointCallbackData
 
 
 class MenuViewEntrypointCallbackData(EntrypointCallbackData, prefix="menu"):
@@ -16,7 +16,7 @@ class ExportViewEntrypointCallbackData(EntrypointCallbackData, prefix="export"):
     pass
 
 class SubscriptionsViewEntrypointCallbackData(EntrypointCallbackData, prefix="subs"):
-    pass
+    unfollow_podcast_id: PydanticObjectId | None = None  # podcast_id to unfollow before displaying the view
 
 
 class PodcastViewEntrypointCallbackData(EntrypointCallbackData, prefix="podcast"):
@@ -27,3 +27,5 @@ class ShareViewEntrypointCallbackData(EntrypointCallbackData, prefix="share"):
     podcast_id: PydanticObjectId
 
 
+class UnfollowViewEntrypointCallbackData(EntrypointCallbackData, prefix="unfollow"):
+    podcast_id: PydanticObjectId
