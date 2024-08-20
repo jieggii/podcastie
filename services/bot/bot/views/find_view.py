@@ -109,7 +109,9 @@ class FindView(View):
             if podcast.db_object.meta.description:
                 text += f"{blockquote(podcast.db_object.meta.description, expandable=True)}\n"
 
-            markup = _build_podcast_card_reply_markup(podcast, user.is_following_podcast(podcast))
+            markup = _build_podcast_card_reply_markup(
+                podcast, user.is_following_podcast(podcast)
+            )
 
             if podcast.db_object.meta.cover_url:
                 await bot.send_chat_action(
