@@ -132,8 +132,7 @@ async def main() -> None:
     bot = Bot(
         token=env.TelegramBot.TOKEN,
         default=DefaultBotProperties(
-            parse_mode=ParseMode.HTML,
-            link_preview_is_disabled=True
+            parse_mode=ParseMode.HTML, link_preview_is_disabled=True
         ),
     )
     dp["bot"] = bot

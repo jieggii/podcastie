@@ -1,6 +1,6 @@
 import typing
 
-from aiogram.types import Message, LinkPreviewOptions
+from aiogram.types import LinkPreviewOptions, Message
 from podcastie_telegram_html.tags import link
 
 from bot.aiogram_view.view import View
