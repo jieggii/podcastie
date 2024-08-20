@@ -40,7 +40,7 @@ async def handle_unfollow_view(query: CallbackQuery, bot: Bot, user: User, callb
         return
 
     kbd = InlineKeyboardBuilder()
-    kbd.button(text="<< Back", callback_data=_match_return_to(callback_data.return_to))
+    kbd.button(text="« Back", callback_data=_match_return_to(callback_data.return_to))
     markup = kbd.as_markup()
 
     await query.answer(f"You have successfully unsubscribed from {bold(podcast.db_object.meta.title)}")

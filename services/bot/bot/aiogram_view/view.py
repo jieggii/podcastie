@@ -3,9 +3,9 @@ import typing
 from aiogram.types import CallbackQuery, Message
 
 
-class CallbackView(ABC):
+class View(ABC):
     @abstractmethod
-    async def handle_entrypoint(self, event: Message | CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
+    async def handle_entrypoint(self, event: Message | CallbackQuery, data: dict[str, typing.Any]) -> None:
         pass
 
     async def handle_state(self, message: Message, data: dict[str, typing.Any]) -> None:
