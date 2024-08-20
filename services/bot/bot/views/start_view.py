@@ -1,12 +1,15 @@
 import typing
 
-from aiogram.types import Message, CallbackQuery
-from bot.aiogram_view.view import View
+from aiogram.types import CallbackQuery, Message
 from podcastie_telegram_html.tags import link
+
+from bot.aiogram_view.view import View
 
 
 class StartView(View):
-    async def handle_entrypoint(self, event: Message, data: dict[str, typing.Any]) -> None:
+    async def handle_entrypoint(
+        self, event: Message, data: dict[str, typing.Any]
+    ) -> None:
         text = (
             f"👋 Hi there, {event.from_user.first_name}!\n"
             f"\n"

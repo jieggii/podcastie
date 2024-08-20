@@ -2,27 +2,35 @@ import io
 import typing
 
 from aiogram import Bot
-from aiogram.enums import ContentType, ChatAction
+from aiogram.enums import ChatAction, ContentType
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from bot.aiogram_view.view import View
-from bot.aiogram_view.util import answer_callback_query_entrypoint_event, answer_entrypoint_event
-from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData
+from podcastie_telegram_html.tags import link
 
-from bot.callback_data.entrypoints import ImportViewEntrypointCallbackData
+from bot.aiogram_view.util import (
+    answer_callback_query_entrypoint_event,
+    answer_entrypoint_event,
+)
+from bot.aiogram_view.view import View
+from bot.callback_data.entrypoints import (
+    ImportViewEntrypointCallbackData,
+    MenuViewEntrypointCallbackData,
+)
 from bot.core import opml
-from bot.core.podcast import Podcast, PodcastNotFoundError, PodcastFeedError
+from bot.core.podcast import Podcast, PodcastFeedError, PodcastNotFoundError
 from bot.core.user import User, UserFollowsPodcastError
 from bot.fsm import BotState
 from bot.validators import is_feed_url
-from podcastie_telegram_html.tags import link
 
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
 
-    kbd.button(text="« Back to menu", callback_data=MenuViewEntrypointCallbackData(clear_state=True))
+    kbd.button(
+        text="« Back to menu",
+        callback_data=MenuViewEntrypointCallbackData(clear_state=True),
+    )
 
     return kbd.as_markup()
 
@@ -30,13 +38,21 @@ def _build_reply_markup() -> InlineKeyboardMarkup:
 def _build_result_reply_markup(failure: bool = False) -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
 
-    kbd.button(text="Try again" if failure else "Import again", callback_data=ImportViewEntrypointCallbackData(edit_current_message=True))
-    kbd.button(text="« Menu", callback_data=MenuViewEntrypointCallbackData(edit_current_message=True))
+    kbd.button(
+        text="Try again" if failure else "Import again",
+        callback_data=ImportViewEntrypointCallbackData(edit_current_message=True),
+    )
+    kbd.button(
+        text="« Menu",
+        callback_data=MenuViewEntrypointCallbackData(edit_current_message=True),
+    )
 
     return kbd.as_markup()
 
 
-async def _follow_podcasts(user: User, feed_urls: list[str]) -> tuple[list[Podcast], list[tuple[Podcast | str, str]]]:
+async def _follow_podcasts(
+    user: User, feed_urls: list[str]
+) -> tuple[list[Podcast], list[tuple[Podcast | str, str]]]:
     followed: list[Podcast] = []
     failed_to_follow: list[tuple[Podcast | str, str]] = []
 
@@ -69,7 +85,9 @@ class ImportView(View):
     _FILE_SIZE_LIMIT = 1 * 1024 * 1024  # file size limit in bytes
     _FEED_URLS_LIMIT = 20
 
-    async def handle_entrypoint(self, event: CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
+    async def handle_entrypoint(
+        self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
+    ) -> None:
         state: FSMContext = data["state"]
 
         await state.set_state(BotState.IMPORT)
@@ -95,8 +113,8 @@ class ImportView(View):
                 file = await bot.get_file(message.document.file_id)
                 if file.file_size > self._FILE_SIZE_LIMIT:
                     await message.answer(
-                        "⚠  The provided file exceeds file size limit.", reply_markup=_build_result_reply_markup(
-                            failure=True),
+                        "⚠  The provided file exceeds file size limit.",
+                        reply_markup=_build_result_reply_markup(failure=True),
                     )
                     return
 
@@ -108,19 +126,22 @@ class ImportView(View):
                 except opml.OPMLParseError:
                     await message.answer(
                         "⚠  Failed to parse this OPML file.",
-                        reply_markup=_build_result_reply_markup(failure=True)
+                        reply_markup=_build_result_reply_markup(failure=True),
                     )
                     return
 
             case _:
                 await message.answer(
-                    "This message kind is not supported.", reply_markup=_build_result_reply_markup(failure=True),
+                    "This message kind is not supported.",
+                    reply_markup=_build_result_reply_markup(failure=True),
                 )
                 return
 
         if len(feed_urls) > self._FEED_URLS_LIMIT:
-            await message.answer("Number of RSS feed URLs exceeds the limit.", reply_markup=_build_result_reply_markup(
-                failure=True))
+            await message.answer(
+                "Number of RSS feed URLs exceeds the limit.",
+                reply_markup=_build_result_reply_markup(failure=True),
+            )
 
         # remove duplicated feed URLs
         feed_urls = list(set(feed_urls))
@@ -130,7 +151,9 @@ class ImportView(View):
         text = ""
         if followed:
             if failed_to_follow:
-                text += "✨ You have successfully subscribed to the following podcasts:\n\n"
+                text += (
+                    "✨ You have successfully subscribed to the following podcasts:\n\n"
+                )
             else:
                 text += "✨ You have successfully subscribed to all the provided podcasts:\n\n"
 

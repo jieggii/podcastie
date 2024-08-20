@@ -1,10 +1,11 @@
-from typing import Type, Any
+from typing import Any, Type
 
 from aiogram.fsm.context import FSMContext
-from aiogram.handlers import CallbackQueryHandler, BaseHandler
+from aiogram.handlers import BaseHandler, CallbackQueryHandler
 from aiogram.types import Message
-from bot.aiogram_view.view import View
+
 from bot.aiogram_view.entrypoint_callback_data import EntrypointCallbackData
+from bot.aiogram_view.view import View
 
 
 def new_entrypoint_callback_query_handler(view: View) -> Type[CallbackQueryHandler]:

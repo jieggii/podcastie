@@ -7,27 +7,32 @@ import structlog
 from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData, ImportViewEntrypointCallbackData, \
-    ExportViewEntrypointCallbackData, UnfollowViewEntrypointCallbackData
-from bot.callback_data.entrypoints import PodcastViewEntrypointCallbackData
-from bot.callback_data.entrypoints import ShareViewEntrypointCallbackData
-from bot.callback_data.entrypoints import SubscriptionsViewEntrypointCallbackData
+from podcastie_database.init import init_database
+
+from bot.aiogram_view.router import ViewRouter
+from bot.callback_data.entrypoints import (
+    ExportViewEntrypointCallbackData,
+    FindViewEntrypointCallbackData,
+    ImportViewEntrypointCallbackData,
+    MenuViewEntrypointCallbackData,
+    PodcastViewEntrypointCallbackData,
+    ShareViewEntrypointCallbackData,
+    SubscriptionsViewEntrypointCallbackData,
+    UnfollowViewEntrypointCallbackData,
+)
+from bot.env import Env
 from bot.fsm import BotState
 from bot.middlewares import DatabaseMiddleware
 from bot.views.export_view import ExportView
+from bot.views.find_view import FindView
 from bot.views.import_view import ImportView
+from bot.views.menu_view import MenuView
 from bot.views.podcast_view import PodcastView
 from bot.views.share_view import ShareView
 from bot.views.start_view import StartView
 from bot.views.subscriptions_view import SubscriptionsView
 from bot.views.unfollow_view import UnfollowView
-from podcastie_database.init import init_database
-from bot.views.find_view import FindView
-from bot.views.menu_view import MenuView
-from bot.aiogram_view.router import ViewRouter
-from bot.callback_data.entrypoints import FindViewEntrypointCallbackData
 
-from bot.env import Env
 # from bot.router import inline_query
 # from bot.router.callback import (
 #     menu as menu_callback,
@@ -101,19 +106,19 @@ async def main() -> None:
             MenuView(),
             MenuViewEntrypointCallbackData,
             entrypoint_command="menu",
-            entrypoint_handler_middlewares=[DatabaseMiddleware()]
+            entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             FindView(),
             FindViewEntrypointCallbackData,
             handle_state=BotState.FIND,
-            state_handler_middlewares=[DatabaseMiddleware()]
+            state_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             ImportView(),
             ImportViewEntrypointCallbackData,
             handle_state=BotState.IMPORT,
-            state_handler_middlewares=[DatabaseMiddleware()]
+            state_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             ExportView(),
@@ -123,24 +128,24 @@ async def main() -> None:
         ViewRouter(
             SubscriptionsView(),
             SubscriptionsViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()]
+            entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             PodcastView(),
             PodcastViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()]
+            entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             ShareView(),
             ShareViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()]
+            entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             UnfollowView(),
             UnfollowViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()]
-        )
-     )
+            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+        ),
+    )
 
     # create and start bot:
     bot = Bot(

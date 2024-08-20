@@ -1,7 +1,6 @@
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
-
 from podcastie_telegram_html.tags import bold, italic
 
 from bot.filters import StatePresenceFilter
@@ -23,16 +22,12 @@ _QUESTIONS = {
     "What is PPID?": (
         "PPID (Podcastie Podcast ID) is a unique identifier of a podcast withing the Podcastie's database. "
         "This ID helps you manage and interact with podcasts easily."
-    )
+    ),
 }
 
 _MESSAGE = ""
 for i, (q, a) in enumerate(_QUESTIONS.items()):
-    _MESSAGE += (
-        f"{bold(f"{i + 1}. {q}")}\n"
-        f"{italic(a)}\n"
-        "\n"
-    )
+    _MESSAGE += f"{bold(f"{i + 1}. {q}")}\n" f"{italic(a)}\n" "\n"
 
 
 @router.message(Command("faq"), StatePresenceFilter(has_state=False))

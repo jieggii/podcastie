@@ -1,11 +1,17 @@
 import typing
 
-from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
+
 from bot.aiogram_view.entrypoint_callback_data import EntrypointCallbackData
 
 
 async def answer_callback_query_entrypoint_event(
-        event: CallbackQuery, data: dict[str, typing.Any], *, message_text: str, query_answer_text: str | None = None, reply_markup: InlineKeyboardMarkup | None = None,
+    event: CallbackQuery,
+    data: dict[str, typing.Any],
+    *,
+    message_text: str,
+    query_answer_text: str | None = None,
+    reply_markup: InlineKeyboardMarkup | None = None,
 ):
     callback_data: EntrypointCallbackData = data["callback_data"]
 
@@ -19,11 +25,11 @@ async def answer_callback_query_entrypoint_event(
 
 
 async def answer_entrypoint_event(
-        event: Message | CallbackQuery,
-        data: dict[str, typing.Any],
-        message_text: str | None = None,
-        query_answer_text: str | None = None,
-        reply_markup: InlineKeyboardMarkup | None = None,
+    event: Message | CallbackQuery,
+    data: dict[str, typing.Any],
+    message_text: str | None = None,
+    query_answer_text: str | None = None,
+    reply_markup: InlineKeyboardMarkup | None = None,
 ) -> None:
     if isinstance(event, Message):
         await event.answer(message_text, reply_markup=reply_markup)

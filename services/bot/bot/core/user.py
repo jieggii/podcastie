@@ -1,9 +1,13 @@
 from podcastie_database.models.user import User as _User
+
 from .podcast import Podcast
+
 
 class UserFollowsPodcastError(Exception):
     """User already follows podcast"""
+
     pass
+
 
 class UserDoesNotFollowPodcastError(Exception):
     pass
@@ -36,7 +40,9 @@ class User:
 
     async def unfollow_podcast(self, podcast: Podcast) -> None:
         if not self.is_following_podcast(podcast):
-            raise UserDoesNotFollowPodcastError("user does not follow this podcast anyway")
+            raise UserDoesNotFollowPodcastError(
+                "user does not follow this podcast anyway"
+            )
 
         self.db_object.following_podcasts.remove(podcast.db_object.id)
         await self.db_object.save()

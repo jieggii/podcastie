@@ -1,8 +1,7 @@
-
-from beanie import PydanticObjectId
-from aiogram.filters.callback_data import CallbackData as CallbackData
-
 from enum import Enum
+
+from aiogram.filters.callback_data import CallbackData as CallbackData
+from beanie import PydanticObjectId
 
 # class ReturnTo(Enum):
 #     SUBSCRIPTIONS_LIST = "subs"

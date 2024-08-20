@@ -20,7 +20,9 @@ class DatabaseMiddleware(BaseMiddleware):
     async def __call__(
         self, handler: _HANDLER_TYPE, event: _EVENT_TYPE, data: _DATA_TYPE
     ) -> Any:
-        db_object = await UserDBModel.find_one(UserDBModel.user_id == event.from_user.id)
+        db_object = await UserDBModel.find_one(
+            UserDBModel.user_id == event.from_user.id
+        )
         if not db_object and self._create_user:
             db_object = UserDBModel(user_id=event.from_user.id)
             await db_object.insert()
