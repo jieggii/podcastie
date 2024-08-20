@@ -1,12 +1,22 @@
-from aiogram import Bot
-from aiogram.enums import ChatAction
-from bot.core import opml
 import typing
 
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, BufferedInputFile
+from aiogram import Bot
+from aiogram.enums import ChatAction
+from aiogram.types import (
+    BufferedInputFile,
+    CallbackQuery,
+    InlineKeyboardMarkup,
+    Message,
+)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from bot.aiogram_view.view import View
-from bot.callback_data.entrypoints import FindViewEntrypointCallbackData, ImportViewEntrypointCallbackData, MenuViewEntrypointCallbackData
+from bot.callback_data.entrypoints import (
+    FindViewEntrypointCallbackData,
+    ImportViewEntrypointCallbackData,
+    MenuViewEntrypointCallbackData,
+)
+from bot.core import opml
 from bot.core.user import User
 
 
@@ -16,6 +26,7 @@ def _build_result_reply_markup(text: str) -> InlineKeyboardMarkup:
     kbd.button(text=text, callback_data=MenuViewEntrypointCallbackData())
 
     return kbd.as_markup()
+
 
 def _build_call_to_action_reply_markup() -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
@@ -27,7 +38,9 @@ def _build_call_to_action_reply_markup() -> InlineKeyboardMarkup:
 
 
 class ExportView(View):
-    async def handle_entrypoint(self, event: CallbackQuery, data: dict[str, typing.Any] | None = None) -> None:
+    async def handle_entrypoint(
+        self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
+    ) -> None:
         bot: Bot = data["bot"]
         user: User = data["user"]
 
@@ -42,8 +55,12 @@ class ExportView(View):
         await bot.send_chat_action(event.from_user.id, ChatAction.UPLOAD_DOCUMENT)
 
         await event.answer()
-        await event.message.answer_document(file, caption="Here are your subscriptions in OPML format", )
+        await event.message.answer_document(
+            file,
+            caption="Here are your subscriptions in OPML format",
+        )
 
         text = "You can import this file in any other podcast app."
-        await event.message.answer(text, reply_markup=_build_result_reply_markup("<< Menu"))
-
+        await event.message.answer(
+            text, reply_markup=_build_result_reply_markup("<< Menu")
+        )

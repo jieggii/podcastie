@@ -1,4 +1,4 @@
-from minicfg import Minicfg, Field, minicfg_prefix
+from minicfg import Field, Minicfg, minicfg_prefix
 from minicfg.caster import to_int
 
 
