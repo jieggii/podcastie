@@ -1,8 +1,10 @@
 import typing
 
+from aiogram import Bot
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, LinkPreviewOptions
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from beanie import PydanticObjectId
+from podcastie_telegram_html.components import start_bot_url
 from podcastie_telegram_html.tags import bold
 
 from bot.aiogram_view.view import View
@@ -12,11 +14,12 @@ from bot.callback_data.entrypoints import (
     SubscriptionsViewEntrypointCallbackData,
 )
 from bot.core.podcast import Podcast, PodcastNotFoundError
+from bot.core.instant_link import build_instant_link
 
 
-def _build_reply_markup(podcast_id: PydanticObjectId) -> InlineKeyboardMarkup:
+def _build_reply_markup(podcast_id: PydanticObjectId, podcast_title: str) -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
-    kbd.button(text="Share podcast to a Telegram chat", switch_inline_query="todo")
+    kbd.button(text="Share podcast to a Telegram chat", switch_inline_query=podcast_title)
     kbd.button(
         text="« Back",
         callback_data=PodcastViewEntrypointCallbackData(podcast_id=podcast_id),
@@ -35,29 +38,31 @@ class ShareView(View):
     async def handle_entrypoint(
         self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
     ) -> None:
+        bot: Bot = data["bot"]
         callback_data: ShareViewEntrypointCallbackData = data["callback_data"]
 
         try:
             podcast = await Podcast.from_object_id(callback_data.podcast_id)
-            text = (
-                f"📤 Here are several ways to share {bold(podcast.db_object.meta.title)}:\n"
-                "\n"
-                f"{bold("Podcast website:")} {podcast.db_object.meta.link if podcast.db_object.meta.link else "not available"}\n"
-                f"{bold("RSS feed:")} {podcast.db_object.feed_url}\n"
-                f"{bold("Instant Link:")} https://example.com"
-            )
-            markup = _build_reply_markup(podcast.db_object.id)
-            await event.message.edit_text(
-                text,
-                reply_markup=markup,
-                link_preview_options=LinkPreviewOptions(
-                    is_disabled=False,
-                    url=podcast.db_object.meta.link,
-                    prefer_large_media=True,
-                ),
-            )
-
         except PodcastNotFoundError:
-            await event.message.edit_text(
-                "Podcast not found.", reply_markup=_build_reply_markup()
-            )
+            await event.answer("Podcast not found.")  # todo emoji
+            return
+
+        instant_link = build_instant_link(bot_username=(await bot.get_me()).username, podcast_feed_url_hash_prefix=podcast.db_object.feed_url_hash_prefix)
+        text = (
+            f"📤 Here are several ways to share {bold(podcast.db_object.meta.title)}:\n"
+            "\n"
+            f"{bold("Podcast website:")} {podcast.db_object.meta.link if podcast.db_object.meta.link else "not available"}\n"
+            f"{bold("RSS feed:")} {podcast.db_object.feed_url}\n"
+            f"{bold("Instant Link:")} {instant_link}"
+        )
+        markup = _build_reply_markup(podcast.db_object.id, podcast.db_object.meta.title)
+        await event.message.edit_text(
+            text,
+            reply_markup=markup,
+            link_preview_options=LinkPreviewOptions(
+                is_disabled=False,
+                url=podcast.db_object.meta.link,
+                prefer_large_media=True,
+            ),
+        )
+
