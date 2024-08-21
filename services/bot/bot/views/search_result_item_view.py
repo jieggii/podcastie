@@ -2,19 +2,15 @@ import typing
 
 from aiogram import Bot
 from aiogram.enums import ChatAction
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    Message,
-    URLInputFile,
-)
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message, URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from beanie import PydanticObjectId
 from podcastie_telegram_html.tags import blockquote, bold
 
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
-    SearchResultViewEntrypointCallbackData, SearchResultAction,
+    SearchResultAction,
+    SearchResultViewEntrypointCallbackData,
 )
 from bot.core.podcast import Podcast, PodcastNotFoundError
 from bot.core.user import User, UserDoesNotFollowPodcastError, UserFollowsPodcastError
@@ -22,24 +18,33 @@ from bot.core.user import User, UserDoesNotFollowPodcastError, UserFollowsPodcas
 
 class SearchResultView(View):
     @staticmethod
-    def _build_follow_keyboard(podcast_id: PydanticObjectId, podcast_link: str | None) -> InlineKeyboardMarkup:
+    def _build_follow_keyboard(
+        podcast_id: PydanticObjectId, podcast_link: str | None
+    ) -> InlineKeyboardMarkup:
         kbd = InlineKeyboardBuilder()
-        kbd.button(text="Follow", callback_data=SearchResultViewEntrypointCallbackData(
-            podcast_id=podcast_id,
-            action=SearchResultAction.follow,
-        ))
+        kbd.button(
+            text="Follow",
+            callback_data=SearchResultViewEntrypointCallbackData(
+                podcast_id=podcast_id,
+                action=SearchResultAction.follow,
+            ),
+        )
         if podcast_link:
             kbd.button(text="Podcast website", url=podcast_link)
 
         return kbd.as_markup()
 
     @staticmethod
-    def _build_unfollow_keyboard(podcast_id: PydanticObjectId, podcast_link: str | None) -> InlineKeyboardMarkup:
+    def _build_unfollow_keyboard(
+        podcast_id: PydanticObjectId, podcast_link: str | None
+    ) -> InlineKeyboardMarkup:
         kbd = InlineKeyboardBuilder()
-        kbd.button(text="Unfollow", callback_data=SearchResultViewEntrypointCallbackData(
-            podcast_id=podcast_id,
-            action=SearchResultAction.unfollow
-        ))
+        kbd.button(
+            text="Unfollow",
+            callback_data=SearchResultViewEntrypointCallbackData(
+                podcast_id=podcast_id, action=SearchResultAction.unfollow
+            ),
+        )
         if podcast_link:
             kbd.button(text="Podcast website", url=podcast_link)
 
@@ -61,20 +66,44 @@ class SearchResultView(View):
             case SearchResultAction.follow:
                 try:
                     await user.follow_podcast(podcast)
-                    await event.message.edit_reply_markup(reply_markup=self._build_unfollow_keyboard(podcast.db_object.id, podcast.db_object.meta.link))
-                    await event.answer(f"🔔 Successfully followed {podcast.db_object.meta.title}.")
+                    await event.message.edit_reply_markup(
+                        reply_markup=self._build_unfollow_keyboard(
+                            podcast.db_object.id, podcast.db_object.meta.link
+                        )
+                    )
+                    await event.answer(
+                        f"🔔 Successfully followed {podcast.db_object.meta.title}."
+                    )
                 except UserFollowsPodcastError:
-                    await event.message.edit_reply_markup(reply_markup=self._build_unfollow_keyboard(podcast.db_object.id, podcast.db_object.meta.link))
-                    await event.answer(f"🔔 You already follow {podcast.db_object.meta.title}.")
+                    await event.message.edit_reply_markup(
+                        reply_markup=self._build_unfollow_keyboard(
+                            podcast.db_object.id, podcast.db_object.meta.link
+                        )
+                    )
+                    await event.answer(
+                        f"🔔 You already follow {podcast.db_object.meta.title}."
+                    )
 
             case SearchResultAction.unfollow:
                 try:
                     await user.unfollow_podcast(podcast)
-                    await event.message.edit_reply_markup(reply_markup=self._build_follow_keyboard(podcast.db_object.id, podcast.db_object.meta.link))
-                    await event.answer(f"🔕 Successfully unfollowed from {podcast.db_object.meta.title}.")
+                    await event.message.edit_reply_markup(
+                        reply_markup=self._build_follow_keyboard(
+                            podcast.db_object.id, podcast.db_object.meta.link
+                        )
+                    )
+                    await event.answer(
+                        f"🔕 Successfully unfollowed from {podcast.db_object.meta.title}."
+                    )
                 except UserDoesNotFollowPodcastError:
-                    await event.message.edit_reply_markup(reply_markup=self._build_follow_keyboard(podcast.db_object.id, podcast.db_object.meta.link))
-                    await event.answer(f"🔕 You don't follow {podcast.db_object.meta.title}.")
+                    await event.message.edit_reply_markup(
+                        reply_markup=self._build_follow_keyboard(
+                            podcast.db_object.id, podcast.db_object.meta.link
+                        )
+                    )
+                    await event.answer(
+                        f"🔕 You don't follow {podcast.db_object.meta.title}."
+                    )
 
             case SearchResultAction.send:
                 if not isinstance(event, Message):
@@ -93,9 +122,13 @@ class SearchResultView(View):
 
                 markup: InlineKeyboardMarkup
                 if user.is_following_podcast(podcast):
-                    markup = self._build_unfollow_keyboard(podcast.db_object.id, podcast.db_object.meta.link)
+                    markup = self._build_unfollow_keyboard(
+                        podcast.db_object.id, podcast.db_object.meta.link
+                    )
                 else:
-                    markup = self._build_follow_keyboard(podcast.db_object.id, podcast.db_object.meta.link)
+                    markup = self._build_follow_keyboard(
+                        podcast.db_object.id, podcast.db_object.meta.link
+                    )
 
                 if podcast.db_object.meta.cover_url:
                     await bot.send_chat_action(

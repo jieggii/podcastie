@@ -10,7 +10,9 @@ from .menu_view import MenuView
 
 
 class StartView(View):
-    _STICKER_FILE_ID = "CAACAgIAAxkBAAEtRB1mxaR_qC3fOUFt2QzPIlos1UI0XwACAQEAAladvQoivp8OuMLmNDUE"
+    _STICKER_FILE_ID = (
+        "CAACAgIAAxkBAAEtRB1mxaR_qC3fOUFt2QzPIlos1UI0XwACAQEAAladvQoivp8OuMLmNDUE"
+    )
 
     async def handle_entrypoint(
         self, event: Message, data: dict[str, typing.Any]

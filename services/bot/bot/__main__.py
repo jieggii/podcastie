@@ -16,19 +16,20 @@ from bot.callback_data.entrypoints import (
     ImportViewEntrypointCallbackData,
     MenuViewEntrypointCallbackData,
     PodcastViewEntrypointCallbackData,
+    SearchResultViewEntrypointCallbackData,
     ShareViewEntrypointCallbackData,
     SubscriptionsViewEntrypointCallbackData,
-    UnfollowViewEntrypointCallbackData, SearchResultViewEntrypointCallbackData,
+    UnfollowViewEntrypointCallbackData,
 )
 from bot.env import Env
 from bot.fsm import BotState
 from bot.middlewares import DatabaseMiddleware
 from bot.views.export_view import ExportView
 from bot.views.find_view import FindView
-from bot.views.search_result_item_view import SearchResultView
 from bot.views.import_view import ImportView
 from bot.views.menu_view import MenuView
 from bot.views.podcast_view import PodcastView
+from bot.views.search_result_item_view import SearchResultView
 from bot.views.share_view import ShareView
 from bot.views.start_view import StartView
 from bot.views.subscriptions_view import SubscriptionsView
@@ -83,7 +84,7 @@ async def main() -> None:
         ViewRouter(
             StartView(),
             entrypoint_command="start",
-            entrypoint_handler_middlewares=[DatabaseMiddleware()]
+            entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             MenuView(),

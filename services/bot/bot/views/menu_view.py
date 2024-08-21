@@ -19,7 +19,8 @@ def _build_reply_markup() -> InlineKeyboardMarkup:
 
     kbd.button(text="Find a podcast", callback_data=FindViewEntrypointCallbackData())
     kbd.button(
-        text=f"My subscriptions", callback_data=SubscriptionsViewEntrypointCallbackData()
+        text=f"My subscriptions",
+        callback_data=SubscriptionsViewEntrypointCallbackData(),
     )
 
     kbd.button(

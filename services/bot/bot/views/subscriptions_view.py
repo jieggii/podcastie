@@ -78,8 +78,8 @@ class SubscriptionsView(View):
         if not subscriptions:
             await event.message.edit_text(
                 "🔕 You aren't following any podcasts yet.",
-                reply_markup=_build_reply_markup(subscriptions)
-                )
+                reply_markup=_build_reply_markup(subscriptions),
+            )
             return
 
         await event.message.edit_text(

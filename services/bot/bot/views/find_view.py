@@ -2,17 +2,15 @@ import typing
 
 from aiogram import Bot
 from aiogram.fsm.context import FSMContext
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
     FindViewEntrypointCallbackData,
-    MenuViewEntrypointCallbackData, SearchResultViewEntrypointCallbackData, SearchResultAction,
+    MenuViewEntrypointCallbackData,
+    SearchResultAction,
+    SearchResultViewEntrypointCallbackData,
 )
 from bot.core.podcast import search_podcasts
 from bot.core.user import User
@@ -45,7 +43,9 @@ class FindView(View):
     ) -> None:
         state: FSMContext = data["state"]
 
-        text = "🔍 In your next message, please send me a podcast title you want to find."
+        text = (
+            "🔍 In your next message, please send me a podcast title you want to find."
+        )
         markup = _build_reply_markup()
 
         await state.set_state(BotState.FIND)
@@ -87,7 +87,12 @@ class FindView(View):
 
             result_view_data = data.copy()
             result_view_data["user"] = user
-            result_view_data["callback_data"] = SearchResultViewEntrypointCallbackData(podcast_id=podcast.db_object.id, action=SearchResultAction.send, result_number=i+1, total_results=podcasts_len)
+            result_view_data["callback_data"] = SearchResultViewEntrypointCallbackData(
+                podcast_id=podcast.db_object.id,
+                action=SearchResultAction.send,
+                result_number=i + 1,
+                total_results=podcasts_len,
+            )
 
             await search_result_view.handle_entrypoint(message, result_view_data)
 

@@ -55,5 +55,5 @@ class ExportView(View):
         )
         await event.message.answer(
             "You can import this file into any other podcast app.",
-            reply_markup=_build_result_reply_markup("« Menu")
+            reply_markup=_build_result_reply_markup("« Menu"),
         )
