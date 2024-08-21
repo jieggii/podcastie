@@ -24,16 +24,17 @@ from bot.callback_data.entrypoints import (
 from bot.env import Env
 from bot.fsm import BotState
 from bot.middlewares import DatabaseMiddleware
-from bot.views.export_view import ExportView
-from bot.views.find_view import FindView
-from bot.views.import_view import ImportView
-from bot.views.menu_view import MenuView
-from bot.views.podcast_view import PodcastView
-from bot.views.search_result_item_view import SearchResultView
-from bot.views.share_view import ShareView
-from bot.views.start_view import StartView
-from bot.views.subscriptions_view import SubscriptionsView
-from bot.views.unfollow_view import UnfollowView
+from bot.handlers.views.export_view import ExportView
+from bot.handlers.views.find_view import FindView
+from bot.handlers.views.import_view import ImportView
+from bot.handlers.views.menu_view import MenuView
+from bot.handlers.views.podcast_view import PodcastView
+from bot.handlers.views.search_result_item_view import SearchResultView
+from bot.handlers.views.share_view import ShareView
+from bot.handlers.views.start_view import StartView
+from bot.handlers.views.subscriptions_view import SubscriptionsView
+from bot.handlers.views.unfollow_view import UnfollowView
+from bot.handlers import inline_query
 
 
 def setup_logging():
@@ -78,6 +79,9 @@ async def main() -> None:
     )
 
     dp = Dispatcher()
+
+    # include inline query router:
+    dp.include_router(inline_query.router)
 
     # include view routers:
     dp.include_routers(

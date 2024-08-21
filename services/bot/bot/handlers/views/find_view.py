@@ -15,7 +15,7 @@ from bot.callback_data.entrypoints import (
 from bot.core.podcast import search_podcasts
 from bot.core.user import User
 from bot.fsm import BotState
-from bot.views.search_result_item_view import SearchResultView
+from bot.handlers.views.search_result_item_view import SearchResultView
 
 
 def _build_reply_markup() -> InlineKeyboardMarkup:

@@ -11,7 +11,6 @@ from bot.callback_data.entrypoints import (
     ImportViewEntrypointCallbackData,
     SubscriptionsViewEntrypointCallbackData,
 )
-from bot.core.user import User
 
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
