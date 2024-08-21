@@ -1,34 +1,40 @@
 import aiogram
 from aiogram import Router
 from aiogram.types import (
+    InlineKeyboardMarkup,
     InlineQuery,
     InlineQueryResultArticle,
     InputTextMessageContent,
-    LinkPreviewOptions, InlineKeyboardMarkup,
+    LinkPreviewOptions,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from beanie import PydanticObjectId
-from bot.core.podcast import Podcast, search_podcasts
-from bot.core.user import User
 from podcastie_telegram_html import components, tags, util
 
+from bot.core.podcast import Podcast, search_podcasts
+from bot.core.user import User
 from bot.middlewares import DatabaseMiddleware
 
 router = Router()
 router.inline_query.middleware(DatabaseMiddleware(create_user=False))
 
 
-def _build_reply_markup(bot_username: str, podcast_id: PydanticObjectId, podcast_link: str | None) -> InlineKeyboardMarkup:
+def _build_reply_markup(
+    bot_username: str, podcast_id: PydanticObjectId, podcast_link: str | None
+) -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
 
     if podcast_link:
         kbd.button(text="Website", url=podcast_link)
 
-    kbd.button(text="Follow via @podcastie_bot", url=components.start_bot_url(
+    kbd.button(
+        text="Follow via @podcastie_bot",
+        url=components.start_bot_url(
             bot_username=bot_username,
             payload=str(podcast_id),
             encode_payload=True,
-        ))
+        ),
+    )
 
     return kbd.as_markup()
 
@@ -81,7 +87,9 @@ async def handle_inline_query(
     articles: list[InlineQueryResultArticle] = []
     for podcast in results:
         description = (
-            util.escape(podcast.db_object.meta.description) if podcast.db_object.meta.description else ""
+            util.escape(podcast.db_object.meta.description)
+            if podcast.db_object.meta.description
+            else ""
         )
         description_len = len(description)
 
@@ -106,7 +114,10 @@ async def handle_inline_query(
                 description=podcast.db_object.meta.description,
                 thumbnail_url=podcast.db_object.meta.cover_url,
                 reply_markup=_build_reply_markup(
-                    bot_username=(await bot.get_me()).username, podcast_id=podcast.db_object.id, podcast_link=podcast.db_object.meta.link)
+                    bot_username=(await bot.get_me()).username,
+                    podcast_id=podcast.db_object.id,
+                    podcast_link=podcast.db_object.meta.link,
+                ),
             )
         )
 
