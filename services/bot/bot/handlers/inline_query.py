@@ -8,19 +8,19 @@ from aiogram.types import (
     LinkPreviewOptions,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from beanie import PydanticObjectId
-from podcastie_telegram_html import components, tags, util
+from podcastie_telegram_html import tags, util
 
 from bot.core.podcast import Podcast, search_podcasts
 from bot.core.user import User
 from bot.middlewares import DatabaseMiddleware
+from bot.core.instant_link import build_instant_link
 
 router = Router()
 router.inline_query.middleware(DatabaseMiddleware(create_user=False))
 
 
 def _build_reply_markup(
-    bot_username: str, podcast_id: PydanticObjectId, podcast_link: str | None
+    bot_username: str, podcast_feed_url_hash_prefix: str, podcast_link: str | None
 ) -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
 
@@ -29,10 +29,9 @@ def _build_reply_markup(
 
     kbd.button(
         text="Follow via @podcastie_bot",
-        url=components.start_bot_url(
+        url=build_instant_link(
             bot_username=bot_username,
-            payload=str(podcast_id),
-            encode_payload=True,
+            podcast_feed_url_hash_prefix=str(podcast_feed_url_hash_prefix),
         ),
     )
 
@@ -115,7 +114,7 @@ async def handle_inline_query(
                 thumbnail_url=podcast.db_object.meta.cover_url,
                 reply_markup=_build_reply_markup(
                     bot_username=(await bot.get_me()).username,
-                    podcast_id=podcast.db_object.id,
+                    podcast_feed_url_hash_prefix=podcast.db_object.feed_url_hash_prefix,
                     podcast_link=podcast.db_object.meta.link,
                 ),
             )
