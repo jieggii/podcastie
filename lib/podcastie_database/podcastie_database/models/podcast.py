@@ -8,7 +8,7 @@ import pymongo
 from beanie import Document, Indexed
 from pydantic import BaseModel
 
-PODCAST_FEED_URL_HASH_PREFIX_LEN = 7
+PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
 
 _TITLE_SLUG_FORBIDDEN_CHARS = set(punctuation)
 
