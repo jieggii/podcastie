@@ -95,8 +95,11 @@ class ImportView(View):
         await event.message.edit_text(text, reply_markup=_build_reply_markup())
 
     async def handle_state(self, message: Message, data: dict[str, typing.Any]) -> None:
+        state: FSMContext = data["state"]
         bot: Bot = data["bot"]
         user: User = data["user"]
+
+        await state.clear()
 
         await bot.send_chat_action(message.from_user.id, ChatAction.TYPING)
 
@@ -141,7 +144,6 @@ class ImportView(View):
 
         # remove duplicated feed URLs
         feed_urls = list(set(feed_urls))
-
         followed, failed_to_follow = await _follow_podcasts(user, feed_urls)
 
         text = ""
