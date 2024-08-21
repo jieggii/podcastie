@@ -1,3 +1,5 @@
+from enum import Enum
+
 from beanie import PydanticObjectId
 
 from bot.aiogram_view.entrypoint_callback_data import EntrypointCallbackData
@@ -9,6 +11,17 @@ class MenuViewEntrypointCallbackData(EntrypointCallbackData, prefix="menu"):
 
 class FindViewEntrypointCallbackData(EntrypointCallbackData, prefix="find"):
     pass
+
+class SearchResultAction(Enum):
+    follow = "follow"
+    unfollow = "unfollow"
+    send = "send"
+
+class SearchResultViewEntrypointCallbackData(EntrypointCallbackData, prefix="search_result"):
+    podcast_id: PydanticObjectId
+    action: SearchResultAction
+    result_number: int | None = None
+    total_results: int | None = None
 
 
 class ImportViewEntrypointCallbackData(EntrypointCallbackData, prefix="import"):

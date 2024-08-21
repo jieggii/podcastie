@@ -8,10 +8,6 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from podcastie_telegram_html.tags import link
 
-from bot.aiogram_view.util import (
-    answer_callback_query_entrypoint_event,
-    answer_entrypoint_event,
-)
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
     ImportViewEntrypointCallbackData,
@@ -83,7 +79,7 @@ async def _follow_podcasts(
 
 class ImportView(View):
     _FILE_SIZE_LIMIT = 1 * 1024 * 1024  # file size limit in bytes
-    _FEED_URLS_LIMIT = 20
+    _FEED_URLS_LIMIT = 20  # number of feed URLs limit
 
     async def handle_entrypoint(
         self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
@@ -93,8 +89,8 @@ class ImportView(View):
         await state.set_state(BotState.IMPORT)
 
         text = (
-            "Please either attach an OPML file containing your subscriptions or "
-            "send a text message containing podcast RSS feed URLs you want to follow."
+            "📄 Attach an OPML file with your subscriptions or "
+            "provide podcast RSS feed URLs in a text message to follow new podcasts."
         )
         await event.message.edit_text(text, reply_markup=_build_reply_markup())
 
@@ -132,14 +128,14 @@ class ImportView(View):
 
             case _:
                 await message.answer(
-                    "This message kind is not supported.",
+                    "⚠️ This message kind is not supported.",
                     reply_markup=_build_result_reply_markup(failure=True),
                 )
                 return
 
         if len(feed_urls) > self._FEED_URLS_LIMIT:
             await message.answer(
-                "Number of RSS feed URLs exceeds the limit.",
+                "⚠️ Number of RSS feed URLs exceeds the limit.",
                 reply_markup=_build_result_reply_markup(failure=True),
             )
 

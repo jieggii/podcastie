@@ -34,16 +34,6 @@ def _build_reply_markup(podcast_id: PydanticObjectId) -> InlineKeyboardMarkup:
     return kbd.as_markup()
 
 
-def _build_failure_reply_markup() -> InlineKeyboardMarkup:
-    kbd = InlineKeyboardBuilder()
-
-    kbd.button(
-        text="« Subscriptions", callback_data=SubscriptionsViewEntrypointCallbackData()
-    )
-
-    return kbd.as_markup()
-
-
 class UnfollowView(View):
     async def handle_entrypoint(
         self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
@@ -52,11 +42,11 @@ class UnfollowView(View):
 
         try:
             podcast = await Podcast.from_object_id(callback_data.podcast_id)
-            text = f"Are you sure that you want to stop following {bold(podcast.db_object.meta.title)}?"
-            markup = _build_reply_markup(podcast.db_object.id)
-
         except PodcastNotFoundError:
-            text = "Podcast not found"
-            markup = _build_failure_reply_markup()
+            await event.answer("⚠️Podcast not found.", show_alert=True)
+            return
 
-        await event.message.edit_text(text, reply_markup=markup)
+        await event.message.edit_text(
+            f"🔕 Are you sure that you want to stop following {bold(podcast.db_object.meta.title)}?",
+            reply_markup=_build_reply_markup(podcast.db_object.id),
+        )

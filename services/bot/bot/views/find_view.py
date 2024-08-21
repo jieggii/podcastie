@@ -1,27 +1,23 @@
 import typing
 
 from aiogram import Bot
-from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardMarkup,
-    LinkPreviewOptions,
     Message,
-    URLInputFile,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from podcastie_telegram_html.tags import blockquote, bold
 
-from bot.aiogram_view.util import answer_entrypoint_event
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
     FindViewEntrypointCallbackData,
-    MenuViewEntrypointCallbackData,
+    MenuViewEntrypointCallbackData, SearchResultViewEntrypointCallbackData, SearchResultAction,
 )
-from bot.core.podcast import Podcast, search_podcasts
+from bot.core.podcast import search_podcasts
 from bot.core.user import User
 from bot.fsm import BotState
+from bot.views.search_result_item_view import SearchResultView
 
 
 def _build_reply_markup() -> InlineKeyboardMarkup:
@@ -43,31 +39,13 @@ def _build_result_reply_markup() -> InlineKeyboardMarkup:
     return kbd.as_markup()
 
 
-def _build_podcast_card_reply_markup(
-    podcast: Podcast, user_is_following_podcast: bool
-) -> InlineKeyboardMarkup:
-    kbd = InlineKeyboardBuilder()
-
-    if user_is_following_podcast:
-        # kbd.button(text="Unfollow", callback_data=UnfollowCallbackData(podcast_id=podcast.db_object.id))
-        kbd.button(text="Unfollow", callback_data="todo")
-    else:
-        # kbd.button(text="Follow", callback_data=FollowCallbackData(podcast_id=podcast.db_object.id))
-        kbd.button(text="Follow", callback_data="todo")
-
-    if podcast.db_object.meta.link:
-        kbd.button(text="Podcast website", url=podcast.db_object.meta.link)
-
-    return kbd.as_markup()
-
-
 class FindView(View):
     async def handle_entrypoint(
         self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
     ) -> None:
         state: FSMContext = data["state"]
 
-        text = "In your next message, please send me a podcast title you want to find."
+        text = "🔍 In your next message, please send me a podcast title you want to find."
         markup = _build_reply_markup()
 
         await state.set_state(BotState.FIND)
@@ -83,7 +61,7 @@ class FindView(View):
 
         if len(message.text) > 50:  # todo: magic number
             await message.answer(
-                "The search query is too long.",
+                "⚠️ The search query is too long.",
                 reply_markup=_build_result_reply_markup(),
             )
             return
@@ -94,7 +72,8 @@ class FindView(View):
         podcasts_len = len(podcasts)
         if podcasts_len == 0:
             await headline_message.edit_text(
-                "No podcasts were found matching your search query. Please try adjusting your keywords.",
+                "No podcasts were found matching your search query. "
+                "Please try adjusting your keywords.",
                 reply_markup=_build_result_reply_markup(),
             )
             return
@@ -104,28 +83,17 @@ class FindView(View):
         )
 
         for i, podcast in enumerate(podcasts):
-            text = f"{i + 1}/{podcasts_len} {bold(podcast.db_object.meta.title)}\n"
+            search_result_view = SearchResultView()
 
-            if podcast.db_object.meta.description:
-                text += f"{blockquote(podcast.db_object.meta.description, expandable=True)}\n"
+            result_view_data = data.copy()
+            result_view_data["user"] = user
+            result_view_data["callback_data"] = SearchResultViewEntrypointCallbackData(podcast_id=podcast.db_object.id, action=SearchResultAction.send, result_number=i+1, total_results=podcasts_len)
 
-            markup = _build_podcast_card_reply_markup(
-                podcast, user.is_following_podcast(podcast)
-            )
-
-            if podcast.db_object.meta.cover_url:
-                await bot.send_chat_action(
-                    message.chat.id, ChatAction.UPLOAD_PHOTO
-                )  # Todo: cache telegram_file_ids
-
-                photo = URLInputFile(podcast.db_object.meta.cover_url)
-                await message.answer_photo(photo, caption=text, reply_markup=markup)
-            else:
-                await message.answer(text, reply_markup=markup)
+            await search_result_view.handle_entrypoint(message, result_view_data)
 
         await headline_message.edit_text("✨ Here is what I have found:")
 
         await message.answer(
-            "Feel free to use inline buttons to follow podcasts I found. Can I do anything else for you?",
+            "Please use inline buttons to follow podcasts I've send to you.",
             reply_markup=_build_result_reply_markup(),
         )

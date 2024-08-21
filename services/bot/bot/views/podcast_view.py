@@ -74,5 +74,5 @@ class PodcastView(View):
 
         except PodcastNotFoundError:
             await event.message.edit_text(
-                "Podcast not found.", reply_markup=_build_failure_reply_markup()
+                "⚠️ Podcast not found.", reply_markup=_build_failure_reply_markup()
             )

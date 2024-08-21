@@ -28,15 +28,6 @@ def _build_result_reply_markup(text: str) -> InlineKeyboardMarkup:
     return kbd.as_markup()
 
 
-def _build_call_to_action_reply_markup() -> InlineKeyboardMarkup:
-    kbd = InlineKeyboardBuilder()
-
-    kbd.button(text="Find a podcast", callback_data=FindViewEntrypointCallbackData())
-    kbd.button(text="Import podcasts", callback_data=ImportViewEntrypointCallbackData())
-
-    return kbd.as_markup()
-
-
 class ExportView(View):
     async def handle_entrypoint(
         self, event: CallbackQuery, data: dict[str, typing.Any] | None = None
@@ -46,7 +37,10 @@ class ExportView(View):
 
         subscriptions = await user.get_following_podcasts()
         if not subscriptions:
-            await event.answer("You don't follow any podcasts yet.", show_alert=True)
+            await event.message.edit_text(
+                "🔕 You aren't following any podcasts yet.",
+                reply_markup=_build_result_reply_markup("« Back"),
+            )
             return
 
         content = opml.generate_opml(subscriptions)
@@ -57,10 +51,9 @@ class ExportView(View):
         await event.answer()
         await event.message.answer_document(
             file,
-            caption="Here are your subscriptions in OPML format",
+            caption="📄 Here are your subscriptions in OPML format.",
         )
-
-        text = "You can import this file in any other podcast app."
         await event.message.answer(
-            text, reply_markup=_build_result_reply_markup("<< Menu")
+            "You can import this file into any other podcast app.",
+            reply_markup=_build_result_reply_markup("« Menu")
         )

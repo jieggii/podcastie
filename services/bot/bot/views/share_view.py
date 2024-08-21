@@ -5,7 +5,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from beanie import PydanticObjectId
 from podcastie_telegram_html.tags import bold
 
-from bot.aiogram_view.util import answer_callback_query_entrypoint_event
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
     PodcastViewEntrypointCallbackData,
@@ -41,7 +40,7 @@ class ShareView(View):
         try:
             podcast = await Podcast.from_object_id(callback_data.podcast_id)
             text = (
-                f"Here are useful ways to share {bold(podcast.db_object.meta.title)} with friends:\n"
+                f"📤 Here are several ways to share {bold(podcast.db_object.meta.title)}:\n"
                 "\n"
                 f"{bold("Podcast website:")} {podcast.db_object.meta.link if podcast.db_object.meta.link else "not available"}\n"
                 f"{bold("RSS feed:")} {podcast.db_object.feed_url}\n"

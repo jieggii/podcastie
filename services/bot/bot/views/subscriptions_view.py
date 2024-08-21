@@ -2,12 +2,7 @@ import typing
 
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from podcastie_telegram_html.tags import bold
 
-from bot.aiogram_view.util import (
-    answer_callback_query_entrypoint_event,
-    answer_entrypoint_event,
-)
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
     MenuViewEntrypointCallbackData,
@@ -28,16 +23,13 @@ def _build_reply_markup(podcasts: list[Podcast]) -> InlineKeyboardMarkup:
                 edit_current_message=True, podcast_id=podcast.db_object.id
             ),
         )
+
     kbd.button(
         text="« Back",
         callback_data=MenuViewEntrypointCallbackData(edit_current_message=True),
     )
 
-    # todo: smarter kbd layout
-    # place two podcats per row
-    # place one podcast per row if its title is longer than X
-    # place "« Back" button on a separate row
-    kbd.adjust(2)
+    kbd.adjust(1)
 
     return kbd.as_markup()
 
@@ -71,23 +63,26 @@ class SubscriptionsView(View):
                 try:
                     await user.unfollow_podcast(podcast)
                     await event.answer(
-                        f"Successfully unfollowed {podcast.db_object.meta.title}"
+                        f"🔕 Successfully unfollowed {podcast.db_object.meta.title}."
                     )
                 except UserDoesNotFollowPodcastError:
                     await event.answer(
-                        "Failed to unfollow podcast as you do not follow it anymore."
+                        f"⚠️ Failed to unfollow {podcast.db_object.meta.title} as you do not follow it anymore."
                     )
             except PodcastNotFoundError:
                 await event.answer(
-                    "Failed to unfollow podcast as it does not longer exist."
+                    f"⚠️ Failed to unfollow podcast as it no longer exists."
                 )
 
         subscriptions = await user.get_following_podcasts()
-        if subscriptions:
-            text = "Here are the podcasts you follow"
-            markup = _build_reply_markup(subscriptions)
-        else:
-            text = "You don't follow any podcasts yet."
-            markup = _POOR_REPLY_MARKUP
+        if not subscriptions:
+            await event.message.edit_text(
+                "🔕 You aren't following any podcasts yet.",
+                reply_markup=_build_reply_markup(subscriptions)
+                )
+            return
 
-        await event.message.edit_text(text, reply_markup=markup)
+        await event.message.edit_text(
+            "📝 Here is the list of the podcasts you follow:",
+            reply_markup=_build_reply_markup(subscriptions),
+        )
