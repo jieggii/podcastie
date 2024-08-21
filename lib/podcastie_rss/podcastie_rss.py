@@ -45,24 +45,20 @@ class Feed:
 
 
 async def _fetch_feed(url: str, *, max_episodes: int) -> dict[str, typing.Any]:
-    session = aiohttp.ClientSession()  # todo: use existing session instead of creating a new one, if possible
-
+    # todo: use a single session.
     try:
-        response = await session.get(url)
-        response.raise_for_status()
+        async with aiohttp.request("GET", url) as response:
+            response.raise_for_status()
+            content = await response.text()
+            return podcastparser.parse(url, io.StringIO(content), max_episodes)
+
     except aiohttp.ClientError as e:
         raise FeedReadError("failed to read feed") from e
-
-    await session.close()  # todo: check if it os OK to close session before reading response text
-
-    text = await response.text()
-    try:
-        return podcastparser.parse(url, io.StringIO(text), max_episodes)
     except podcastparser.FeedParseError as e:
         raise FeedParseError("failed to parse feed") from e
 
 async def fetch_feed(url: str) -> Feed:
-    """Fetches podcast by RSS feed URL."""
+    """Fetches feed by RSS feed URL."""
     feed = await _fetch_feed(url, max_episodes=1)
 
     # parse and validate title (it's required):
