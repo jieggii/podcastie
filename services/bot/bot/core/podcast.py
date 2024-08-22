@@ -22,7 +22,8 @@ class Podcast:
     async def from_object_id(cls, object_id: PydanticObjectId):
         podcast = await _PodcastDatabaseModel.get(object_id)
         if not podcast:
-            raise PodcastNotFoundError("podcast not found")  # todo
+            raise PodcastNotFoundError("podcast not found")
+
         return cls(podcast)
 
     @classmethod
@@ -32,6 +33,17 @@ class Podcast:
         )
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
+
+        return cls(podcast)
+
+    @classmethod
+    async def from_feed_url_hash_prefix(cls, feed_url_hash_prefix: str):
+        podcast = await _PodcastDatabaseModel.find_one(
+            _PodcastDatabaseModel.feed_url_hash_prefix == feed_url_hash_prefix
+        )
+        if not podcast:
+            raise PodcastNotFoundError("podcast not found")
+
         return cls(podcast)
 
     @classmethod
