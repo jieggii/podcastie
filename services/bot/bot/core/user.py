@@ -1,4 +1,5 @@
 from podcastie_database.models.user import User as _UserDatabaseModel
+from typing_extensions import AsyncGenerator
 
 from .podcast import Podcast
 
@@ -38,11 +39,10 @@ class User:
         return cls(user)
 
     async def subscriptions(self) -> list[Podcast]:
-        podcasts: list[Podcast] = []
-        for object_id in self.db_object.following_podcasts:
-            podcasts.append(await Podcast.from_object_id(object_id))
-
-        return podcasts
+        return [
+            await Podcast.from_object_id(object_id)
+            for object_id in self.db_object.following_podcasts
+        ]
 
     async def follow(self, podcast: Podcast) -> None:
         if self.is_following(podcast):
