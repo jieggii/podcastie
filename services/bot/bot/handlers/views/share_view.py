@@ -13,13 +13,17 @@ from bot.callback_data.entrypoints import (
     ShareViewEntrypointCallbackData,
     SubscriptionsViewEntrypointCallbackData,
 )
-from bot.core.podcast import Podcast, PodcastNotFoundError
 from bot.core.instant_link import build_instant_link
+from bot.core.podcast import Podcast, PodcastNotFoundError
 
 
-def _build_reply_markup(podcast_id: PydanticObjectId, podcast_title: str) -> InlineKeyboardMarkup:
+def _build_reply_markup(
+    podcast_id: PydanticObjectId, podcast_title: str
+) -> InlineKeyboardMarkup:
     kbd = InlineKeyboardBuilder()
-    kbd.button(text="Share podcast to a Telegram chat", switch_inline_query=podcast_title)
+    kbd.button(
+        text="Share podcast to a Telegram chat", switch_inline_query=podcast_title
+    )
     kbd.button(
         text="« Back",
         callback_data=PodcastViewEntrypointCallbackData(podcast_id=podcast_id),
@@ -47,7 +51,10 @@ class ShareView(View):
             await event.answer("Podcast not found.")  # todo emoji
             return
 
-        instant_link = build_instant_link(bot_username=(await bot.get_me()).username, podcast_feed_url_hash_prefix=podcast.db_object.feed_url_hash_prefix)
+        instant_link = build_instant_link(
+            bot_username=(await bot.get_me()).username,
+            podcast_feed_url_hash_prefix=podcast.db_object.feed_url_hash_prefix,
+        )
         text = (
             f"📤 Here are several ways to share {bold(podcast.db_object.meta.title)}:\n"
             "\n"
@@ -65,4 +72,3 @@ class ShareView(View):
                 prefer_large_media=True,
             ),
         )
-

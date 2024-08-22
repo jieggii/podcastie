@@ -6,6 +6,7 @@ from .podcast import Podcast
 class UserNotFoundError(Exception):
     pass
 
+
 class UserFollowsPodcastError(Exception):
     """User already follows podcast"""
 
@@ -56,9 +57,7 @@ class User:
 
     async def unfollow(self, podcast: Podcast) -> None:
         if not self.is_following(podcast):
-            raise UserDoesNotFollowPodcastError(
-                "user does not follow podcast"
-            )
+            raise UserDoesNotFollowPodcastError("user does not follow podcast")
 
         self._db_object.following_podcasts.remove(podcast.db_object.id)
         await self._db_object.save()

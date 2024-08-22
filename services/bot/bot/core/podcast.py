@@ -1,13 +1,17 @@
 import hashlib
-import time
 import string
+import time
 
 import podcastie_rss
 from beanie import PydanticObjectId
 from beanie.operators import Text
-from podcastie_database.models.podcast_model import PodcastModel as _PodcastDatabaseModel
-from podcastie_database.models.podcast_model import PodcastMeta, PodcastLatestEpisodeInfo
-
+from podcastie_database.models.podcast_model import (
+    PodcastLatestEpisodeInfo,
+    PodcastMeta,
+)
+from podcastie_database.models.podcast_model import (
+    PodcastModel as _PodcastDatabaseModel,
+)
 
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
 
@@ -18,6 +22,8 @@ def generate_feed_url_hash_prefix(feed_url: str, length: int) -> str:
 
 
 _TITLE_SLUG_FORBIDDEN_CHARS = set(string.punctuation)
+
+
 def generate_podcast_title_slug(title: str) -> str:
     slug_chars: list[str] = []
     for c in title:
@@ -80,7 +86,9 @@ class Podcast:
 
         db_object = _PodcastDatabaseModel(
             feed_url=feed_url,
-            feed_url_hash_prefix=generate_feed_url_hash_prefix(feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN),
+            feed_url_hash_prefix=generate_feed_url_hash_prefix(
+                feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN
+            ),
             meta=PodcastMeta(
                 title=feed.title,
                 title_slug=generate_podcast_title_slug(feed.title),
@@ -91,7 +99,9 @@ class Podcast:
             latest_episode_info=PodcastLatestEpisodeInfo(
                 check_ts=int(time.time()),
                 check_success=True,
-                publication_ts=feed.latest_episode.published if feed.latest_episode else None,
+                publication_ts=(
+                    feed.latest_episode.published if feed.latest_episode else None
+                ),
             ),
         )
 
