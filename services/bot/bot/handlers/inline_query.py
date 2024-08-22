@@ -49,7 +49,7 @@ async def handle_inline_query(
 
     subscriptions: list[Podcast] | None = None
     if user:
-        subscriptions = await user.get_following_podcasts()
+        subscriptions = await user.subscriptions()
 
     if subscriptions:
         result_is_personal = True
@@ -62,7 +62,7 @@ async def handle_inline_query(
             other = []
 
             for podcast in all_results:
-                if user.is_following_podcast(podcast):
+                if user.is_following(podcast):
                     prioritized.append(podcast)
                 else:
                     other.append(podcast)

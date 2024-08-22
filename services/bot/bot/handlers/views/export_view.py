@@ -35,7 +35,7 @@ class ExportView(View):
         bot: Bot = data["bot"]
         user: User = data["user"]
 
-        subscriptions = await user.get_following_podcasts()
+        subscriptions = await user.subscriptions()
         if not subscriptions:
             await event.message.edit_text(
                 "🔕 You aren't following any podcasts yet.",

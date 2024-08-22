@@ -61,7 +61,7 @@ class SubscriptionsView(View):
                     callback_data.unfollow_podcast_id
                 )
                 try:
-                    await user.unfollow_podcast(podcast)
+                    await user.unfollow(podcast)
                     await event.answer(
                         f"🔕 Successfully unfollowed {podcast.db_object.meta.title}."
                     )
@@ -74,7 +74,7 @@ class SubscriptionsView(View):
                     f"⚠️ Failed to unfollow podcast as it no longer exists."
                 )
 
-        subscriptions = await user.get_following_podcasts()
+        subscriptions = await user.subscriptions()
         if not subscriptions:
             await event.message.edit_text(
                 "🔕 You aren't following any podcasts yet.",

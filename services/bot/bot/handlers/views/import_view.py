@@ -67,7 +67,7 @@ async def _follow_podcasts(
                 continue
 
         try:
-            await user.follow_podcast(podcast)
+            await user.follow(podcast)
         except UserFollowsPodcastError:
             failed_to_follow.append((podcast, "you already follow this podcast"))
             continue

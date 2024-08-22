@@ -65,7 +65,7 @@ class SearchResultView(View):
         match callback_data.action:
             case SearchResultAction.follow:
                 try:
-                    await user.follow_podcast(podcast)
+                    await user.follow(podcast)
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_unfollow_keyboard(
                             podcast.db_object.id, podcast.db_object.meta.link
@@ -86,7 +86,7 @@ class SearchResultView(View):
 
             case SearchResultAction.unfollow:
                 try:
-                    await user.unfollow_podcast(podcast)
+                    await user.unfollow(podcast)
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_follow_keyboard(
                             podcast.db_object.id, podcast.db_object.meta.link
@@ -121,7 +121,7 @@ class SearchResultView(View):
                     text += f"{blockquote(podcast.db_object.meta.description, expandable=True)}\n"
 
                 markup: InlineKeyboardMarkup
-                if user.is_following_podcast(podcast):
+                if user.is_following(podcast):
                     markup = self._build_unfollow_keyboard(
                         podcast.db_object.id, podcast.db_object.meta.link
                     )

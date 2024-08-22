@@ -61,7 +61,7 @@ class StartView(View):
 
             if podcast:
                 try:
-                    await user.follow_podcast(podcast)
+                    await user.follow(podcast)
                 except UserFollowsPodcastError:
                     await event.answer(f"⚠️ You already follow {bold(podcast.db_object.meta.title)}.", reply_markup=self._build_keyboard_markup())
                 else:
