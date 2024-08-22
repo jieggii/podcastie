@@ -1,5 +1,4 @@
 from podcastie_database.models.user import User as _UserDatabaseModel
-from typing_extensions import AsyncGenerator
 
 from .podcast import Podcast
 
