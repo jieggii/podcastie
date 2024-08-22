@@ -53,22 +53,22 @@ class ShareView(View):
 
         instant_link = build_instant_link(
             bot_username=(await bot.get_me()).username,
-            podcast_feed_url_hash_prefix=podcast.db_object.feed_url_hash_prefix,
+            podcast_feed_url_hash_prefix=podcast.model.feed_url_hash_prefix,
         )
         text = (
-            f"📤 Here are several ways to share {bold(podcast.db_object.meta.title)}:\n"
+            f"📤 Here are several ways to share {bold(podcast.model.meta.title)}:\n"
             "\n"
-            f"{bold("Podcast website:")} {podcast.db_object.meta.link if podcast.db_object.meta.link else "not available"}\n"
-            f"{bold("RSS feed:")} {podcast.db_object.feed_url}\n"
+            f"{bold("Podcast website:")} {podcast.model.meta.link if podcast.model.meta.link else "not available"}\n"
+            f"{bold("RSS feed:")} {podcast.model.feed_url}\n"
             f"{bold("Instant Link:")} {instant_link}"
         )
-        markup = _build_reply_markup(podcast.db_object.id, podcast.db_object.meta.title)
+        markup = _build_reply_markup(podcast.model.id, podcast.model.meta.title)
         await event.message.edit_text(
             text,
             reply_markup=markup,
             link_preview_options=LinkPreviewOptions(
                 is_disabled=False,
-                url=podcast.db_object.meta.link,
+                url=podcast.model.meta.link,
                 prefer_large_media=True,
             ),
         )

@@ -19,7 +19,7 @@ def parse_opml(data: bytes) -> list[str]:
 def generate_opml(podcasts: list[Podcast]) -> str:
     # todo: escape titles and urls
     outlines = [
-        f'\t\t<outline xmlUrl="{podcast.db_object.feed_url}" type="rss" text="{podcast.db_object.meta.title}"/>'
+        f'\t\t<outline xmlUrl="{podcast.model.feed_url}" type="rss" text="{podcast.model.meta.title}"/>'
         for podcast in podcasts
     ]
 

@@ -1,4 +1,4 @@
-from podcastie_database.models.user_model import UserModel as _UserDatabaseModel
+from podcastie_database.models.user_model import UserModel
 
 from .podcast import Podcast
 
@@ -18,18 +18,18 @@ class UserDoesNotFollowPodcastError(Exception):
 
 
 class User:
-    _db_object: _UserDatabaseModel
+    _model: UserModel
 
-    def __init__(self, db_object: _UserDatabaseModel):
-        self._db_object = db_object
+    def __init__(self, model: UserModel):
+        self._model = model
 
     @property
-    def db_object(self) -> _UserDatabaseModel:
-        return self._db_object
+    def model(self) -> UserModel:
+        return self._model
 
     @classmethod
     async def from_user_id(cls, user_id: int):
-        user = await _UserDatabaseModel.find_one(_UserDatabaseModel.user_id == user_id)
+        user = await UserModel.find_one(UserModel.user_id == user_id)
         if not user:
             raise UserNotFoundError("user not found")
 
@@ -37,7 +37,7 @@ class User:
 
     @classmethod
     async def new_from_user_id(cls, user_id: int):
-        user = _UserDatabaseModel(user_id=user_id)
+        user = UserModel(user_id=user_id)
         await user.insert()
 
         return cls(user)
@@ -45,24 +45,24 @@ class User:
     async def subscriptions(self) -> list[Podcast]:
         return [
             await Podcast.from_object_id(object_id)
-            for object_id in self._db_object.following_podcasts
+            for object_id in self._model.following_podcasts
         ]
 
     async def follow(self, podcast: Podcast) -> None:
         if self.is_following(podcast):
             raise UserFollowsPodcastError("user already follows this podcast")
 
-        self._db_object.following_podcasts.append(podcast.db_object.id)
-        await self._db_object.save()
+        self._model.following_podcasts.append(podcast.model.id)
+        await self._model.save()
 
     async def unfollow(self, podcast: Podcast) -> None:
         if not self.is_following(podcast):
             raise UserDoesNotFollowPodcastError("user does not follow podcast")
 
-        self._db_object.following_podcasts.remove(podcast.db_object.id)
-        await self._db_object.save()
+        self._model.following_podcasts.remove(podcast.model.id)
+        await self._model.save()
 
     def is_following(self, podcast: Podcast) -> bool:
-        if podcast.db_object.id in self._db_object.following_podcasts:
+        if podcast.model.id in self._model.following_podcasts:
             return True
         return False

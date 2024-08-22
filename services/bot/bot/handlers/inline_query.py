@@ -86,36 +86,36 @@ async def handle_inline_query(
     articles: list[InlineQueryResultArticle] = []
     for podcast in results:
         description = (
-            util.escape(podcast.db_object.meta.description)
-            if podcast.db_object.meta.description
+            util.escape(podcast.model.meta.description)
+            if podcast.model.meta.description
             else ""
         )
         description_len = len(description)
 
         message_text = (
-            f"{tags.bold(podcast.db_object.meta.title)}\n"
+            f"{tags.bold(podcast.model.meta.title)}\n"
             f"{tags.blockquote(description, expandable=description_len > 800)}"  # todo: const magic number
         )
 
         message_content = InputTextMessageContent(
             message_text=message_text,
             link_preview_options=LinkPreviewOptions(
-                url=podcast.db_object.meta.link, prefer_small_media=description_len != 0
+                url=podcast.model.meta.link, prefer_small_media=description_len != 0
             ),
         )
 
         articles.append(
             InlineQueryResultArticle(
-                id=podcast.db_object.meta.hash(),
-                title=podcast.db_object.meta.title,
+                id=podcast.model.meta.hash(),
+                title=podcast.model.meta.title,
                 input_message_content=message_content,
-                url=podcast.db_object.meta.link,
-                description=podcast.db_object.meta.description,
-                thumbnail_url=podcast.db_object.meta.cover_url,
+                url=podcast.model.meta.link,
+                description=podcast.model.meta.description,
+                thumbnail_url=podcast.model.meta.cover_url,
                 reply_markup=_build_reply_markup(
                     bot_username=(await bot.get_me()).username,
-                    podcast_feed_url_hash_prefix=podcast.db_object.feed_url_hash_prefix,
-                    podcast_link=podcast.db_object.meta.link,
+                    podcast_feed_url_hash_prefix=podcast.model.feed_url_hash_prefix,
+                    podcast_link=podcast.model.meta.link,
                 ),
             )
         )

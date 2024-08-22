@@ -156,7 +156,7 @@ class ImportView(View):
                 text += "✨ You have successfully subscribed to all the provided podcasts:\n\n"
 
             for podcast in followed:
-                text += f"- {link(podcast.db_object.meta.title, podcast.db_object.meta.link)}\n"
+                text += f"- {link(podcast.model.meta.title, podcast.model.meta.link)}\n"
 
         if failed_to_follow:
             text += "\n"
@@ -168,7 +168,7 @@ class ImportView(View):
 
             for podcast_or_feed_url, error_message in failed_to_follow:
                 if isinstance(podcast_or_feed_url, Podcast):
-                    text += f"⚠️ {link(podcast_or_feed_url.db_object.meta.title, podcast_or_feed_url.db_object.meta.link)}: {error_message}\n"
+                    text += f"⚠️ {link(podcast_or_feed_url.model.meta.title, podcast_or_feed_url.model.meta.link)}: {error_message}\n"
                 elif isinstance(podcast_or_feed_url, str):
                     text += f"⚠️ {podcast_or_feed_url}: {error_message}\n"
                 else:

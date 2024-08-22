@@ -9,9 +9,7 @@ from podcastie_database.models.podcast_model import (
     PodcastLatestEpisodeInfo,
     PodcastMeta,
 )
-from podcastie_database.models.podcast_model import (
-    PodcastModel as _PodcastDatabaseModel,
-)
+from podcastie_database.models.podcast_model import PodcastModel
 
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
 
@@ -43,18 +41,18 @@ class PodcastFeedError(Exception):
 
 
 class Podcast:
-    _db_object: _PodcastDatabaseModel
+    _model: PodcastModel
 
-    def __init__(self, db_object: _PodcastDatabaseModel):
-        self._db_object = db_object
+    def __init__(self, model: PodcastModel):
+        self._model = model
 
     @property
-    def db_object(self) -> _PodcastDatabaseModel:
-        return self._db_object
+    def model(self) -> PodcastModel:
+        return self._model
 
     @classmethod
     async def from_object_id(cls, object_id: PydanticObjectId):
-        podcast = await _PodcastDatabaseModel.get(object_id)
+        podcast = await PodcastModel.get(object_id)
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
 
@@ -62,8 +60,8 @@ class Podcast:
 
     @classmethod
     async def from_feed_url(cls, feed_url: str):
-        podcast = await _PodcastDatabaseModel.find_one(
-            _PodcastDatabaseModel.feed_url == feed_url
+        podcast = await PodcastModel.find_one(
+            PodcastModel.feed_url == feed_url
         )
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
@@ -72,8 +70,8 @@ class Podcast:
 
     @classmethod
     async def from_feed_url_hash_prefix(cls, feed_url_hash_prefix: str):
-        podcast = await _PodcastDatabaseModel.find_one(
-            _PodcastDatabaseModel.feed_url_hash_prefix == feed_url_hash_prefix
+        podcast = await PodcastModel.find_one(
+            PodcastModel.feed_url_hash_prefix == feed_url_hash_prefix
         )
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
@@ -84,7 +82,7 @@ class Podcast:
     async def new_from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
         global PODCAST_FEED_URL_HASH_PREFIX_LEN
 
-        db_object = _PodcastDatabaseModel(
+        db_object = PodcastModel(
             feed_url=feed_url,
             feed_url_hash_prefix=generate_feed_url_hash_prefix(
                 feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN
@@ -123,5 +121,5 @@ class Podcast:
 
 
 async def search_podcasts(query: str) -> list[Podcast]:
-    db_objects = await _PodcastDatabaseModel.find(Text(query)).to_list()
+    db_objects = await PodcastModel.find(Text(query)).to_list()
     return [Podcast(p) for p in db_objects]
