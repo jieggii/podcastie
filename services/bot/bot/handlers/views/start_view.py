@@ -33,7 +33,7 @@ class StartView(View):
     )
 
     @staticmethod
-    def _build_keyboard_markup(self) -> InlineKeyboardMarkup:
+    def _build_keyboard_markup() -> InlineKeyboardMarkup:
         kbd = InlineKeyboardBuilder()
         kbd.button(text="« Menu", callback_data=MenuViewEntrypointCallbackData())
         return kbd.as_markup()
