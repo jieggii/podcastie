@@ -13,7 +13,7 @@ from bot.callback_data.entrypoints import (
     ShareViewEntrypointCallbackData,
     SubscriptionsViewEntrypointCallbackData,
 )
-from bot.core.instant_link import build_instant_link
+from bot.utils.instant_link import build_instant_link
 from podcastie_core.podcast import Podcast, PodcastNotFoundError
 
 

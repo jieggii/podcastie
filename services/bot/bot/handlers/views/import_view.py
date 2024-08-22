@@ -13,7 +13,7 @@ from bot.callback_data.entrypoints import (
     ImportViewEntrypointCallbackData,
     MenuViewEntrypointCallbackData,
 )
-from bot.core import opml
+from bot.utils import opml
 from podcastie_core.podcast import Podcast, PodcastFeedError, PodcastNotFoundError
 from podcastie_core.user import User, UserFollowsPodcastError
 from bot.fsm import BotState
