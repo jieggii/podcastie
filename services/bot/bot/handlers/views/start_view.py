@@ -3,7 +3,9 @@ import base64
 import binascii
 import typing
 
-from aiogram.types import LinkPreviewOptions, Message
+from aiogram.types import LinkPreviewOptions, Message, InlineQueryResult, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData
 from podcastie_telegram_html.tags import bold
 from podcastie_telegram_html.tags import link
 
@@ -30,6 +32,12 @@ class StartView(View):
         "CAACAgIAAxkBAAEtRB1mxaR_qC3fOUFt2QzPIlos1UI0XwACAQEAAladvQoivp8OuMLmNDUE"
     )
 
+    @staticmethod
+    def _build_keyboard_markup(self) -> InlineKeyboardMarkup:
+        kbd = InlineKeyboardBuilder()
+        kbd.button(text="« Menu", callback_data=MenuViewEntrypointCallbackData())
+        return kbd.as_markup()
+
     async def handle_entrypoint(
         self, event: Message, data: dict[str, typing.Any]
     ) -> None:
@@ -40,7 +48,7 @@ class StartView(View):
         try:
             feed_url_hash_prefix = _extract_payload(event.text)
         except binascii.Error:
-            await event.answer("⚠️ Failed to decode podcast identifier provided using Instant Link.")
+            await event.answer("⚠️ Failed to decode podcast identifier provided using Instant Link.", reply_markup=self._build_keyboard_markup())
 
         if feed_url_hash_prefix:
             user = user or await User.new_from_user_id(event.from_user.id)
@@ -49,15 +57,15 @@ class StartView(View):
             try:
                 podcast = await Podcast.from_feed_url_hash_prefix(feed_url_hash_prefix)
             except PodcastNotFoundError:
-                await event.answer("⚠️ Podcast you are trying to follow using Instant Link does not exist.")
+                await event.answer("⚠️ Podcast you are trying to follow using Instant Link does not exist.", reply_markup=self._build_keyboard_markup())
 
             if podcast:
                 try:
                     await user.follow_podcast(podcast)
                 except UserFollowsPodcastError:
-                    await event.answer(f"⚠️ You already follow {bold(podcast.db_object.meta.title)}.")
+                    await event.answer(f"⚠️ You already follow {bold(podcast.db_object.meta.title)}.", reply_markup=self._build_keyboard_markup())
                 else:
-                    await event.answer(f"🌟 You have successfully subscribed to {bold(podcast.db_object.meta.title)}.")
+                    await event.answer(f"🌟 You have successfully subscribed to {bold(podcast.db_object.meta.title)}.", reply_markup=self._build_keyboard_markup())
 
         if is_new_user or not feed_url_hash_prefix:
             text = (
@@ -78,7 +86,5 @@ class StartView(View):
             )
 
             await event.answer_sticker(self._STICKER_FILE_ID)
-
             await asyncio.sleep(1)
-
-        await MenuView().handle_entrypoint(event, data)
+            await MenuView().handle_entrypoint(event, data)
