@@ -18,6 +18,8 @@ class UserDoesNotFollowPodcastError(Exception):
 
 
 class User:
+    _db_object: _UserDatabaseModel
+
     def __init__(self, db_object: _UserDatabaseModel):
         self._db_object = db_object
 
