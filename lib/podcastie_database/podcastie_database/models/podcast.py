@@ -1,30 +1,9 @@
-import hashlib
-import time
-from string import punctuation
+import warnings
 from typing import TypedDict
 
-import podcastie_rss
 import pymongo
 from beanie import Document, Indexed
 from pydantic import BaseModel
-
-PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
-
-_TITLE_SLUG_FORBIDDEN_CHARS = set(punctuation)
-
-
-def _sha256(plaintext: str) -> str:
-    return hashlib.sha256(plaintext.encode(), usedforsecurity=False).hexdigest()
-
-
-def generate_podcast_title_slug(title: str) -> str:
-    slug_chars: list[str] = []
-    for c in title:
-        if c.isspace() or c in _TITLE_SLUG_FORBIDDEN_CHARS:
-            continue
-        slug_chars.append(c.lower())
-
-    return "".join(slug_chars)
 
 
 class PodcastMetaPatch(TypedDict):
@@ -45,8 +24,8 @@ class PodcastMeta(BaseModel):
     cover_url: str | None
 
     def hash(self) -> str:
-        plaintext = f"{self.title}{self.description}{self.link}{self.cover_url}"
-        return _sha256(plaintext)
+        warnings.warn("PodcastMeta.hash() is not implemented and returns 'hash'")
+        return "hash"
 
     def patch(self, patch: PodcastMetaPatch) -> bool:
         patched = False
@@ -95,29 +74,6 @@ class Podcast(Document):
                 ("meta.title_slug", pymongo.TEXT),
             ]
         ]
-
-    @classmethod
-    def from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
-        return cls(
-            feed_url=feed_url,
-            feed_url_hash_prefix=_sha256(feed_url)[:PODCAST_FEED_URL_HASH_PREFIX_LEN],
-            meta=PodcastMeta(
-                title=feed.title,
-                title_slug=generate_podcast_title_slug(feed.title),
-                description=feed.description,
-                link=feed.link,
-                cover_url=feed.cover_url,
-            ),
-            latest_episode_info=PodcastLatestEpisodeInfo(
-                check_ts=int(time.time()),
-                check_success=True,
-                publication_ts=feed.latest_episode.published if feed.latest_episode else None,
-            ),
-        )
-
-    # @property
-    # def ppid(self) -> str:
-    #     return f"{self.meta.title_slug}#{self.feed_url_hash_prefix}"
 
     def __repr__(self) -> str:
         return self.__str__()
