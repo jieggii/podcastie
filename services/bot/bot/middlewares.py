@@ -2,16 +2,15 @@ from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import InlineQuery, Message
-from podcastie_database.models.user import User as UserDBModel
 
-from bot.core.user import User
+from bot.core.user import User, UserNotFoundError
 
 _HANDLER_TYPE = Callable[[Message | InlineQuery, Dict[str, Any]], Awaitable[Any]]
 _EVENT_TYPE = Message | InlineQuery
 _DATA_TYPE = Dict[str, Any]
 
 
-class DatabaseMiddleware(BaseMiddleware):
+class UserMiddleware(BaseMiddleware):
     _create_user: bool
 
     def __init__(self, create_user: bool = True) -> None:

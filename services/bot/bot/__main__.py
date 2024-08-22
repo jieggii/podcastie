@@ -34,7 +34,7 @@ from bot.handlers.views.share_view import ShareView
 from bot.handlers.views.start_view import StartView
 from bot.handlers.views.subscriptions_view import SubscriptionsView
 from bot.handlers.views.unfollow_view import UnfollowView
-from bot.middlewares import DatabaseMiddleware
+from bot.middlewares import UserMiddleware
 
 
 def setup_logging():
@@ -88,55 +88,55 @@ async def main() -> None:
         ViewRouter(
             StartView(),
             entrypoint_command="start",
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            entrypoint_handler_middlewares=[UserMiddleware(create_user=False)],
         ),
         ViewRouter(
             MenuView(),
             entrypoint_callback_data_type=MenuViewEntrypointCallbackData,
             entrypoint_command="menu",
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            # entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             FindView(),
             entrypoint_callback_data_type=FindViewEntrypointCallbackData,
             handle_state=BotState.FIND,
-            state_handler_middlewares=[DatabaseMiddleware()],
+            state_handler_middlewares=[UserMiddleware()],
         ),
         ViewRouter(
             SearchResultView(),
             entrypoint_callback_data_type=SearchResultViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            entrypoint_handler_middlewares=[UserMiddleware()],
         ),
         ViewRouter(
             ImportView(),
             entrypoint_callback_data_type=ImportViewEntrypointCallbackData,
             handle_state=BotState.IMPORT,
-            state_handler_middlewares=[DatabaseMiddleware()],
+            state_handler_middlewares=[UserMiddleware()],
         ),
         ViewRouter(
             ExportView(),
             entrypoint_callback_data_type=ExportViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            entrypoint_handler_middlewares=[UserMiddleware()],
         ),
         ViewRouter(
             SubscriptionsView(),
             entrypoint_callback_data_type=SubscriptionsViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            entrypoint_handler_middlewares=[UserMiddleware()],
         ),
         ViewRouter(
             PodcastView(),
             entrypoint_callback_data_type=PodcastViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            # entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             ShareView(),
             entrypoint_callback_data_type=ShareViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            # entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
         ViewRouter(
             UnfollowView(),
             entrypoint_callback_data_type=UnfollowViewEntrypointCallbackData,
-            entrypoint_handler_middlewares=[DatabaseMiddleware()],
+            # entrypoint_handler_middlewares=[DatabaseMiddleware()],
         ),
     )
 
