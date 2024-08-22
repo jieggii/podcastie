@@ -68,5 +68,5 @@ class Podcast:
 
 
 async def search_podcasts(query: str) -> list[Podcast]:
-    podcasts = await _PodcastDatabaseModel.find(Text(query)).to_list()
-    return [Podcast(p) for p in podcasts]
+    db_objects = await _PodcastDatabaseModel.find(Text(query)).to_list()
+    return [Podcast(p) for p in db_objects]
