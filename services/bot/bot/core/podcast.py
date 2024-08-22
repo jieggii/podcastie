@@ -96,6 +96,7 @@ class Podcast:
         )
 
         await db_object.insert()
+        return cls(db_object)
 
     @classmethod
     async def new_from_feed_url(cls, feed_url: str):
@@ -108,7 +109,7 @@ class Podcast:
         ) as e:
             raise PodcastFeedError("failed to fetch podcast feed") from e
 
-        return cls.new_from_feed(feed, feed_url)
+        return await cls.new_from_feed(feed, feed_url)
 
 
 async def search_podcasts(query: str) -> list[Podcast]:
