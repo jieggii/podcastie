@@ -13,10 +13,14 @@ class PodcastFeedError(Exception):
 
 
 class Podcast:
-    db_object: _PodcastDatabaseModel
+    _db_object: _PodcastDatabaseModel
 
     def __init__(self, db_object: _PodcastDatabaseModel):
-        self.db_object = db_object
+        self._db_object = db_object
+
+    @property
+    def db_object(self) -> _PodcastDatabaseModel:
+        return self._db_object
 
     @classmethod
     async def from_object_id(cls, object_id: PydanticObjectId):
