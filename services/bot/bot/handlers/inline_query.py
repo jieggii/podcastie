@@ -28,7 +28,7 @@ def _build_reply_markup(
         kbd.button(text="Website", url=podcast_link)
 
     kbd.button(
-        text="Follow via @podcastie_bot",
+        text="Follow via Podcastie Bot",
         url=build_instant_link(
             bot_username=bot_username,
             podcast_feed_url_hash_prefix=str(podcast_feed_url_hash_prefix),
