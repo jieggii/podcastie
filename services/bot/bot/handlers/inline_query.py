@@ -12,11 +12,11 @@ from podcastie_telegram_html import tags, util
 
 from bot.core.podcast import Podcast, search_podcasts
 from bot.core.user import User
-from bot.middlewares import DatabaseMiddleware
+from bot.middlewares import UserMiddleware
 from bot.core.instant_link import build_instant_link
 
 router = Router()
-router.inline_query.middleware(DatabaseMiddleware(create_user=False))
+router.inline_query.middleware(UserMiddleware(create_user=False))
 
 
 def _build_reply_markup(
