@@ -18,10 +18,12 @@ class UserDoesNotFollowPodcastError(Exception):
 
 
 class User:
-    db_object: _UserDatabaseModel
-
     def __init__(self, db_object: _UserDatabaseModel):
-        self.db_object = db_object
+        self._db_object = db_object
+
+    @property
+    def db_object(self) -> _UserDatabaseModel:
+        return self._db_object
 
     @classmethod
     async def from_user_id(cls, user_id: int):
@@ -41,15 +43,15 @@ class User:
     async def subscriptions(self) -> list[Podcast]:
         return [
             await Podcast.from_object_id(object_id)
-            for object_id in self.db_object.following_podcasts
+            for object_id in self._db_object.following_podcasts
         ]
 
     async def follow(self, podcast: Podcast) -> None:
         if self.is_following(podcast):
             raise UserFollowsPodcastError("user already follows this podcast")
 
-        self.db_object.following_podcasts.append(podcast.db_object.id)
-        await self.db_object.save()
+        self._db_object.following_podcasts.append(podcast.db_object.id)
+        await self._db_object.save()
 
     async def unfollow(self, podcast: Podcast) -> None:
         if not self.is_following(podcast):
@@ -57,10 +59,10 @@ class User:
                 "user does not follow podcast"
             )
 
-        self.db_object.following_podcasts.remove(podcast.db_object.id)
-        await self.db_object.save()
+        self._db_object.following_podcasts.remove(podcast.db_object.id)
+        await self._db_object.save()
 
     def is_following(self, podcast: Podcast) -> bool:
-        if podcast.db_object.id in self.db_object.following_podcasts:
+        if podcast.db_object.id in self._db_object.following_podcasts:
             return True
         return False
