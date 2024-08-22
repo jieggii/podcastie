@@ -14,6 +14,7 @@ from bot.callback_data.entrypoints import (
 )
 from podcastie_core.podcast import Podcast, PodcastNotFoundError
 from podcastie_core.user import User, UserDoesNotFollowPodcastError, UserFollowsPodcastError
+from podcastie_core.service import follow_podcast, unfollow_podcast, user_is_following_podcast
 
 
 class SearchResultView(View):
@@ -65,7 +66,7 @@ class SearchResultView(View):
         match callback_data.action:
             case SearchResultAction.follow:
                 try:
-                    await user.follow(podcast)
+                    await follow_podcast(user, podcast)
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_unfollow_keyboard(
                             podcast.model.id, podcast.model.meta.link
@@ -86,7 +87,7 @@ class SearchResultView(View):
 
             case SearchResultAction.unfollow:
                 try:
-                    await user.unfollow(podcast)
+                    await unfollow_podcast(user, podcast)
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_follow_keyboard(
                             podcast.model.id, podcast.model.meta.link
@@ -121,7 +122,7 @@ class SearchResultView(View):
                     text += f"{blockquote(podcast.model.meta.description, expandable=True)}\n"
 
                 markup: InlineKeyboardMarkup
-                if user.is_following(podcast):
+                if user_is_following_podcast(user, podcast):
                     markup = self._build_unfollow_keyboard(
                         podcast.model.id, podcast.model.meta.link
                     )

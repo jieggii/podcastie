@@ -1,8 +1,5 @@
 from podcastie_database.models.user_model import UserModel
 
-from .podcast import Podcast
-
-
 class UserNotFoundError(Exception):
     pass
 
@@ -41,28 +38,3 @@ class User:
         await user.insert()
 
         return cls(user)
-
-    async def subscriptions(self) -> list[Podcast]:
-        return [
-            await Podcast.from_object_id(object_id)
-            for object_id in self._model.following_podcasts
-        ]
-
-    async def follow(self, podcast: Podcast) -> None:
-        if self.is_following(podcast):
-            raise UserFollowsPodcastError("user already follows this podcast")
-
-        self._model.following_podcasts.append(podcast.model.id)
-        await self._model.save()
-
-    async def unfollow(self, podcast: Podcast) -> None:
-        if not self.is_following(podcast):
-            raise UserDoesNotFollowPodcastError("user does not follow podcast")
-
-        self._model.following_podcasts.remove(podcast.model.id)
-        await self._model.save()
-
-    def is_following(self, podcast: Podcast) -> bool:
-        if podcast.model.id in self._model.following_podcasts:
-            return True
-        return False

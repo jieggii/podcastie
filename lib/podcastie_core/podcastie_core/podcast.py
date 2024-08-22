@@ -4,17 +4,17 @@ import time
 
 import podcastie_rss
 from beanie import PydanticObjectId
-from beanie.operators import Text
 from podcastie_database.models.podcast_model import (
     PodcastLatestEpisodeInfo,
     PodcastMeta,
 )
 from podcastie_database.models.podcast_model import PodcastModel
 
+
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
 
 
-def generate_feed_url_hash_prefix(feed_url: str, length: int) -> str:
+def _generate_feed_url_hash_prefix(feed_url: str, length: int) -> str:
     digest = hashlib.sha256(feed_url.encode(), usedforsecurity=False).hexdigest()
     return digest[:length]
 
@@ -22,7 +22,7 @@ def generate_feed_url_hash_prefix(feed_url: str, length: int) -> str:
 _TITLE_SLUG_FORBIDDEN_CHARS = set(string.punctuation)
 
 
-def generate_podcast_title_slug(title: str) -> str:
+def _generate_podcast_title_slug(title: str) -> str:
     slug_chars: list[str] = []
     for c in title:
         if c.isspace() or c in _TITLE_SLUG_FORBIDDEN_CHARS:
@@ -84,12 +84,12 @@ class Podcast:
 
         db_object = PodcastModel(
             feed_url=feed_url,
-            feed_url_hash_prefix=generate_feed_url_hash_prefix(
+            feed_url_hash_prefix=_generate_feed_url_hash_prefix(
                 feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN
             ),
             meta=PodcastMeta(
                 title=feed.title,
-                title_slug=generate_podcast_title_slug(feed.title),
+                title_slug=_generate_podcast_title_slug(feed.title),
                 description=feed.description,
                 link=feed.link,
                 cover_url=feed.cover_url,
@@ -118,8 +118,3 @@ class Podcast:
             raise PodcastFeedError("failed to fetch podcast feed") from e
 
         return await cls.new_from_feed(feed, feed_url)
-
-
-async def search_podcasts(query: str) -> list[Podcast]:
-    db_objects = await PodcastModel.find(Text(query)).to_list()
-    return [Podcast(p) for p in db_objects]

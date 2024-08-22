@@ -18,6 +18,7 @@ from bot.callback_data.entrypoints import (
 )
 from bot.utils import opml
 from podcastie_core.user import User
+from podcastie_core.service import user_subscriptions
 
 
 def _build_result_reply_markup(text: str) -> InlineKeyboardMarkup:
@@ -35,7 +36,7 @@ class ExportView(View):
         bot: Bot = data["bot"]
         user: User = data["user"]
 
-        subscriptions = await user.subscriptions()
+        subscriptions = await user_subscriptions(user)
         if not subscriptions:
             await event.message.edit_text(
                 "🔕 You aren't following any podcasts yet.",

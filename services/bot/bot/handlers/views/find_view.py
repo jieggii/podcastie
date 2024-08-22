@@ -12,8 +12,8 @@ from bot.callback_data.entrypoints import (
     SearchResultAction,
     SearchResultViewEntrypointCallbackData,
 )
-from podcastie_core.podcast import search_podcasts
 from podcastie_core.user import User
+from podcastie_core.service import search_podcasts
 from bot.fsm import BotState
 from bot.handlers.views.search_result_item_view import SearchResultView
 

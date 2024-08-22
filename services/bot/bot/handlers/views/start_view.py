@@ -10,6 +10,7 @@ from aiogram.types import (
     Message,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.service import follow_podcast
 from podcastie_telegram_html.tags import bold, link
 
 from bot.aiogram_view.view import View
@@ -72,7 +73,7 @@ class StartView(View):
 
             if podcast:
                 try:
-                    await user.follow(podcast)
+                    await follow_podcast(user, podcast)
                 except UserFollowsPodcastError:
                     await event.answer(
                         f"⚠️ You already follow {bold(podcast.model.meta.title)}.",

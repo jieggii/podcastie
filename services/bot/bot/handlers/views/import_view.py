@@ -16,6 +16,7 @@ from bot.callback_data.entrypoints import (
 from bot.utils import opml
 from podcastie_core.podcast import Podcast, PodcastFeedError, PodcastNotFoundError
 from podcastie_core.user import User, UserFollowsPodcastError
+from podcastie_core.service import follow_podcast
 from bot.fsm import BotState
 from bot.validators import is_feed_url
 
@@ -67,7 +68,7 @@ async def _follow_podcasts(
                 continue
 
         try:
-            await user.follow(podcast)
+            await follow_podcast(user, podcast)
         except UserFollowsPodcastError:
             failed_to_follow.append((podcast, "you already follow this podcast"))
             continue

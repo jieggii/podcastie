@@ -11,6 +11,7 @@ from bot.callback_data.entrypoints import (
 )
 from podcastie_core.podcast import Podcast, PodcastNotFoundError
 from podcastie_core.user import User, UserDoesNotFollowPodcastError
+from podcastie_core.service import user_subscriptions, unfollow_podcast
 
 
 def _build_reply_markup(podcasts: list[Podcast]) -> InlineKeyboardMarkup:
@@ -61,7 +62,7 @@ class SubscriptionsView(View):
                     callback_data.unfollow_podcast_id
                 )
                 try:
-                    await user.unfollow(podcast)
+                    await unfollow_podcast(user, podcast)
                     await event.answer(
                         f"🔕 Successfully unfollowed {podcast.model.meta.title}."
                     )
@@ -74,7 +75,7 @@ class SubscriptionsView(View):
                     f"⚠️ Failed to unfollow podcast as it no longer exists."
                 )
 
-        subscriptions = await user.subscriptions()
+        subscriptions = await user_subscriptions(user)
         if not subscriptions:
             await event.message.edit_text(
                 "🔕 You aren't following any podcasts yet.",

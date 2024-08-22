@@ -11,7 +11,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from podcastie_telegram_html import tags, util
 
 from bot.utils.instant_link import build_instant_link
-from podcastie_core.podcast import Podcast, search_podcasts
+from podcastie_core.podcast import Podcast
+from podcastie_core.service import search_podcasts, user_subscriptions, user_is_following_podcast
 from podcastie_core.user import User
 from bot.middlewares import UserMiddleware
 
@@ -49,7 +50,7 @@ async def handle_inline_query(
 
     subscriptions: list[Podcast] | None = None
     if user:
-        subscriptions = await user.subscriptions()
+        subscriptions = await user_subscriptions(user)
 
     if subscriptions:
         result_is_personal = True
@@ -62,7 +63,7 @@ async def handle_inline_query(
             other = []
 
             for podcast in all_results:
-                if user.is_following(podcast):
+                if user_is_following_podcast(user, podcast):
                     prioritized.append(podcast)
                 else:
                     other.append(podcast)
