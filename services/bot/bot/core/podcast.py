@@ -66,15 +66,6 @@ class Podcast:
 
         return cls(podcast)
 
-    @classmethod
-    async def _from_feed_url_hash_prefix(cls, feed_url_hash_prefix: str):
-        podcast = await _PodcastDatabaseModel.find_one(
-            _PodcastDatabaseModel.feed_url_hash_prefix == feed_url_hash_prefix
-        )
-        if not podcast:
-            raise PodcastNotFoundError("podcast not found")
-        return cls(podcast)
-
 
 async def search_podcasts(query: str) -> list[Podcast]:
     podcasts = await _PodcastDatabaseModel.find(Text(query)).to_list()
