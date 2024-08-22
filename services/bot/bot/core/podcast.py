@@ -5,8 +5,8 @@ import string
 import podcastie_rss
 from beanie import PydanticObjectId
 from beanie.operators import Text
-from podcastie_database.models.podcast import Podcast as _PodcastDatabaseModel
-from podcastie_database.models.podcast import PodcastMeta, PodcastLatestEpisodeInfo
+from podcastie_database.models.podcast_model import PodcastModel as _PodcastDatabaseModel
+from podcastie_database.models.podcast_model import PodcastMeta, PodcastLatestEpisodeInfo
 
 
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8

@@ -59,7 +59,7 @@ class PodcastLatestEpisodeInfo(BaseModel):
     publication_ts: int | None
 
 
-class Podcast(Document):
+class PodcastModel(Document):
     feed_url: Indexed(str, unique=True)
     feed_url_hash_prefix: Indexed(str, unique=True)
 

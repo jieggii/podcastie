@@ -1,4 +1,4 @@
-from podcastie_database.models.user import User as _UserDatabaseModel
+from podcastie_database.models.user_model import UserModel as _UserDatabaseModel
 
 from .podcast import Podcast
 

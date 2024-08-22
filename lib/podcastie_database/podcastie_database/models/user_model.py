@@ -1,7 +1,7 @@
 from beanie import Document, PydanticObjectId
 
 
-class User(Document):
+class UserModel(Document):
     user_id: int
     following_podcasts: list[PydanticObjectId] = []
 

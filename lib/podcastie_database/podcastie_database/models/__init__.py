@@ -1,1 +1,1 @@
-from . import podcast, user
+from . import podcast_model, user_model
