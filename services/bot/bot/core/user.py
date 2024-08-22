@@ -3,6 +3,9 @@ from podcastie_database.models.user import User as _User
 from .podcast import Podcast
 
 
+class UserNotFoundError(Exception):
+    pass
+
 class UserFollowsPodcastError(Exception):
     """User already follows podcast"""
 
@@ -18,6 +21,21 @@ class User:
 
     def __init__(self, db_object: _User):
         self.db_object = db_object
+
+    @classmethod
+    async def from_user_id(cls, user_id: int):
+        user = await _User.find_one(_User.user_id == user_id)
+        if not user:
+            raise UserNotFoundError("user not found")
+
+        return cls(user)
+
+    @classmethod
+    async def new_from_user_id(cls, user_id: int):
+        user = _User(user_id=user_id)
+        await user.insert()
+
+        return cls(user)
 
     async def get_following_podcasts(self) -> list[Podcast]:
         # todo: yield?
