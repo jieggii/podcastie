@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:bda03e314ebc4c8593453dedff196f9f8804cc064f02d34060b18f474922c365"
+content_hash = "sha256:c80a7282b0f46a4b96dc67304a8a9fbfef816669e56b25e3613e3938cee63b92"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -429,6 +429,19 @@ groups = ["dev"]
 files = [
     {file = "platformdirs-4.2.2-py3-none-any.whl", hash = "sha256:2d7a1657e36a80ea911db832a8a6ece5ee53d8de21edd5cc5879af6530b1bfee"},
     {file = "platformdirs-4.2.2.tar.gz", hash = "sha256:38b7b51f512eed9e84a22788b4bce1de17c0adb134d6becb09836e37d8654cd3"},
+]
+
+[[package]]
+name = "podcastie-core"
+version = "0.1.0"
+requires_python = ">=3.12"
+path = "../../lib/podcastie_core"
+summary = "Default template for PDM package"
+groups = ["default"]
+dependencies = [
+    "beanie>=1.26.0",
+    "podcastie-database @ file:///home/jieggii/code/project/podcastie_bot/lib/podcastie_core/../podcastie_database",
+    "podcastie-rss @ file:///home/jieggii/code/project/podcastie_bot/lib/podcastie_core/../podcastie_rss",
 ]
 
 [[package]]

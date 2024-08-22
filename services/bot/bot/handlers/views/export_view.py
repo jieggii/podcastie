@@ -17,7 +17,7 @@ from bot.callback_data.entrypoints import (
     MenuViewEntrypointCallbackData,
 )
 from bot.core import opml
-from bot.core.user import User
+from podcastie_core.user import User
 
 
 def _build_result_reply_markup(text: str) -> InlineKeyboardMarkup:

@@ -17,6 +17,7 @@ dependencies = [
     "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
     "listparser>=0.20",
     "minicfg>=0.1.1",
+    "podcastie-core @ file:///${PROJECT_ROOT}/../../lib/podcastie_core",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"

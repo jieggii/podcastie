@@ -9,8 +9,8 @@ from bot.callback_data.entrypoints import (
     PodcastViewEntrypointCallbackData,
     SubscriptionsViewEntrypointCallbackData,
 )
-from bot.core.podcast import Podcast, PodcastNotFoundError
-from bot.core.user import User, UserDoesNotFollowPodcastError
+from podcastie_core.podcast import Podcast, PodcastNotFoundError
+from podcastie_core.user import User, UserDoesNotFollowPodcastError
 
 
 def _build_reply_markup(podcasts: list[Podcast]) -> InlineKeyboardMarkup:

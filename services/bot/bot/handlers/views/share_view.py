@@ -14,7 +14,7 @@ from bot.callback_data.entrypoints import (
     SubscriptionsViewEntrypointCallbackData,
 )
 from bot.core.instant_link import build_instant_link
-from bot.core.podcast import Podcast, PodcastNotFoundError
+from podcastie_core.podcast import Podcast, PodcastNotFoundError
 
 
 def _build_reply_markup(

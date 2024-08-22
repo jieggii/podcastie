@@ -1,6 +1,6 @@
 import listparser
 
-from bot.core.podcast import Podcast
+from podcastie_core.podcast import Podcast
 
 
 class OPMLParseError(Exception):

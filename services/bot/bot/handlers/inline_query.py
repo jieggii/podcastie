@@ -11,8 +11,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from podcastie_telegram_html import tags, util
 
 from bot.core.instant_link import build_instant_link
-from bot.core.podcast import Podcast, search_podcasts
-from bot.core.user import User
+from podcastie_core.podcast import Podcast, search_podcasts
+from podcastie_core.user import User
 from bot.middlewares import UserMiddleware
 
 router = Router()

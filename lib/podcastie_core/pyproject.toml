@@ -1,0 +1,23 @@
+[project]
+name = "podcastie_core"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "jieggii", email = "jieggii@protonmail.com"},
+]
+dependencies = [
+    "podcastie-database @ file:///${PROJECT_ROOT}/../podcastie_database",
+    "podcastie-rss @ file:///${PROJECT_ROOT}/../podcastie_rss",
+    "beanie>=1.26.0",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
