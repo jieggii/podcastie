@@ -110,11 +110,7 @@ class Podcast:
     async def new_from_feed_url(cls, feed_url: str):
         try:
             feed = await podcastie_rss.fetch_feed(feed_url)
-        except (
-            podcastie_rss.FeedReadError,
-            podcastie_rss.FeedParseError,
-            podcastie_rss.FeedValidateError,
-        ) as e:
+        except podcastie_rss.FeedError as e:
             raise PodcastFeedError("failed to fetch podcast feed") from e
 
         return await cls.new_from_feed(feed, feed_url)

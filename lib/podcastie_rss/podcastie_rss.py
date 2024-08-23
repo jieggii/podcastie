@@ -8,13 +8,16 @@ import podcastparser
 _SUPPORTED_ENCLOSURE_MIME_TYPES = {"audio/mp3", "audio/mpeg"}  # todo: expand to supported by Telegram as we don't need to compress audio anymore
 
 
-class FeedReadError(Exception):
+class FeedError(Exception):
     pass
 
-class FeedParseError(Exception):
+class FeedReadError(FeedError):
     pass
 
-class FeedValidateError(Exception):
+class FeedParseError(FeedError):
+    pass
+
+class FeedValidateError(FeedError):
     pass
 
 
