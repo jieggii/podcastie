@@ -10,7 +10,7 @@ async def follow_podcast(user: User, podcast: Podcast) -> None:
     if user_is_following_podcast(user, podcast):
         raise UserFollowsPodcastError("user is following the provided podcast")
 
-    user.document.following_podcasts.append(podcast.document.id)
+    user.document.subscriptions.append(podcast.document.id)
     await user.document.save()
 
 
@@ -18,12 +18,12 @@ async def unfollow_podcast(user: User, podcast: Podcast) -> None:
     if not user_is_following_podcast(user, podcast):
         raise UserDoesNotFollowPodcastError("user is not following the provided podcast")
 
-    user.document.following_podcasts.remove(podcast.document.id)
+    user.document.subscriptions.remove(podcast.document.id)
     await user.document.save()
 
 
 def user_is_following_podcast(user: User, podcast: Podcast) -> bool:
-    if podcast.document.id in user.document.following_podcasts:
+    if podcast.document.id in user.document.subscriptions:
         return True
     return False
 
@@ -31,11 +31,11 @@ def user_is_following_podcast(user: User, podcast: Podcast) -> bool:
 async def user_subscriptions(user: User) -> list[Podcast]:
     return [
         await Podcast.from_object_id(object_id)
-        for object_id in user.document.following_podcasts
+        for object_id in user.document.subscriptions
     ]
 
 async def podcast_followers(podcast: Podcast) -> list[User]:
-    models = await UserDocument.find(UserDocument.following_podcasts == podcast.document.id).to_list()
+    models = await UserDocument.find(UserDocument.subscriptions == podcast.document.id).to_list()
     return [User(model) for model in models]
 
 

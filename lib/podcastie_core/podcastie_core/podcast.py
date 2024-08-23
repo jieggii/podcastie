@@ -4,7 +4,6 @@ import time
 
 import podcastie_rss
 from beanie import PydanticObjectId
-from lib.podcastie_database.podcastie_database.models.podcast import PodcastCheckModel
 from podcastie_database.models.podcast import (
     PodcastCheckModel,
     PodcastMetaModel,
