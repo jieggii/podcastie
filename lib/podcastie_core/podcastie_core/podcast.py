@@ -113,3 +113,6 @@ class Podcast:
             raise PodcastFeedError("failed to fetch podcast feed") from e
 
         return await cls.new_from_feed(feed, feed_url)
+
+    async def save_changes(self) -> None:
+        await self._document.save_changes()

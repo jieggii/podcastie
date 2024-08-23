@@ -11,7 +11,7 @@ async def follow_podcast(user: User, podcast: Podcast) -> None:
         raise UserFollowsPodcastError("user is following the provided podcast")
 
     user.document.subscriptions.append(podcast.document.id)
-    await user.document.save()
+    await user.save_changes()
 
 
 async def unfollow_podcast(user: User, podcast: Podcast) -> None:
@@ -19,7 +19,7 @@ async def unfollow_podcast(user: User, podcast: Podcast) -> None:
         raise UserDoesNotFollowPodcastError("user is not following the provided podcast")
 
     user.document.subscriptions.remove(podcast.document.id)
-    await user.document.save()
+    await user.save_changes()
 
 
 def user_is_following_podcast(user: User, podcast: Podcast) -> bool:

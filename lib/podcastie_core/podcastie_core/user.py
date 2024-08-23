@@ -38,3 +38,6 @@ class User:
         await user.insert()
 
         return cls(user)
+
+    async def save_changes(self) -> None:
+        await self._document.save()
