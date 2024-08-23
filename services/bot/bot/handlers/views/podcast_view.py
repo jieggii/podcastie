@@ -52,22 +52,22 @@ class PodcastView(View):
 
         try:
             podcast = await Podcast.from_object_id(callback_data.podcast_id)
-            meta = podcast.model.meta
+            meta = podcast.document.meta
 
             text = f"{bold(meta.title)}\n"
-            if podcast.model.meta.description:
-                escaped_description = escape(podcast.model.meta.description)
+            if podcast.document.meta.description:
+                escaped_description = escape(podcast.document.meta.description)
                 expandable = len(escaped_description) > 1000
                 text += blockquote(escaped_description, expandable=expandable)
 
-            markup = _build_reply_markup(podcast.model.id)
+            markup = _build_reply_markup(podcast.document.id)
 
             await event.message.edit_text(
                 text,
                 reply_markup=markup,
                 link_preview_options=LinkPreviewOptions(
                     is_disabled=False,
-                    url=podcast.model.meta.link,
+                    url=podcast.document.meta.link,
                     prefer_small_media=True,
                 ),
             )

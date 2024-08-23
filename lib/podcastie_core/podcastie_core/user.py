@@ -1,4 +1,4 @@
-from podcastie_database.models.user_model import UserModel
+from podcastie_database.models.user import UserDocument
 
 class UserNotFoundError(Exception):
     pass
@@ -15,18 +15,18 @@ class UserDoesNotFollowPodcastError(Exception):
 
 
 class User:
-    _model: UserModel
+    _document: UserDocument
 
-    def __init__(self, model: UserModel):
-        self._model = model
+    def __init__(self, document: UserDocument):
+        self._document = document
 
     @property
-    def model(self) -> UserModel:
-        return self._model
+    def document(self) -> UserDocument:
+        return self._document
 
     @classmethod
     async def from_user_id(cls, user_id: int):
-        user = await UserModel.find_one(UserModel.user_id == user_id)
+        user = await UserDocument.find_one(UserDocument.user_id == user_id)
         if not user:
             raise UserNotFoundError("user not found")
 
@@ -34,7 +34,7 @@ class User:
 
     @classmethod
     async def new_from_user_id(cls, user_id: int):
-        user = UserModel(user_id=user_id)
+        user = UserDocument(user_id=user_id)
         await user.insert()
 
         return cls(user)

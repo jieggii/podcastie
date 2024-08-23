@@ -88,7 +88,7 @@ class FindView(View):
             result_view_data = data.copy()
             result_view_data["user"] = user
             result_view_data["callback_data"] = SearchResultViewEntrypointCallbackData(
-                podcast_id=podcast.model.id,
+                podcast_id=podcast.document.id,
                 action=SearchResultAction.send,
                 result_number=i + 1,
                 total_results=podcasts_len,

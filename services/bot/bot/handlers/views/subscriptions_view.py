@@ -19,9 +19,9 @@ def _build_reply_markup(podcasts: list[Podcast]) -> InlineKeyboardMarkup:
 
     for i, podcast in enumerate(podcasts):
         kbd.button(
-            text=podcast.model.meta.title,
+            text=podcast.document.meta.title,
             callback_data=PodcastViewEntrypointCallbackData(
-                edit_current_message=True, podcast_id=podcast.model.id
+                edit_current_message=True, podcast_id=podcast.document.id
             ),
         )
 
@@ -64,11 +64,11 @@ class SubscriptionsView(View):
                 try:
                     await unfollow_podcast(user, podcast)
                     await event.answer(
-                        f"🔕 Successfully unfollowed {podcast.model.meta.title}."
+                        f"🔕 Successfully unfollowed {podcast.document.meta.title}."
                     )
                 except UserDoesNotFollowPodcastError:
                     await event.answer(
-                        f"⚠️ Failed to unfollow {podcast.model.meta.title} as you do not follow it anymore."
+                        f"⚠️ Failed to unfollow {podcast.document.meta.title} as you do not follow it anymore."
                     )
             except PodcastNotFoundError:
                 await event.answer(

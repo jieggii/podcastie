@@ -47,6 +47,6 @@ class UnfollowView(View):
             return
 
         await event.message.edit_text(
-            f"🔕 Are you sure that you want to stop following {bold(podcast.model.meta.title)}?",
-            reply_markup=_build_reply_markup(podcast.model.id),
+            f"🔕 Are you sure that you want to stop following {bold(podcast.document.meta.title)}?",
+            reply_markup=_build_reply_markup(podcast.document.id),
         )

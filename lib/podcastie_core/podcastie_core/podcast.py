@@ -4,11 +4,13 @@ import time
 
 import podcastie_rss
 from beanie import PydanticObjectId
-from podcastie_database.models.podcast_model import (
-    PodcastLatestEpisodeInfo,
-    PodcastMeta,
+from lib.podcastie_database.podcastie_database.models.podcast import PodcastCheckModel
+from podcastie_database.models.podcast import (
+    PodcastCheckModel,
+    PodcastMetaModel,
+
 )
-from podcastie_database.models.podcast_model import PodcastModel
+from podcastie_database.models.podcast import PodcastDocument
 
 
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
@@ -41,18 +43,18 @@ class PodcastFeedError(Exception):
 
 
 class Podcast:
-    _model: PodcastModel
+    _document: PodcastDocument
 
-    def __init__(self, model: PodcastModel):
-        self._model = model
+    def __init__(self, document: PodcastDocument):
+        self._document = document
 
     @property
-    def model(self) -> PodcastModel:
-        return self._model
+    def document(self) -> PodcastDocument:
+        return self._document
 
     @classmethod
     async def from_object_id(cls, object_id: PydanticObjectId):
-        podcast = await PodcastModel.get(object_id)
+        podcast = await PodcastDocument.get(object_id)
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
 
@@ -60,8 +62,8 @@ class Podcast:
 
     @classmethod
     async def from_feed_url(cls, feed_url: str):
-        podcast = await PodcastModel.find_one(
-            PodcastModel.feed_url == feed_url
+        podcast = await PodcastDocument.find_one(
+            PodcastDocument.feed_url == feed_url
         )
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
@@ -70,8 +72,8 @@ class Podcast:
 
     @classmethod
     async def from_feed_url_hash_prefix(cls, feed_url_hash_prefix: str):
-        podcast = await PodcastModel.find_one(
-            PodcastModel.feed_url_hash_prefix == feed_url_hash_prefix
+        podcast = await PodcastDocument.find_one(
+            PodcastDocument.feed_url_hash_prefix == feed_url_hash_prefix
         )
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
@@ -82,29 +84,27 @@ class Podcast:
     async def new_from_feed(cls, feed: podcastie_rss.Feed, feed_url: str):
         global PODCAST_FEED_URL_HASH_PREFIX_LEN
 
-        db_object = PodcastModel(
+        document = PodcastDocument(
             feed_url=feed_url,
             feed_url_hash_prefix=_generate_feed_url_hash_prefix(
                 feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN
             ),
-            meta=PodcastMeta(
+            meta=PodcastMetaModel(
                 title=feed.title,
                 title_slug=_generate_podcast_title_slug(feed.title),
                 description=feed.description,
                 link=feed.link,
                 cover_url=feed.cover_url,
             ),
-            latest_episode_info=PodcastLatestEpisodeInfo(
-                check_ts=int(time.time()),
-                check_success=True,
-                publication_ts=(
-                    feed.latest_episode.published if feed.latest_episode else None
-                ),
+            check=PodcastCheckModel(
+                timestamp=int(time.time()),
+                success=True,
             ),
+            latest_episode_publication_timestamp=feed.latest_episode.published if feed.latest_episode else None,
         )
 
-        await db_object.insert()
-        return cls(db_object)
+        await document.insert()
+        return cls(document)
 
     @classmethod
     async def new_from_feed_url(cls, feed_url: str):

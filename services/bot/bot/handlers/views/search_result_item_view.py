@@ -69,20 +69,20 @@ class SearchResultView(View):
                     await follow_podcast(user, podcast)
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_unfollow_keyboard(
-                            podcast.model.id, podcast.model.meta.link
+                            podcast.document.id, podcast.document.meta.link
                         )
                     )
                     await event.answer(
-                        f"🔔 Successfully followed {podcast.model.meta.title}."
+                        f"🔔 Successfully followed {podcast.document.meta.title}."
                     )
                 except UserFollowsPodcastError:
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_unfollow_keyboard(
-                            podcast.model.id, podcast.model.meta.link
+                            podcast.document.id, podcast.document.meta.link
                         )
                     )
                     await event.answer(
-                        f"🔔 You already follow {podcast.model.meta.title}."
+                        f"🔔 You already follow {podcast.document.meta.title}."
                     )
 
             case SearchResultAction.unfollow:
@@ -90,20 +90,20 @@ class SearchResultView(View):
                     await unfollow_podcast(user, podcast)
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_follow_keyboard(
-                            podcast.model.id, podcast.model.meta.link
+                            podcast.document.id, podcast.document.meta.link
                         )
                     )
                     await event.answer(
-                        f"🔕 Successfully unfollowed from {podcast.model.meta.title}."
+                        f"🔕 Successfully unfollowed from {podcast.document.meta.title}."
                     )
                 except UserDoesNotFollowPodcastError:
                     await event.message.edit_reply_markup(
                         reply_markup=self._build_follow_keyboard(
-                            podcast.model.id, podcast.model.meta.link
+                            podcast.document.id, podcast.document.meta.link
                         )
                     )
                     await event.answer(
-                        f"🔕 You don't follow {podcast.model.meta.title}."
+                        f"🔕 You don't follow {podcast.document.meta.title}."
                     )
 
             case SearchResultAction.send:
@@ -116,27 +116,27 @@ class SearchResultView(View):
 
                 bot: Bot = data["bot"]
 
-                text = f"{callback_data.result_number}/{callback_data.total_results} {bold(podcast.model.meta.title)}\n"
+                text = f"{callback_data.result_number}/{callback_data.total_results} {bold(podcast.document.meta.title)}\n"
 
-                if podcast.model.meta.description:
-                    text += f"{blockquote(podcast.model.meta.description, expandable=True)}\n"
+                if podcast.document.meta.description:
+                    text += f"{blockquote(podcast.document.meta.description, expandable=True)}\n"
 
                 markup: InlineKeyboardMarkup
                 if user_is_following_podcast(user, podcast):
                     markup = self._build_unfollow_keyboard(
-                        podcast.model.id, podcast.model.meta.link
+                        podcast.document.id, podcast.document.meta.link
                     )
                 else:
                     markup = self._build_follow_keyboard(
-                        podcast.model.id, podcast.model.meta.link
+                        podcast.document.id, podcast.document.meta.link
                     )
 
-                if podcast.model.meta.cover_url:
+                if podcast.document.meta.cover_url:
                     await bot.send_chat_action(
                         event.chat.id, ChatAction.UPLOAD_PHOTO
                     )  # Todo: cache telegram_file_ids
 
-                    photo = URLInputFile(podcast.model.meta.cover_url)
+                    photo = URLInputFile(podcast.document.meta.cover_url)
                     await event.answer_photo(photo, caption=text, reply_markup=markup)
                 else:
                     await event.answer(text, reply_markup=markup)

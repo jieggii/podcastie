@@ -87,36 +87,36 @@ async def handle_inline_query(
     articles: list[InlineQueryResultArticle] = []
     for podcast in results:
         description = (
-            util.escape(podcast.model.meta.description)
-            if podcast.model.meta.description
+            util.escape(podcast.document.meta.description)
+            if podcast.document.meta.description
             else ""
         )
         description_len = len(description)
 
         message_text = (
-            f"{tags.bold(podcast.model.meta.title)}\n"
+            f"{tags.bold(podcast.document.meta.title)}\n"
             f"{tags.blockquote(description, expandable=description_len > 800)}"  # todo: const magic number
         )
 
         message_content = InputTextMessageContent(
             message_text=message_text,
             link_preview_options=LinkPreviewOptions(
-                url=podcast.model.meta.link, prefer_small_media=description_len != 0
+                url=podcast.document.meta.link, prefer_small_media=description_len != 0
             ),
         )
 
         articles.append(
             InlineQueryResultArticle(
-                id=podcast.model.meta.hash(),
-                title=podcast.model.meta.title,
+                id=podcast.document.meta.hash(),
+                title=podcast.document.meta.title,
                 input_message_content=message_content,
-                url=podcast.model.meta.link,
-                description=podcast.model.meta.description,
-                thumbnail_url=podcast.model.meta.cover_url,
+                url=podcast.document.meta.link,
+                description=podcast.document.meta.description,
+                thumbnail_url=podcast.document.meta.cover_url,
                 reply_markup=_build_reply_markup(
                     bot_username=(await bot.get_me()).username,
-                    podcast_feed_url_hash_prefix=podcast.model.feed_url_hash_prefix,
-                    podcast_link=podcast.model.meta.link,
+                    podcast_feed_url_hash_prefix=podcast.document.feed_url_hash_prefix,
+                    podcast_link=podcast.document.meta.link,
                 ),
             )
         )
