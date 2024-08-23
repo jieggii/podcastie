@@ -143,6 +143,13 @@ class ImportView(View):
                 reply_markup=_build_result_reply_markup(failure=True),
             )
 
+        if not feed_urls:
+            await message.answer(
+                "⚠️ The provided OPML file does not contain any subscriptions.",
+                reply_markup=_build_result_reply_markup(failure=True)
+            )
+            return
+
         # remove duplicated feed URLs
         feed_urls = list(set(feed_urls))
         followed, failed_to_follow = await _follow_podcasts(user, feed_urls)
