@@ -1,6 +1,5 @@
 services:
   bot:
-    container_name: podcastie-bot
     image: ghcr.io/jieggii/podcastie/bot:latest
 
     secrets:
@@ -10,11 +9,11 @@ services:
       - mongo_database
 
     environment:
-      BOT_TOKEN_FILE: /run/secrets/bot_token
+      BOT_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/bot_token
 
-      MONGO_HOST: podcastie-mongo
-      MONGO_PORT: 27017
-      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+      BOT_MONGO_HOST: podcastie-mongo
+      BOT_MONGO_PORT: 27017
+      BOT_MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
     depends_on:
       - mongo
@@ -22,19 +21,18 @@ services:
     restart: unless-stopped
 
   feed_poller:
-    container_name: podcastie-feed_poller
     image: ghcr.io/jieggii/podcastie/feed_poller:latest
 
     environment:
       FEED_POLLER_INTERVAL: 300
-      FEED_POLLER_BOT_API_HOST: telegram-bot-api
-      FEED_POLLER_BOT_API_PORT: 8081
+      FEED_POLLER_TELEGRAM_BOT_API_HOST: telegram-bot-api
+      FEED_POLLER_TELEGRAM_BOT_API_PORT: 8081
 
-      BOT_TOKEN_FILE: /run/secrets/bot_token
+      FEED_POLLER_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/bot_token
 
-      MONGO_HOST: podcastie-mongo
-      MONGO_PORT: 27017
-      MONGO_DATABASE_FILE: /run/secrets/mongo_database
+      FEED_POLLER_MONGO_HOST: podcastie-mongo
+      FEED_POLLER_MONGO_PORT: 27017
+      FEED_POLLER_MONGO_DATABASE_FILE: /run/secrets/mongo_database
 
     depends_on:
       - mongo
@@ -49,11 +47,9 @@ services:
     restart: unless-stopped
 
   telegram-bot-api:
-    container_name: podcastie-telegram-bot-api
     image: aiogram/telegram-bot-api
-    environment:
-      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
-      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+    env_file:
+      - ./services/telegram-bot-api/.env
 
   mongo:
     container_name: podcastie-mongo
