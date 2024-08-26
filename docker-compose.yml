@@ -1,6 +1,5 @@
 services:
   bot:
-#    container_name: podcastie-bot
     build:
       context: .
       dockerfile: ./services/bot/Dockerfile
@@ -22,7 +21,6 @@ services:
     restart: unless-stopped
 
   feed_poller:
-#    container_name: podcastie-feed_poller
     build:
       context: .
       dockerfile: ./services/feed_poller/Dockerfile
@@ -61,7 +59,6 @@ services:
       TELEGRAM_API_HASH_FILE: /run/secrets/telegram_api_hash
 
   mongo:
-#    container_name: podcastie-mongo
     hostname: mongo
     image: mongo
     volumes:
