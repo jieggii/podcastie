@@ -45,5 +45,6 @@ async def search_podcasts(query: str) -> list[Podcast]:
 
 
 async def all_podcasts() -> list[Podcast]:
+    # todo: async iterable
     models = await PodcastDocument.find().to_list()
     return [Podcast(model) for model in models]
