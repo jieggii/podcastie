@@ -61,7 +61,7 @@ jobs:
             
             # create secrets:
             mkdir -p .secrets
-            echo "${{ secrets.BOT_TOKEN }}" > .secrets/bot_token
+            echo "${{ secrets.BOT_TOKEN }}" > .secrets/telegram_bot_token
             echo "${{ secrets.MONGO_DATABASE }}" > .secrets/mongo_database
             
             # put telegram secrets to .env fiile (temporary solution until secrets are not supported by aiogram/telegram-bot-api)
