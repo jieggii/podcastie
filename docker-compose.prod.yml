@@ -28,7 +28,7 @@ services:
       FEED_POLLER_TELEGRAM_BOT_API_HOST: telegram-bot-api
       FEED_POLLER_TELEGRAM_BOT_API_PORT: 8081
 
-      FEED_POLLER_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/bot_token
+      FEED_POLLER_TELEGRAM_BOT_TOKEN_FILE: /run/secrets/telegram_bot_token
 
       FEED_POLLER_MONGO_HOST: podcastie-mongo
       FEED_POLLER_MONGO_PORT: 27017
