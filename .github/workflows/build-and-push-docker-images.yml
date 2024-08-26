@@ -58,10 +58,14 @@ jobs:
             cd ${{ secrets.SSH_WORKDIR }}
             
             git pull
-
+            
             mkdir -p .secrets
             echo "${{ secrets.BOT_TOKEN }}" > .secrets/bot_token
             echo "${{ secrets.MONGO_DATABASE }}" > .secrets/mongo_database
+            
+            echo > ./services/telegram-bot-api/.env
+            echo "TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }}" >> ./services/telegram-bot-api/.env
+            echo "TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }}" >> ./services/telegram-bot-api/.env
 
             echo "${{ env.GITHUB_TOKEN }}" | docker login --password-stdin --username "${{ env.GITHUB_ACTOR }}" ghcr.io
-            TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }} TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }} docker compose -f ./docker-compose.prod.yml up --pull=always --detach
+            docker compose -f ./docker-compose.prod.yml up --pull=always --detach
