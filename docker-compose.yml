@@ -47,16 +47,17 @@ services:
     restart: unless-stopped
 
   telegram-bot-api:
-#    container_name: podcastie-telegram-bot-api
-    build: ../telegram-bot-api
+    image: aiogram/telegram-bot-api
+    env_file:
+      - ./services/telegram-bot-api/.env
 
-    secrets:
-      - telegram_api_id
-      - telegram_api_hash
+#    secrets:
+#      - telegram_api_id
+#      - telegram_api_hash
 
-    environment:
-      TELEGRAM_API_ID_FILE: /run/secrets/telegram_api_id
-      TELEGRAM_API_HASH_FILE: /run/secrets/telegram_api_hash
+#    environment:
+#      TELEGRAM_API_ID_FILE: /run/secrets/telegram_api_id
+#      TELEGRAM_API_HASH_FILE: /run/secrets/telegram_api_hash
 
   mongo:
     hostname: mongo
@@ -82,8 +83,8 @@ secrets:
   mongo_database:
     file: ./.secrets/mongo_database
 
-  telegram_api_id:
-    file: ./secrets/telegram_api_id
-
-  telegram_api_hash:
-    file: ./secrets/telegram_api_hash
+#  telegram_api_id:
+#    file: ./secrets/telegram_api_id
+#
+#  telegram_api_hash:
+#    file: ./secrets/telegram_api_hash
