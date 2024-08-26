@@ -26,7 +26,7 @@ def is_valid_podcast_title(title: str) -> bool:
     return len(title) > 0
 
 
-def _generate_podcast_title_slug(title: str) -> str:
+def generate_podcast_title_slug(title: str) -> str:
     slug_chars: list[str] = []
     for c in title:
         if c.isspace() or c in _TITLE_SLUG_FORBIDDEN_CHARS:
@@ -93,7 +93,7 @@ class Podcast:
             ),
             meta=PodcastMetaModel(
                 title=feed.title,
-                title_slug=_generate_podcast_title_slug(feed.title),
+                title_slug=generate_podcast_title_slug(feed.title),
                 description=feed.description,
                 link=feed.link,
                 cover_url=feed.cover_url,
