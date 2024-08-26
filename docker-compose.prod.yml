@@ -70,7 +70,7 @@ services:
 
 secrets:
   bot_token:
-    file: ./.secrets/bot_token
+    file: ./.secrets/telegram_bot_token
 #  mongo_user:
 #    file: ./.secrets/mongo_user
 #  mongo_password:
