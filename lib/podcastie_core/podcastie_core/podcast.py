@@ -14,13 +14,16 @@ from podcastie_database.models.podcast import PodcastDocument
 
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
 
+_TITLE_SLUG_FORBIDDEN_CHARS = set(string.punctuation)
+
 
 def _generate_feed_url_hash_prefix(feed_url: str, length: int) -> str:
     digest = hashlib.sha256(feed_url.encode(), usedforsecurity=False).hexdigest()
     return digest[:length]
 
 
-_TITLE_SLUG_FORBIDDEN_CHARS = set(string.punctuation)
+def is_valid_podcast_title(title: str) -> bool:
+    return len(title) > 0
 
 
 def _generate_podcast_title_slug(title: str) -> str:
