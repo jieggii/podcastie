@@ -35,7 +35,7 @@ async def main() -> None:
     env = Env()
     env.populate()
 
-    log.debug(f"bot token: {env.TelegramBot.TOKEN}")
+    log.debug(f"bot token: '{env.TelegramBot.TOKEN}'")
 
     log.info("connecting to the database...")
     await init_database(env.Mongo.HOST, env.Mongo.PORT, env.Mongo.DATABASE)
