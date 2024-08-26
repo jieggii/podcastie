@@ -3,7 +3,7 @@ services:
     image: ghcr.io/jieggii/podcastie/bot:latest
 
     secrets:
-      - bot_token
+      - telegram_bot_token
 #      - mongo_user
 #      - mongo_password
       - mongo_database
@@ -39,7 +39,7 @@ services:
       - telegram-bot-api
 
     secrets:
-      - bot_token
+      - telegram_bot_token
 #      - mongo_user
 #      - mongo_password
       - mongo_database
@@ -69,7 +69,7 @@ services:
     restart: unless-stopped
 
 secrets:
-  bot_token:
+  telegram_bot_token:
     file: ./.secrets/telegram_bot_token
 #  mongo_user:
 #    file: ./.secrets/mongo_user
