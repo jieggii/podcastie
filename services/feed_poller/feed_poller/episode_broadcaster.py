@@ -1,168 +1,161 @@
+import asyncio
 from asyncio import Queue
-from dataclasses import dataclass
-
-import podcastie_rss
 import structlog
+
+from structlog import contextvars
+
+import aiohttp
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import Bot
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ChatAction, ParseMode
+from aiogram.enums import ChatAction
 from aiogram.exceptions import TelegramForbiddenError
-from aiogram.types import Message, URLInputFile
-from podcastie_database.models.podcast import Podcast
-from podcastie_telegram_html import components, tags, util
+from aiogram.types import URLInputFile, InlineKeyboardMarkup
+from feed_poller.episode import Episode
+from podcastie_telegram_html import tags, util
 from podcastie_telegram_html.tags import link
-from structlog.contextvars import bind_contextvars, unbind_contextvars
 
-from feed_poller.bot_session import LocalTelegramAPIAiohttpSession
-from feed_poller.http_retryer import HTTPRetryer
+from tenacity import retry, wait_exponential, retry_if_exception_type, RetryError
 
-_AUDIO_FILE_SIZE_LIMIT = 2000 * 1024 * 1024  # Max audio file size allowed by Telegram
-_AUDIO_FILE_CHUNK_SIZE = 512 * 1024  # 512 kb
+_AUDIO_SIZE_LIMIT = 2000 * 1024 * 1024  # max audio file size allowed by Telegram (bytes)
+_AUDIO_FILE_DOWNLOAD_TIMEOUT = 20 * 60  # timeout for audio download (seconds)
+_AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # timeout for audio upload (seconds)
 
-_AUDIO_FILE_DOWNLOAD_TIMEOUT = 20 * 60  # 20 min
-_AUDIO_FILE_UPLOAD_TIMEOUT = 20 * 60  # 20 min
+_DEFAULT_UPLOAD_AUDIO_CHUNK_SIZE = 512 * 1024  # chunk size for audio upload to Telegram (bytes)
 
 
-@dataclass
-class Episode:
-    recipient_user_ids: list[int]  # list of user IDs who are recipients of the episode
+class EpisodeNotificationSender:
+    _bot: Bot
+    _episode: Episode
+    _notification_text: str
 
-    title: str
-    audio: podcastie_rss.AudioFile
-    podcast: Podcast
+    _cached_episode_audio_telegram_file_id: str | None
+    _cached_audio_message_inline_markup: InlineKeyboardMarkup | None
 
-    link: str | None
-    description: str | None
+    def __init__(self, bot: Bot, episode: Episode):
+        self._bot = bot
+        self._episode = episode
 
-    audio_telegram_file_id: str | None = None  # Telegram file_id of the audio file
+        self._notification_text = self.build_notification_text(episode)
+
+        self._cached_episode_audio_telegram_file_id = None
+        self._cached_audio_message_inline_markup = None
+
+    @staticmethod
+    def build_notification_text(episode: Episode) -> str:
+        text = (
+            f"🎉 {link(episode.published_by.document.meta.title, episode.published_by.document.meta.link)} "
+            f"published a new episode - {link(episode.title, episode.link)}"
+        )
+
+        if episode.description:
+            escaped_description = util.escape(episode.description)
+            text += (
+                "\n"
+                f"{tags.blockquote(escaped_description, expandable=True)}"
+            )
+
+        return text
+
+    async def send_notification(self, user_id: int, upload_audio_chunk_size: int):
+        await self._send_text_notification(user_id)
+        await self._send_uploading_file_chat_action(user_id)
+
+        if self._episode.audio.size > _AUDIO_SIZE_LIMIT:
+            await self._send_audio_message(user_id)
+        else:
+            await self._send_audio_file(user_id, upload_audio_chunk_size)
+
+    @retry(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60))
+    async def _send_text_notification(self, user_id: int):
+        await self._bot.send_message(user_id, self._notification_text)
+
+    @retry(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60))
+    async def _send_uploading_file_chat_action(self, user_id: int):
+        await self._bot.send_chat_action(user_id, ChatAction.UPLOAD_DOCUMENT)
+
+    @retry(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60))
+    async def _send_audio_file(self, user_id: int, upload_audio_chunk_size: int):
+        file: str | URLInputFile
+        if self._cached_episode_audio_telegram_file_id:
+            file = self._cached_episode_audio_telegram_file_id
+        else:
+            file = URLInputFile(
+                self._episode.audio.url,
+                filename="Episode.mp3",
+                chunk_size=upload_audio_chunk_size,
+                timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT
+            )
+
+        thumbnail: URLInputFile | None = None
+        if self._episode.published_by.document.meta.cover_url:
+            thumbnail = URLInputFile(self._episode.published_by.document.meta.cover_url)
+
+        await self._bot.send_audio(
+            user_id,
+            file,
+            performer=self._episode.published_by.document.meta.title,
+            title=self._episode.title,
+            thumbnail=thumbnail,
+            disable_notification=True,
+            request_timeout=_AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate
+        )
+
+    @retry(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60))
+    async def _send_audio_message(self, user_id: int):
+        if not self._cached_audio_message_inline_markup:
+            kbd = InlineKeyboardBuilder()
+            kbd.button(text="Download episode audio", url=self._episode.audio.url)
+            self._cached_audio_message_inline_markup = kbd.as_markup()
+
+        await self._bot.send_message(
+            user_id,
+            f"The episode audio file size exceeds Telegram limits, "
+            f"so I am not able to send it to you.\n"
+            f"Instead, you can download it manually",
+            reply_markup=self._cached_audio_message_inline_markup,
+            disable_notification=True,
+        )
 
 
 class EpisodeBroadcaster:
     _bot: Bot
     _audio_file_size_limit: int
+    _interval: int
+    _upload_audio_chunk_size: int
 
-    _http_retryer: HTTPRetryer
-    _episodes: Queue[Episode]
+    def __init__(self, episodes_queue: Queue[Episode], bot: Bot, interval: int, upload_audio_chunk_size: int = _DEFAULT_UPLOAD_AUDIO_CHUNK_SIZE):
+        self._episodes_queue = episodes_queue
+        self._bot = bot
+        self._interval = interval
+        self._upload_audio_chunk_size = upload_audio_chunk_size
 
-    _task_name = "episode_broadcaster"
-
-    def __init__(self, bot_api_host: str, bot_api_port: int, bot_token: str):
-        self._bot = Bot(
-            token=bot_token,
-            session=LocalTelegramAPIAiohttpSession(
-                f"http://{bot_api_host}:{bot_api_port}",
-            ),
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
-        self._http_retryer = HTTPRetryer(interval=1, max_attempts=10)
-        self._episodes = Queue()
-
-    async def add_episode(self, episode: Episode) -> None:
-        await self._episodes.put(episode)
-
-    async def run(self) -> None:
-        log = structlog.getLogger().bind(task=self._task_name)
+    async def broadcast_episodes(self) -> None:
+        log: structlog.stdlib.BoundLogger = structlog.get_logger(task=self.__class__.__name__)
 
         while True:
-            episode = await self._episodes.get()
-            bind_contextvars(podcast=episode.podcast.meta.title, episode=episode.title)
+            episode = await self._episodes_queue.get()
 
-            log.info(f"start broadcasting")
+            with contextvars.bound_contextvars(episode=episode.title, podcast=episode.published_by.document.meta.title):
+                log.info("start broadcasting")
 
-            footer_items = [
-                link("audio", episode.audio.url),
-                components.start_bot_link(
-                    "follow",
-                    bot_username=(await self._bot.get_me()).username,
-                    payload=episode.podcast.ppid,
-                    encode_payload=True,
-                ),
-                f"#{episode.podcast.meta.title_slug}",
-            ]
-            description = util.escape(episode.description) if episode.description else ""
+                notification_sender = EpisodeNotificationSender(self._bot, episode)
 
-            text = (
-                f"🎉 {link(episode.podcast.meta.title, episode.podcast.meta.link)} "
-                f"has published a new episode - {link(episode.title, episode.link)}\n"
-                f"{tags.blockquote(description, expandable=len(description) > 800)}\n"  # todo: const magic number
-                f"{components.footer(footer_items)}"
-            )
+                for user in episode.recipients:
+                    with contextvars.bound_contextvars(user_id=user.document.user_id):
+                        try:
+                            await notification_sender.send_notification(user.document.user_id, self._upload_audio_chunk_size)
+                        except TelegramForbiddenError:
+                            log.info("skipping user as they blocked the bot")
+                            continue
+                        except RetryError:
+                            log.info("skipping user as retrying failed")
+                            continue
+                        except Exception as e:
+                            log.error(f"unexpected exception when sending notification: {e}")
+                            continue
 
-            for user_id in episode.recipient_user_ids:
-                bind_contextvars(user_id=user_id)
+                    log.info("sent new episode notification to user")
 
-                # send text notification to the user:
-                try:
-                    await self._http_retryer.wrap(
-                        self._bot.send_message,
-                        kwargs={"chat_id": user_id, "text": text, "disable_web_page_preview": True},
-                        retry_callback=lambda attempt, prev_e: log.warning(
-                            "retrying to send text notification", attempt=attempt, e=prev_e
-                        ),
-                    )
-                    log.info("sent text notification")
-                except Exception as e:
-                    match e:
-                        case TelegramForbiddenError():
-                            # todo: check if the user has blocked the bot for too long, delete them from the database
-                            log.info("skipping recipient, he/she has blocked the bot")
-                        case _:
-                            log.exception(
-                                "unexpected exception when sending text notification, skipping this recipient", e=e
-                            )
-                    continue
-
-                if episode.audio.size > _AUDIO_FILE_SIZE_LIMIT:
-                    log.info("episode audio size is too big, won't be sent")
-                    continue
-
-                # send "UPLOAD_DOCUMENT" chat action to the user:
-                try:
-                    await self._http_retryer.wrap(
-                        self._bot.send_chat_action,  # todo: this sets status only for 5 seconds, repeat this request until audio is delivered
-                        kwargs={"chat_id": user_id, "action": ChatAction.UPLOAD_DOCUMENT},
-                        retry_callback=lambda attempt, prev_e: log.warning(
-                            "retrying to send chat action", attempt=attempt, e=prev_e
-                        ),
-                    )
-                except Exception as e:
-                    log.exception("unexpected exception when sending chat action", e=e)
-
-                audio_file: str | None | URLInputFile = episode.audio_telegram_file_id
-                if audio_file is None:  # use URL input file if no file_id stored yet
-                    audio_file = URLInputFile(
-                        episode.audio.url,
-                        filename="Episode.mp3",  # todo: use actual file name
-                        chunk_size=_AUDIO_FILE_CHUNK_SIZE,
-                        timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
-                    )
-
-                try:
-                    message: Message = await self._http_retryer.wrap(
-                        self._bot.send_audio,
-                        kwargs={
-                            "chat_id": user_id,
-                            "audio": audio_file,
-                            "title": episode.title,
-                            "performer": episode.podcast.meta.title,
-                            "thumbnail": (
-                                URLInputFile(episode.podcast.meta.cover_url) if episode.podcast.meta.cover_url else None
-                            ),
-                            "request_timeout": _AUDIO_FILE_UPLOAD_TIMEOUT,
-                        },
-                        retry_callback=lambda attempt, prev_e: log.warning(
-                            "retrying to send audio", attempt=attempt, e=prev_e
-                        ),
-                    )
-                    log.info("sent audio file")
-
-                    # remember Telegram file_id for the next time:
-                    if not episode.audio_telegram_file_id:
-                        episode.audio_telegram_file_id = message.audio.file_id
-
-                except Exception as e:
-                    # todo: handle aiogram.exceptions.TelegramForbiddenError here
-                    log.exception("unexpected exception when sending audio file", e=e)
-
-            unbind_contextvars("recipient_user_id")
             log.info("finish broadcasting")
+            log.info(f"task is sleeping for {self._interval} seconds")
+            await asyncio.sleep(self._interval)

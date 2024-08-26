@@ -6,15 +6,16 @@ authors = [
     {name = "jieggii", email = "jieggii@protonmail.com"},
 ]
 dependencies = [
-    "loguru>=0.7.2",
     "podcastie-database @ file:///${PROJECT_ROOT}/../../lib/podcastie_database",
     "podcastie-rss @ file:///${PROJECT_ROOT}/../../lib/podcastie_rss",
     "aiogram>=3.7.0",
     "aiohttp>=3.9.5",
     "pydub>=0.25.1",
-    "structlog>=24.2.0",
     "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
     "minicfg>=0.1.1",
+    "podcastie-core @ file:///${PROJECT_ROOT}/../../lib/podcastie_core",
+    "tenacity>=9.0.0",
+    "structlog>=24.4.0",
 ]
 requires-python = "==3.12.*"
 readme = "README.md"
