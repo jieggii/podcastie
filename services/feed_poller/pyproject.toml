@@ -12,7 +12,7 @@ dependencies = [
     "aiohttp>=3.9.5",
     "pydub>=0.25.1",
     "podcastie-telegram-html @ file:///${PROJECT_ROOT}/../../lib/podcastie_telegram_html",
-    "minicfg>=0.1.1",
+    "minicfg>=1.0.0",
     "podcastie-core @ file:///${PROJECT_ROOT}/../../lib/podcastie_core",
     "tenacity>=9.0.0",
     "structlog>=24.4.0",
