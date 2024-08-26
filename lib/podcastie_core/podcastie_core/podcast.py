@@ -118,4 +118,4 @@ class Podcast:
         return await cls.new_from_feed(feed, feed_url)
 
     async def save_changes(self) -> None:
-        await self._document.save_changes()
+        await self._document.save()
