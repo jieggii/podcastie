@@ -110,9 +110,9 @@ class EpisodeNotificationSender:
 
         await self._bot.send_message(
             user_id,
-            f"The episode audio file size exceeds Telegram limits, "
-            f"so I am not able to send it to you.\n"
-            f"Instead, you can download it manually",
+            f"🧱 The episode audio file size exceeds Telegram limits, "
+            f"that's why I am not able to send it to you.\n\n"
+            f"You can download it manually using the button below.",
             reply_markup=self._cached_audio_message_inline_markup,
             disable_notification=True,
         )
