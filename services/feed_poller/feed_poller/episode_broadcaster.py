@@ -75,9 +75,10 @@ class EpisodeNotificationSender:
         if self._cached_episode_audio_telegram_file_id:
             file = self._cached_episode_audio_telegram_file_id
         else:
+            filename = f"{self._episode.published_by.document.meta.title} - {self._episode.title}.mp3"
             file = URLInputFile(
                 self._episode.audio.url,
-                filename="Episode.mp3",
+                filename=filename,
                 chunk_size=upload_audio_chunk_size,
                 timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
             )
