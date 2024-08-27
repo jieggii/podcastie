@@ -37,6 +37,5 @@ class PodcastDocument(Document):
         indexes = [
             [
                 ("meta.title", pymongo.TEXT),
-                ("meta.title_slug", pymongo.TEXT),
             ]
         ]
