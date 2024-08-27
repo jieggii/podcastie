@@ -5,10 +5,10 @@ from asyncio import Queue
 import aiohttp
 import podcastie_rss
 import structlog
+from feed_poller.broadcastable_episode import BroadcastableEpisode
 from podcastie_core.podcast import generate_podcast_title_slug, is_valid_podcast_title
 from podcastie_core.service import all_podcasts, podcast_followers
 from podcastie_database.models.podcast import PodcastCheckModel, PodcastMetaModel
-from podcastie_rss import Episode
 from structlog import contextvars
 from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, wait_exponential
 
@@ -39,10 +39,10 @@ def _update_podcast_meta(old_meta: PodcastMetaModel, title: str, description: st
 
 
 class FeedPoller:
-    _episodes_queue: Queue[Episode]
+    _episodes_queue: Queue[BroadcastableEpisode]
     _interval: int
 
-    def __init__(self, episodes_queue: Queue[Episode], interval: int):
+    def __init__(self, episodes_queue: Queue[BroadcastableEpisode], interval: int):
         self._episodes_queue = episodes_queue
         self._interval = interval
 
@@ -114,13 +114,10 @@ class FeedPoller:
                                 continue
 
                             log.info("sending episode for broadcasting")
-                            episode = episode_broadcaster.Episode(
+                            episode = episode_broadcaster.BroadcastableEpisode(
                                 recipients=followers,
-                                title=feed.latest_episode.title,
-                                audio=feed.latest_episode.audio_file,
+                                episode=feed.latest_episode,
                                 published_by=podcast,
-                                link=feed.latest_episode.link,
-                                description=feed.latest_episode.description,
                             )
                             await self._episodes_queue.put(episode)
 

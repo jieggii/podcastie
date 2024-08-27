@@ -8,5 +8,5 @@ from podcastie_core.user import User
 @dataclass
 class BroadcastableEpisode:
     recipients: list[User]  # episode recipients
-    episode: podcastie_rss.Episode  # episode itself
+    episode: podcastie_rss.Episode  # the episode itself
     published_by: Podcast  # episode publisher

@@ -13,7 +13,7 @@ from podcastie_telegram_html.tags import link
 from structlog import contextvars
 from tenacity import RetryError, retry, retry_if_exception_type, wait_exponential
 
-from feed_poller.episode import Episode
+from feed_poller.broadcastable_episode import BroadcastableEpisode
 
 _AUDIO_SIZE_LIMIT = 2000 * 1024 * 1024  # max audio file size allowed by Telegram (bytes)
 _AUDIO_FILE_DOWNLOAD_TIMEOUT = 20 * 60  # timeout for audio download (seconds)
@@ -24,13 +24,13 @@ _DEFAULT_UPLOAD_AUDIO_CHUNK_SIZE = 512 * 1024  # chunk size for audio upload to 
 
 class EpisodeNotificationSender:
     _bot: Bot
-    _episode: Episode
+    _episode: BroadcastableEpisode
     _notification_text: str
 
     _cached_episode_audio_telegram_file_id: str | None
     _cached_audio_message_inline_markup: InlineKeyboardMarkup | None
 
-    def __init__(self, bot: Bot, episode: Episode):
+    def __init__(self, bot: Bot, episode: BroadcastableEpisode):
         self._bot = bot
         self._episode = episode
 
@@ -40,14 +40,14 @@ class EpisodeNotificationSender:
         self._cached_audio_message_inline_markup = None
 
     @staticmethod
-    def build_notification_text(episode: Episode) -> str:
+    def build_notification_text(episode: BroadcastableEpisode) -> str:
         text = (
             f"🎉 {link(episode.published_by.document.meta.title, episode.published_by.document.meta.link)} "
-            f"published a new episode - {link(episode.title, episode.link)}"
+            f"published a new episode - {link(episode.episode.title, episode.episode.link)}"
         )
 
-        if episode.description:
-            escaped_description = util.escape(episode.description)
+        if episode.episode.description:
+            escaped_description = util.escape(episode.episode.description)
             text += "\n" f"{tags.blockquote(escaped_description, expandable=True)}"
 
         return text
@@ -56,14 +56,18 @@ class EpisodeNotificationSender:
         await self._send_text_notification(user_id)
         await self._send_uploading_file_chat_action(user_id)
 
-        if self._episode.audio.size > _AUDIO_SIZE_LIMIT:
+        if self._episode.episode.audio_file.size > _AUDIO_SIZE_LIMIT:
             await self._send_audio_message(user_id)
         else:
             await self._send_audio_file(user_id, upload_audio_chunk_size)
 
     @retry(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60))
     async def _send_text_notification(self, user_id: int):
-        await self._bot.send_message(user_id, self._notification_text)
+        if self._episode.episode.art_url:
+            art = URLInputFile(self._episode.episode.art_url)
+            await self._bot.send_photo(user_id, art, caption=self._notification_text)
+        else:
+            await self._bot.send_message(user_id, self._notification_text)
 
     @retry(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60))
     async def _send_uploading_file_chat_action(self, user_id: int):
@@ -75,9 +79,9 @@ class EpisodeNotificationSender:
         if self._cached_episode_audio_telegram_file_id:
             file = self._cached_episode_audio_telegram_file_id
         else:
-            filename = f"{self._episode.published_by.document.meta.title} - {self._episode.title}.mp3"
+            filename = f"{self._episode.published_by.document.meta.title} - {self._episode.episode.title}.mp3"
             file = URLInputFile(
-                self._episode.audio.url,
+                self._episode.episode.audio_file.url,
                 filename=filename,
                 chunk_size=upload_audio_chunk_size,
                 timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
@@ -91,7 +95,7 @@ class EpisodeNotificationSender:
             user_id,
             file,
             performer=self._episode.published_by.document.meta.title,
-            title=self._episode.title,
+            title=self._episode.episode.title,
             thumbnail=thumbnail,
             disable_notification=True,
             request_timeout=_AUDIO_FILE_UPLOAD_TIMEOUT,  # todo: investigate
@@ -101,7 +105,7 @@ class EpisodeNotificationSender:
     async def _send_audio_message(self, user_id: int):
         if not self._cached_audio_message_inline_markup:
             kbd = InlineKeyboardBuilder()
-            kbd.button(text="Download episode audio", url=self._episode.audio.url)
+            kbd.button(text="Download episode audio", url=self._episode.episode.audio_file.url)
             self._cached_audio_message_inline_markup = kbd.as_markup()
 
         await self._bot.send_message(
@@ -122,7 +126,7 @@ class EpisodeBroadcaster:
 
     def __init__(
         self,
-        episodes_queue: Queue[Episode],
+        episodes_queue: Queue[BroadcastableEpisode],
         bot: Bot,
         interval: int,
         upload_audio_chunk_size: int = _DEFAULT_UPLOAD_AUDIO_CHUNK_SIZE,
@@ -138,7 +142,7 @@ class EpisodeBroadcaster:
         while True:
             episode = await self._episodes_queue.get()
 
-            with contextvars.bound_contextvars(episode=episode.title, podcast=episode.published_by.document.meta.title):
+            with contextvars.bound_contextvars(episode=episode.episode.title, podcast=episode.published_by.document.meta.title):
                 log.info("start broadcasting")
 
                 notification_sender = EpisodeNotificationSender(self._bot, episode)
