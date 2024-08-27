@@ -1,8 +1,8 @@
-from beanie import Document, PydanticObjectId
+from beanie import Document, PydanticObjectId, Indexed
 
 
 class UserDocument(Document):
-    user_id: int
+    user_id: Indexed(int, unique=True)
     subscriptions: list[PydanticObjectId] = []
 
     class Settings:
