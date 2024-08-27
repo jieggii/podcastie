@@ -15,6 +15,7 @@ from bot.callback_data.entrypoints import (
 from podcastie_core.podcast import Podcast, PodcastNotFoundError
 from podcastie_core.user import User, UserDoesNotFollowPodcastError, UserFollowsPodcastError
 from podcastie_core.service import follow_podcast, unfollow_podcast, user_is_following_podcast
+from podcastie_telegram_html.util import escape
 
 
 class SearchResultView(View):
@@ -119,7 +120,8 @@ class SearchResultView(View):
                 text = f"{callback_data.result_number}/{callback_data.total_results} {bold(podcast.document.meta.title)}\n"
 
                 if podcast.document.meta.description:
-                    text += f"{blockquote(podcast.document.meta.description, expandable=True)}\n"
+                    escaped_description = escape(podcast.document.meta.description)
+                    text += f"{blockquote(escaped_description, expandable=True)}\n"
 
                 markup: InlineKeyboardMarkup
                 if user_is_following_podcast(user, podcast):
