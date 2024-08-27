@@ -41,6 +41,7 @@ class Episode:
     description: str | None
     link: str | None
     audio_file: AudioFile | None
+    art_url: str | None
 
 
 @dataclass
@@ -106,6 +107,9 @@ async def fetch_feed(url: str) -> Feed:
             # parse episode description (it's optional):
             ep_description: str | None = raw_episode.get("description")
 
+            # parse episode art URL (it's optional):
+            ep_art_url: str | None = raw_episode.get("episode_art_url")
+
             # parse episode audio file (it's optional):
             ep_audio_file: AudioFile | None = None
             enclosures: list[dict[str, typing.Any]] | None = raw_episode.get("enclosures")
@@ -129,6 +133,7 @@ async def fetch_feed(url: str) -> Feed:
                 title=ep_title,
                 description=ep_description,
                 link=ep_link,
+                art_url=ep_art_url,
                 audio_file=ep_audio_file,
             )
 
