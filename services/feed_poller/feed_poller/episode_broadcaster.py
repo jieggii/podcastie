@@ -1,20 +1,19 @@
 import asyncio
 from asyncio import Queue
-import structlog
-
-from structlog import contextvars
 
 import aiohttp
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+import structlog
 from aiogram import Bot
 from aiogram.enums import ChatAction
 from aiogram.exceptions import TelegramForbiddenError
-from aiogram.types import URLInputFile, InlineKeyboardMarkup
-from feed_poller.episode import Episode
+from aiogram.types import InlineKeyboardMarkup, URLInputFile
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from podcastie_telegram_html import tags, util
 from podcastie_telegram_html.tags import link
+from structlog import contextvars
+from tenacity import RetryError, retry, retry_if_exception_type, wait_exponential
 
-from tenacity import retry, wait_exponential, retry_if_exception_type, RetryError
+from feed_poller.episode import Episode
 
 _AUDIO_SIZE_LIMIT = 2000 * 1024 * 1024  # max audio file size allowed by Telegram (bytes)
 _AUDIO_FILE_DOWNLOAD_TIMEOUT = 20 * 60  # timeout for audio download (seconds)
@@ -49,10 +48,7 @@ class EpisodeNotificationSender:
 
         if episode.description:
             escaped_description = util.escape(episode.description)
-            text += (
-                "\n"
-                f"{tags.blockquote(escaped_description, expandable=True)}"
-            )
+            text += "\n" f"{tags.blockquote(escaped_description, expandable=True)}"
 
         return text
 
@@ -83,7 +79,7 @@ class EpisodeNotificationSender:
                 self._episode.audio.url,
                 filename="Episode.mp3",
                 chunk_size=upload_audio_chunk_size,
-                timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT
+                timeout=_AUDIO_FILE_DOWNLOAD_TIMEOUT,
             )
 
         thumbnail: URLInputFile | None = None
@@ -123,7 +119,13 @@ class EpisodeBroadcaster:
     _interval: int
     _upload_audio_chunk_size: int
 
-    def __init__(self, episodes_queue: Queue[Episode], bot: Bot, interval: int, upload_audio_chunk_size: int = _DEFAULT_UPLOAD_AUDIO_CHUNK_SIZE):
+    def __init__(
+        self,
+        episodes_queue: Queue[Episode],
+        bot: Bot,
+        interval: int,
+        upload_audio_chunk_size: int = _DEFAULT_UPLOAD_AUDIO_CHUNK_SIZE,
+    ):
         self._episodes_queue = episodes_queue
         self._bot = bot
         self._interval = interval
@@ -143,7 +145,9 @@ class EpisodeBroadcaster:
                 for user in episode.recipients:
                     with contextvars.bound_contextvars(user_id=user.document.user_id):
                         try:
-                            await notification_sender.send_notification(user.document.user_id, self._upload_audio_chunk_size)
+                            await notification_sender.send_notification(
+                                user.document.user_id, self._upload_audio_chunk_size
+                            )
                         except TelegramForbiddenError:
                             log.info("skipping user as they blocked the bot")
                             continue

@@ -11,6 +11,7 @@ def code(child: str) -> str:
 def bold(child: str) -> str:
     return f"<b>{child}</b>"
 
+
 def italic(child: str) -> str:
     return f"<i>{child}</i>"
 

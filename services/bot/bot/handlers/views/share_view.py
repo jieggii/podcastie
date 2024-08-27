@@ -4,6 +4,7 @@ from aiogram import Bot
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, LinkPreviewOptions
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from beanie import PydanticObjectId
+from podcastie_core.podcast import Podcast, PodcastNotFoundError
 from podcastie_telegram_html.components import start_bot_url
 from podcastie_telegram_html.tags import bold
 
@@ -14,7 +15,6 @@ from bot.callback_data.entrypoints import (
     SubscriptionsViewEntrypointCallbackData,
 )
 from bot.utils.instant_link import build_instant_link
-from podcastie_core.podcast import Podcast, PodcastNotFoundError
 
 
 def _build_reply_markup(

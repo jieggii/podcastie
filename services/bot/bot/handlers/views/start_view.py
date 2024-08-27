@@ -10,13 +10,13 @@ from aiogram.types import (
     Message,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.podcast import Podcast, PodcastNotFoundError
 from podcastie_core.service import follow_podcast
+from podcastie_core.user import User, UserFollowsPodcastError
 from podcastie_telegram_html.tags import bold, link
 
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import MenuViewEntrypointCallbackData
-from podcastie_core.podcast import Podcast, PodcastNotFoundError
-from podcastie_core.user import User, UserFollowsPodcastError
 from bot.handlers.views.menu_view import MenuView
 
 

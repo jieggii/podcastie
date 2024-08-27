@@ -4,13 +4,7 @@ import time
 
 import podcastie_rss
 from beanie import PydanticObjectId
-from podcastie_database.models.podcast import (
-    PodcastCheckModel,
-    PodcastMetaModel,
-
-)
-from podcastie_database.models.podcast import PodcastDocument
-
+from podcastie_database.models.podcast import PodcastCheckModel, PodcastDocument, PodcastMetaModel
 
 PODCAST_FEED_URL_HASH_PREFIX_LEN = 8
 
@@ -64,9 +58,7 @@ class Podcast:
 
     @classmethod
     async def from_feed_url(cls, feed_url: str):
-        podcast = await PodcastDocument.find_one(
-            PodcastDocument.feed_url == feed_url
-        )
+        podcast = await PodcastDocument.find_one(PodcastDocument.feed_url == feed_url)
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
 
@@ -74,9 +66,7 @@ class Podcast:
 
     @classmethod
     async def from_feed_url_hash_prefix(cls, feed_url_hash_prefix: str):
-        podcast = await PodcastDocument.find_one(
-            PodcastDocument.feed_url_hash_prefix == feed_url_hash_prefix
-        )
+        podcast = await PodcastDocument.find_one(PodcastDocument.feed_url_hash_prefix == feed_url_hash_prefix)
         if not podcast:
             raise PodcastNotFoundError("podcast not found")
 
@@ -88,9 +78,7 @@ class Podcast:
 
         document = PodcastDocument(
             feed_url=feed_url,
-            feed_url_hash_prefix=_generate_feed_url_hash_prefix(
-                feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN
-            ),
+            feed_url_hash_prefix=_generate_feed_url_hash_prefix(feed_url, PODCAST_FEED_URL_HASH_PREFIX_LEN),
             meta=PodcastMetaModel(
                 title=feed.title,
                 title_slug=generate_podcast_title_slug(feed.title),

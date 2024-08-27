@@ -2,7 +2,6 @@ from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import InlineQuery, Message
-
 from podcastie_core.user import User, UserNotFoundError
 
 _HANDLER_TYPE = Callable[[Message | InlineQuery, Dict[str, Any]], Awaitable[Any]]

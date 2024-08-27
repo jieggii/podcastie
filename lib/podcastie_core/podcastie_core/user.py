@@ -1,5 +1,6 @@
 from podcastie_database.models.user import UserDocument
 
+
 class UserNotFoundError(Exception):
     pass
 

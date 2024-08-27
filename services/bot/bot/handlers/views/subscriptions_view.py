@@ -2,6 +2,9 @@ import typing
 
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.podcast import Podcast, PodcastNotFoundError
+from podcastie_core.service import unfollow_podcast, user_subscriptions
+from podcastie_core.user import User, UserDoesNotFollowPodcastError
 
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
@@ -9,9 +12,6 @@ from bot.callback_data.entrypoints import (
     PodcastViewEntrypointCallbackData,
     SubscriptionsViewEntrypointCallbackData,
 )
-from podcastie_core.podcast import Podcast, PodcastNotFoundError
-from podcastie_core.user import User, UserDoesNotFollowPodcastError
-from podcastie_core.service import user_subscriptions, unfollow_podcast
 
 
 def _build_reply_markup(podcasts: list[Podcast]) -> InlineKeyboardMarkup:

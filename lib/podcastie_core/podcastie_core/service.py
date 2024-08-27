@@ -1,9 +1,9 @@
 from beanie.odm.operators.find.evaluation import Text
-from podcastie_core.user import UserFollowsPodcastError, UserDoesNotFollowPodcastError
-from podcastie_core.podcast import Podcast
-from podcastie_core.user import User
 from podcastie_database.models.podcast import PodcastDocument
 from podcastie_database.models.user import UserDocument
+
+from podcastie_core.podcast import Podcast
+from podcastie_core.user import User, UserDoesNotFollowPodcastError, UserFollowsPodcastError
 
 
 async def follow_podcast(user: User, podcast: Podcast) -> None:
@@ -29,10 +29,8 @@ def user_is_following_podcast(user: User, podcast: Podcast) -> bool:
 
 
 async def user_subscriptions(user: User) -> list[Podcast]:
-    return [
-        await Podcast.from_object_id(object_id)
-        for object_id in user.document.subscriptions
-    ]
+    return [await Podcast.from_object_id(object_id) for object_id in user.document.subscriptions]
+
 
 async def podcast_followers(podcast: Podcast) -> list[User]:
     models = await UserDocument.find(UserDocument.subscriptions == podcast.document.id).to_list()

@@ -6,6 +6,9 @@ from aiogram.enums import ChatAction, ContentType
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.podcast import Podcast, PodcastFeedError, PodcastNotFoundError
+from podcastie_core.service import follow_podcast
+from podcastie_core.user import User, UserFollowsPodcastError
 from podcastie_telegram_html.tags import link
 
 from bot.aiogram_view.view import View
@@ -13,11 +16,8 @@ from bot.callback_data.entrypoints import (
     ImportViewEntrypointCallbackData,
     MenuViewEntrypointCallbackData,
 )
-from bot.utils import opml
-from podcastie_core.podcast import Podcast, PodcastFeedError, PodcastNotFoundError
-from podcastie_core.user import User, UserFollowsPodcastError
-from podcastie_core.service import follow_podcast
 from bot.fsm import BotState
+from bot.utils import opml
 from bot.validators import is_feed_url
 
 
@@ -146,7 +146,7 @@ class ImportView(View):
         if not feed_urls:
             await message.answer(
                 "⚠️ The provided OPML file does not contain any subscriptions.",
-                reply_markup=_build_result_reply_markup(failure=True)
+                reply_markup=_build_result_reply_markup(failure=True),
             )
             return
 

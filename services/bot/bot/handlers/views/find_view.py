@@ -4,6 +4,8 @@ from aiogram import Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.service import search_podcasts
+from podcastie_core.user import User
 
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
@@ -12,8 +14,6 @@ from bot.callback_data.entrypoints import (
     SearchResultAction,
     SearchResultViewEntrypointCallbackData,
 )
-from podcastie_core.user import User
-from podcastie_core.service import search_podcasts
 from bot.fsm import BotState
 from bot.handlers.views.search_result_item_view import SearchResultView
 

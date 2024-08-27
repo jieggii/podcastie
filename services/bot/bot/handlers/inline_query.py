@@ -8,13 +8,17 @@ from aiogram.types import (
     LinkPreviewOptions,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.podcast import Podcast
+from podcastie_core.service import (
+    search_podcasts,
+    user_is_following_podcast,
+    user_subscriptions,
+)
+from podcastie_core.user import User
 from podcastie_telegram_html import tags, util
 
-from bot.utils.instant_link import build_instant_link
-from podcastie_core.podcast import Podcast
-from podcastie_core.service import search_podcasts, user_subscriptions, user_is_following_podcast
-from podcastie_core.user import User
 from bot.middlewares import UserMiddleware
+from bot.utils.instant_link import build_instant_link
 
 router = Router()
 router.inline_query.middleware(UserMiddleware(create_user=False))

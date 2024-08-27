@@ -3,6 +3,7 @@ import typing
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineQueryResult
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from beanie import PydanticObjectId
+from podcastie_core.podcast import Podcast, PodcastNotFoundError
 from podcastie_telegram_html.tags import bold
 
 from bot.aiogram_view.view import View
@@ -12,7 +13,6 @@ from bot.callback_data.entrypoints import (
     SubscriptionsViewEntrypointCallbackData,
     UnfollowViewEntrypointCallbackData,
 )
-from podcastie_core.podcast import Podcast, PodcastNotFoundError
 
 
 def _build_reply_markup(podcast_id: PydanticObjectId) -> InlineKeyboardMarkup:

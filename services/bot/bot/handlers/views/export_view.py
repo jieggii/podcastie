@@ -9,6 +9,8 @@ from aiogram.types import (
     Message,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from podcastie_core.service import user_subscriptions
+from podcastie_core.user import User
 
 from bot.aiogram_view.view import View
 from bot.callback_data.entrypoints import (
@@ -17,8 +19,6 @@ from bot.callback_data.entrypoints import (
     MenuViewEntrypointCallbackData,
 )
 from bot.utils import opml
-from podcastie_core.user import User
-from podcastie_core.service import user_subscriptions
 
 
 def _build_result_reply_markup(text: str) -> InlineKeyboardMarkup:

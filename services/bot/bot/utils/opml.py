@@ -1,5 +1,4 @@
 import listparser
-
 from podcastie_core.podcast import Podcast
 
 

@@ -5,17 +5,23 @@ from dataclasses import dataclass
 import aiohttp
 import podcastparser
 
-_SUPPORTED_ENCLOSURE_MIME_TYPES = {"audio/mp3", "audio/mpeg"}  # todo: expand to supported by Telegram as we don't need to compress audio anymore
+_SUPPORTED_ENCLOSURE_MIME_TYPES = {
+    "audio/mp3",
+    "audio/mpeg",
+}  # todo: expand to supported by Telegram as we don't need to compress audio anymore
 
 
 class FeedError(Exception):
     pass
 
+
 class FeedReadError(FeedError):
     pass
 
+
 class FeedParseError(FeedError):
     pass
+
 
 class FeedValidateError(FeedError):
     pass
@@ -60,6 +66,7 @@ async def _fetch_feed(url: str, *, max_episodes: int) -> dict[str, typing.Any]:
     except podcastparser.FeedParseError as e:
         raise FeedParseError("failed to parse feed") from e
 
+
 async def fetch_feed(url: str) -> Feed:
     """Fetches feed by RSS feed URL."""
     feed = await _fetch_feed(url, max_episodes=1)
@@ -70,7 +77,9 @@ async def fetch_feed(url: str) -> Feed:
         raise FeedValidateError("feed does not contain title")
 
     # parse podcast description (it's optional):
-    description: str | None = feed.get("description")  # todo: check if there are any other fields containing description
+    description: str | None = feed.get(
+        "description"
+    )  # todo: check if there are any other fields containing description
 
     # parse podcast link (it's optional):
     link: str | None = feed.get("link")

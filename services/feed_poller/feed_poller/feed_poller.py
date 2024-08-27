@@ -2,18 +2,17 @@ import asyncio
 import time
 from asyncio import Queue
 
-import structlog
-from structlog import contextvars
-
 import aiohttp
 import podcastie_rss
+import structlog
 from podcastie_core.podcast import generate_podcast_title_slug, is_valid_podcast_title
+from podcastie_core.service import all_podcasts, podcast_followers
 from podcastie_database.models.podcast import PodcastCheckModel, PodcastMetaModel
 from podcastie_rss import Episode
-
-from podcastie_core.service import all_podcasts, podcast_followers
-from feed_poller import episode_broadcaster
+from structlog import contextvars
 from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, wait_exponential
+
+from feed_poller import episode_broadcaster
 
 
 def _update_podcast_meta(old_meta: PodcastMetaModel, title: str, description: str, link: str, cover_url: str) -> bool:
@@ -64,7 +63,9 @@ class FeedPoller:
                     # fetch podcast RSS feed:
                     feed: podcastie_rss.Feed | None = None
                     try:
-                        async for attempt in AsyncRetrying(retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60)):
+                        async for attempt in AsyncRetrying(
+                            retry=retry_if_exception_type(aiohttp.ClientConnectorError), wait=wait_exponential(max=60)
+                        ):
                             with attempt:
                                 feed = await podcastie_rss.fetch_feed(podcast.document.feed_url)
                     except podcastie_rss.FeedError as e:
@@ -78,14 +79,17 @@ class FeedPoller:
                         continue
                     finally:
                         # update information about latest podcast check:
-                        podcast.document.check = PodcastCheckModel(
-                            timestamp=int(time.time()),
-                            success=bool(feed)
-                        )
+                        podcast.document.check = PodcastCheckModel(timestamp=int(time.time()), success=bool(feed))
                         await podcast.save_changes()
 
                     # update podcast metadata if it has changed:
-                    meta_changed = _update_podcast_meta(podcast.document.meta, title=feed.title, description=feed.description, link=feed.link, cover_url=feed.cover_url)
+                    meta_changed = _update_podcast_meta(
+                        podcast.document.meta,
+                        title=feed.title,
+                        description=feed.description,
+                        link=feed.link,
+                        cover_url=feed.cover_url,
+                    )
                     if meta_changed:
                         await podcast.save_changes()
 
