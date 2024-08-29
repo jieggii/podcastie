@@ -14,6 +14,9 @@ COPY lib/podcastie_core lib/podcastie_core
 # copy feed_poller service pdm files
 COPY services/feed_poller/pyproject.toml services/feed_poller/pdm.lock* services/feed_poller/
 
+# setup pdm:
+RUN pdm config check_update False
+
 # install dependencies:
 RUN cd services/feed_poller/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable --no-self
 

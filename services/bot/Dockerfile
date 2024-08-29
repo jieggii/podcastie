@@ -14,6 +14,9 @@ COPY lib/podcastie_core lib/podcastie_core
 # copy bot service pdm files
 COPY services/bot/pyproject.toml services/bot/pdm.lock* services/bot/
 
+# setup pdm:
+RUN pdm config check_update False
+
 # install dependencies and the project:
 RUN cd services/bot/ && mkdir __pypackages__ && pdm install --prod --no-lock --no-editable --no-self
 
