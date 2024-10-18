@@ -3,10 +3,8 @@
 
 Subscribe to your favorite podcasts, share them with friends, and listen to new episodes right within Telegram!
 
-> [!WARNING]
-> Work in progress, estimating release in July - August 2024.
-
 ## Roadmap
+> [!WARNING]
 > The project is put on hold as I currently focus on preparing to enter an university.
 
 - [x] MVP (July)
