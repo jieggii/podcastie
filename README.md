@@ -7,13 +7,15 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 > Work in progress, estimating release in July - August 2024.
 
 ## Roadmap
+> The project is put on hold as I currently focus on preparing to enter an univercity.
+
 - [x] MVP (July)
 - [x] [UI/UX redisign](https://github.com/jieggii/podcastie/tree/feature/ui-redesign) (using callback buttons) (Aug)
-- [ ] iTunes integration (Sep)
-- [ ] Antifraud measures (Sep)
-- [ ] Multiple languages support using i18n (Sep)
-- [ ] Release (Oct)
-- [ ] Recommendation system using KNN (Dec)
+- [ ] iTunes integration 
+- [ ] Antifraud measures 
+- [ ] Multiple languages support using i18n 
+- [ ] Release 
+- [ ] Recommendation system using KNN 
 
 ## Features
 * **Subscribe to Podcasts**: Simply provide the RSS feed URL or PPID of your favorite podcast to start receiving new episodes.
