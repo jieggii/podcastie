@@ -7,7 +7,7 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 > Work in progress, estimating release in July - August 2024.
 
 ## Roadmap
-> The project is put on hold as I currently focus on preparing to enter an univercity.
+> The project is put on hold as I currently focus on preparing to enter an university.
 
 - [x] MVP (July)
 - [x] [UI/UX redisign](https://github.com/jieggii/podcastie/tree/feature/ui-redesign) (using callback buttons) (Aug)
