@@ -5,7 +5,7 @@ Subscribe to your favorite podcasts, share them with friends, and listen to new 
 
 ## Roadmap
 > [!WARNING]
-> The project is put on hold as I currently focus on preparing to enter an university.
+> The project is put on hold.
 
 - [x] MVP (July)
 - [x] [UI/UX redisign](https://github.com/jieggii/podcastie/tree/feature/ui-redesign) (using callback buttons) (Aug)
